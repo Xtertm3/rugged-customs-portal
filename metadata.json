@@ -1,0 +1,7 @@
+{
+  "name": "Rugged Customs Payment Portal",
+  "description": "An application for Rugged Customs construction teams to submit payment requests. The form collects project details, and upon submission, uses the Gemini API to format the request into a professional summary.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
