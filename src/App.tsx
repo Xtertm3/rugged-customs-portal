@@ -17,7 +17,7 @@ import { Login } from './components/Login';
 import { TransporterDashboard } from './components/TransporterDashboard';
 import { EditTransporterModal } from './components/EditTransporterModal';
 import { SiteForm } from './components/SiteForm';
-import { initDB, saveData, loadData } from './services/db';
+import firebaseService from './services/firebaseService';
 import { Spinner } from './components/Spinner';
 import { Inventory } from './components/Inventory';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
@@ -207,152 +207,112 @@ const App: React.FC = () => {
       });
   };
 
-  const saveToDb = useCallback(async (key: string, data: any): Promise<boolean> => {
-    try {
-        await saveData(key, data);
-        return true;
-    } catch (err) {
-        console.error(`Failed to save to IndexedDB store "${key}"`, err);
-        setError("Could not save data due to a database error. Please try again.");
-        return false;
-    }
-  }, []);
-
-  const handleSaveSites = (sitesToSave: Site[]) => saveToDb('sites', sitesToSave);
-  const handleSaveRequest = (requests: PaymentRequest[]) => saveToDb('paymentRequests', requests);
-  const handleSaveTeamMembers = (team: TeamMember[]) => saveToDb('teamMembers', team);
-  const handleSaveTransporters = (transporters: Transporter[]) => saveToDb('transporters', transporters);
-  const handleSaveJobCards = (cards: JobCard[]) => saveToDb('jobCards', cards);
-  const handleSaveMaterialUsageLogs = (logs: MaterialUsageLog[]) => saveToDb('materialUsageLogs', logs);
+  // All save functions removed - Firebase real-time listeners auto-sync all data changes
 
 
+  // Initialize Firebase real-time listeners for ALL data
   useEffect(() => {
-    const initializeAndLoad = async () => {
+    const initializeFirebase = async () => {
       try {
-        await initDB();
+        // Initialize default admin if needed
+        await firebaseService.initializeDefaultAdmin();
 
+        // Restore logged-in user from session
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
-            setCurrentUser(JSON.parse(storedUser));
-        }
-        
-        const isMigrated = localStorage.getItem('db_migrated');
-        if (!isMigrated) {
-            console.log("Checking for data to migrate from localStorage to IndexedDB...");
-            const oldSites = JSON.parse(localStorage.getItem('sites') || '[]');
-            const oldRequests = JSON.parse(localStorage.getItem('paymentRequests') || '[]');
-            const oldTeam = JSON.parse(localStorage.getItem('teamMembers') || '[]');
-            const oldTransporters = JSON.parse(localStorage.getItem('transporters') || '[]');
-            const oldJobCards = JSON.parse(localStorage.getItem('jobCards') || '[]');
-            
-            if (oldSites.length > 0 || oldRequests.length > 0 || oldTeam.length > 0 || oldTransporters.length > 0 || oldJobCards.length > 0) {
-                console.log("Starting migration...");
-                await saveData('sites', oldSites);
-                await saveData('paymentRequests', oldRequests);
-                await saveData('teamMembers', oldTeam);
-                await saveData('transporters', oldTransporters);
-                await saveData('jobCards', oldJobCards);
-
-                localStorage.setItem('db_migrated', 'true');
-                localStorage.removeItem('sites');
-                localStorage.removeItem('paymentRequests');
-                localStorage.removeItem('teamMembers');
-                localStorage.removeItem('transporters');
-                localStorage.removeItem('jobCards');
-                console.log("Migration complete.");
-            } else {
-                localStorage.setItem('db_migrated', 'true');
-                console.log("No old data found to migrate.");
-            }
+          setCurrentUser(JSON.parse(storedUser));
         }
 
-        let loadedSites: Site[] = await loadData<Site>('sites');
-        let loadedRequests: any[] = await loadData<PaymentRequest>('paymentRequests');
+        // Setup real-time listeners for ALL collections
+        const unsubscribeTeam = firebaseService.subscribeToTeamMembers((members) => {
+          setTeamMembers(members);
+        });
 
-        let migratedSites = [...loadedSites];
-        if (loadedSites.length === 0 && loadedRequests.length > 0) {
-          const siteMap = new Map<string, Site>();
-          loadedRequests.forEach((req: PaymentRequest) => {
-            if (!siteMap.has(req.siteName)) {
-              siteMap.set(req.siteName, {
-                id: `site-${Date.now()}-${siteMap.size}`,
-                siteName: req.siteName,
-                location: req.location,
-                latitude: req.latitude,
-                longitude: req.longitude,
-                projectType: req.projectType,
-                initialMaterials: req.materials ? req.materials.map(m => ({...m, units: m.used})) : []
-              });
-            }
-          });
-          migratedSites = Array.from(siteMap.values());
-          await handleSaveSites(migratedSites); // Save newly created sites back to DB
-        }
-        
-        migratedSites = migratedSites.map(s => ({...s, initialMaterials: s.initialMaterials || [], photos: s.photos || [], documents: s.documents || [] }));
-        setSites(migratedSites);
+        const unsubscribeSites = firebaseService.subscribeToSites((sites) => {
+          const migratedSites = sites.map(s => ({
+            ...s, 
+            initialMaterials: s.initialMaterials || [], 
+            photos: s.photos || [], 
+            documents: s.documents || []
+          }));
+          setSites(migratedSites);
+        });
 
-        const migratedRequests = loadedRequests.map((req: any): PaymentRequest => {
+        const unsubscribeRequests = firebaseService.subscribeToPaymentRequests((requests) => {
+          const migratedRequests = requests.map((req: any): PaymentRequest => {
             let newReq = {...req};
             if (!newReq.statusHistory || newReq.statusHistory.length === 0) {
-                newReq.statusHistory = [{
-                    status: newReq.status,
-                    timestamp: newReq.timestamp,
-                    userId: 'system',
-                    userName: 'System (migrated)'
-                }];
+              newReq.statusHistory = [{
+                status: newReq.status,
+                timestamp: newReq.timestamp,
+                userId: 'system',
+                userName: 'System'
+              }];
             }
-            if (newReq.photos && newReq.photos.length > 0 && typeof newReq.photos[0] === 'string') {
-              newReq.photos = newReq.photos.map((p: string) => ({ name: p, dataUrl: '' }));
-            } else {
-              newReq.photos = newReq.photos || [];
-            }
-            if (newReq.documents && newReq.documents.length > 0 && typeof newReq.documents[0] === 'string') {
-              newReq.documents = newReq.documents.map((d: string) => ({ name: d, dataUrl: '' }));
-            } else {
-              newReq.documents = newReq.documents || [];
-            }
+            newReq.photos = newReq.photos || [];
+            newReq.documents = newReq.documents || [];
             return newReq as PaymentRequest;
+          });
+          setPaymentRequests(migratedRequests);
         });
-        setPaymentRequests(migratedRequests);
-        
-        setTeamMembers(await loadData<TeamMember>('teamMembers'));
-        setTransporters(await loadData<Transporter>('transporters'));
-        
-        const loadedJobCards: any[] = await loadData<JobCard>('jobCards');
-        const migratedJobCards = loadedJobCards.map((card): JobCard => {
+
+        const unsubscribeTransporters = firebaseService.subscribeToTransporters((transporters) => {
+          setTransporters(transporters);
+        });
+
+        const unsubscribeJobCards = firebaseService.subscribeToJobCards((cards) => {
+          const migratedJobCards = cards.map((card): JobCard => {
             if (card.dropPoint && !Array.isArray(card.dropPoints)) {
-                const { dropPoint, ...rest } = card;
-                return { ...rest, dropPoints: [dropPoint] };
+              const { dropPoint, ...rest } = card;
+              return { ...rest, dropPoints: [dropPoint] };
             }
             if (!Array.isArray(card.dropPoints)) {
-                return { ...card, dropPoints: [] };
+              return { ...card, dropPoints: [] };
             }
             return card;
+          });
+          setJobCards(migratedJobCards);
         });
-        setJobCards(migratedJobCards);
 
-  const loadedMaterialUsageLogs: MaterialUsageLog[] = await loadData<MaterialUsageLog>('materialUsageLogs');
-  setMaterialUsageLogs(loadedMaterialUsageLogs || []);
+        const unsubscribeMaterialLogs = firebaseService.subscribeToMaterialUsageLogs((logs) => {
+          setMaterialUsageLogs(logs || []);
+        });
+
+        setIsDbLoading(false);
+
+        // Service worker for notifications
+        if ('Notification' in window && 'serviceWorker' in navigator) {
+          setNotificationPermission(Notification.permission);
+          navigator.serviceWorker.ready.then(reg => {
+            reg.pushManager.getSubscription().then(sub => {
+              if (sub) setIsSubscribed(true);
+            });
+          });
+        }
+
+        // Cleanup function to unsubscribe when component unmounts
+        return () => {
+          unsubscribeTeam();
+          unsubscribeSites();
+          unsubscribeRequests();
+          unsubscribeTransporters();
+          unsubscribeJobCards();
+          unsubscribeMaterialLogs();
+        };
 
       } catch (err) {
-        console.error("Failed to initialize or load data:", err);
-        setError("Could not load application data. Please try refreshing the page.");
-      } finally {
+        console.error("Failed to initialize Firebase:", err);
+        setError("Could not connect to cloud database. Please check your internet connection.");
         setIsDbLoading(false);
-      }
-
-      if ('Notification' in window && 'serviceWorker' in navigator) {
-        setNotificationPermission(Notification.permission);
-        navigator.serviceWorker.ready.then(reg => {
-            reg.pushManager.getSubscription().then(sub => {
-                if (sub) setIsSubscribed(true);
-            });
-        });
       }
     };
 
-    initializeAndLoad();
+    const cleanup = initializeFirebase();
+    
+    // Cleanup subscriptions on unmount
+    return () => {
+      cleanup.then(unsubFn => unsubFn && unsubFn());
+    };
   }, []);
 
   const handleLogin = (mobile: string, pass: string): boolean => {
@@ -414,23 +374,25 @@ const App: React.FC = () => {
 
   const handleUpdateRequestStatus = useCallback(async (requestId: string, status: 'Pending' | 'Approved' | 'Paid') => {
     if (!currentUser) return;
-    const updatedRequests = paymentRequests.map(req => {
-      if (req.id === requestId) {
-        const newHistoryEntry: StatusChange = {
-          status,
-          timestamp: new Date().toLocaleString(),
-          userId: currentUser.id,
-          userName: currentUser.name,
-        };
-        return { ...req, status, statusHistory: [...req.statusHistory, newHistoryEntry] };
-      }
-      return req;
-    });
+    const req = paymentRequests.find(r => r.id === requestId);
+    if (!req) return;
     
-    if (await handleSaveRequest(updatedRequests)) {
-      setPaymentRequests(updatedRequests);
-    }
-  }, [currentUser, paymentRequests, handleSaveRequest]);
+    const newHistoryEntry: StatusChange = {
+      status,
+      timestamp: new Date().toLocaleString(),
+      userId: currentUser.id,
+      userName: currentUser.name,
+    };
+    
+    const updatedRequest = {
+      ...req,
+      status,
+      statusHistory: [...req.statusHistory, newHistoryEntry]
+    };
+    
+    await firebaseService.updatePaymentRequest(requestId, updatedRequest);
+    // State will auto-update via Firebase listener
+  }, [currentUser, paymentRequests]);
 
   const handleSubmitRequest = useCallback(async (formData: PaymentRequestData & {id?: string}, photos: File[], documents: File[]): Promise<boolean> => {
     if (!currentUser) {
@@ -455,22 +417,18 @@ const App: React.FC = () => {
         };
 
         if (formData.id) {
-            const updatedRequests = paymentRequests.map((req): PaymentRequest => {
-              if (req.id === formData.id) {
-                return {
-                  ...req,
-                  ...formData,
-                  summary,
-                  photos: photos.length > 0 ? photoAttachments : req.photos,
-                  documents: documents.length > 0 ? documentAttachments : req.documents,
-                  status: initialStatus,
-                  statusHistory: [...req.statusHistory, { ...statusEntry, status: initialStatus }],
-                };
-              }
-              return req;
-            });
-            if (await handleSaveRequest(updatedRequests)) {
-              setPaymentRequests(updatedRequests);
+            const req = paymentRequests.find(r => r.id === formData.id);
+            if (req) {
+              const updatedRequest: PaymentRequest = {
+                ...req,
+                ...formData,
+                summary,
+                photos: photos.length > 0 ? photoAttachments : req.photos,
+                documents: documents.length > 0 ? documentAttachments : req.documents,
+                status: initialStatus,
+                statusHistory: [...req.statusHistory, { ...statusEntry, status: initialStatus }],
+              };
+              await firebaseService.updatePaymentRequest(formData.id, updatedRequest);
               navigateBack();
               return true;
             }
@@ -485,15 +443,12 @@ const App: React.FC = () => {
                 documents: documentAttachments,
                 statusHistory: [statusEntry]
             };
-            const updatedRequests = [newRequest, ...paymentRequests];
-            if (await handleSaveRequest(updatedRequests)) {
-              setPaymentRequests(updatedRequests);
-              if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIFICATION', title: `New Submission: ${newRequest.siteName}`, body: `A completion report was submitted for ${newRequest.location}.` });
-              }
-              navigateBack();
-              return true;
+            await firebaseService.savePaymentRequest(newRequest);
+            if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIFICATION', title: `New Submission: ${newRequest.siteName}`, body: `A completion report was submitted for ${newRequest.location}.` });
             }
+            navigateBack();
+            return true;
         }
         return false;
 
@@ -503,7 +458,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [navigateBack, isSubscribed, currentUser, paymentRequests, handleSaveRequest]);
+  }, [navigateBack, isSubscribed, currentUser, paymentRequests]);
   
    const handleBulkUpload = useCallback(async (file: File): Promise<{success: number, failed: number, errors: string[]}> => {
     if (!currentUser) {
@@ -578,12 +533,11 @@ const App: React.FC = () => {
         });
 
         if (newRequests.length > 0) {
-           const updatedRequests = [...newRequests.reverse(), ...paymentRequests];
-           if (await handleSaveRequest(updatedRequests)) {
-             setPaymentRequests(updatedRequests);
-           } else {
-             errors.push("Failed to save processed requests due to storage limitations.");
-           }
+           // Save all requests to Firebase
+           await Promise.all(
+             newRequests.map(req => firebaseService.savePaymentRequest(req))
+           );
+           // State auto-updates via Firebase listener
         }
         
         setIsLoading(false);
@@ -591,14 +545,12 @@ const App: React.FC = () => {
       };
       reader.readAsText(file);
     });
-  }, [currentUser, sites, paymentRequests, handleSaveRequest]);
+  }, [currentUser, sites, paymentRequests]);
 
   const handleAddTeamMember = async (name: string, role: string, mobile: string, photo: string | null, password?: string) => {
     const newMember: TeamMember = { id: Date.now().toString(), name, role, mobile, photo, password: password || mobile, passwordChanged: false };
-    const updatedTeam = [newMember, ...teamMembers];
-    if (await handleSaveTeamMembers(updatedTeam)) {
-        setTeamMembers(updatedTeam);
-    }
+    await firebaseService.saveTeamMember(newMember);
+    // State auto-updates via Firebase listener
   };
   
   const handleDeleteTeamMember = async (memberId: string) => {
@@ -612,28 +564,23 @@ const App: React.FC = () => {
     }
 
     if (window.confirm(`Are you sure you want to permanently delete ${memberToDelete.name}? This action cannot be undone.`)) {
-        const updatedTeam = teamMembers.filter(m => m.id !== memberId);
-        if (await handleSaveTeamMembers(updatedTeam)) {
-            setTeamMembers(updatedTeam);
-        }
+        await firebaseService.deleteTeamMember(memberId);
+        // State auto-updates via Firebase listener
     }
   };
   
   const handleUpdateTeamMember = async (updatedMember: TeamMember) => {
-     const updatedTeam = teamMembers.map(m => {
-        if (m.id === updatedMember.id) {
-            const wasPasswordUpdated = !!updatedMember.password;
-            return { 
-                ...m, 
-                ...updatedMember,
-                password: updatedMember.password || m.password, // Keep old password if new one is not provided
-                passwordChanged: wasPasswordUpdated ? false : m.passwordChanged // Reset flag if password was changed by admin
-            };
-        }
-        return m;
-    });
-    if (await handleSaveTeamMembers(updatedTeam)) {
-        setTeamMembers(updatedTeam);
+    const existing = teamMembers.find(m => m.id === updatedMember.id);
+    if (existing) {
+      const wasPasswordUpdated = !!updatedMember.password;
+      const updated = { 
+        ...existing, 
+        ...updatedMember,
+        password: updatedMember.password || existing.password,
+        passwordChanged: wasPasswordUpdated ? false : existing.passwordChanged
+      };
+      await firebaseService.updateTeamMember(updatedMember.id, updated);
+      // State auto-updates via Firebase listener
     }
     setIsEditTeamMemberModalOpen(false);
     setEditingTeamMember(null);
@@ -641,60 +588,44 @@ const App: React.FC = () => {
 
   const handleAddTransporter = async (contactPerson: string, contactNumber: string, password?: string) => {
     const newTransporter: Transporter = { id: Date.now().toString(), contactPerson, contactNumber, password: password || contactNumber, passwordChanged: false };
-    const updated = [newTransporter, ...transporters];
-    if (await handleSaveTransporters(updated)) {
-        setTransporters(updated);
-    }
+    await firebaseService.saveTransporter(newTransporter);
   };
 
   const handleUpdateTransporter = async (updatedTransporter: Transporter) => {
-     const updated = transporters.map(t => {
-        if (t.id === updatedTransporter.id) {
-            const wasPasswordUpdated = !!updatedTransporter.password;
-            return { 
-                ...t, 
-                ...updatedTransporter,
-                password: updatedTransporter.password || t.password,
-                passwordChanged: wasPasswordUpdated ? false : t.passwordChanged
-            };
-        }
-        return t;
-    });
-    if (await handleSaveTransporters(updated)) {
-        setTransporters(updated);
+    const existing = transporters.find(t => t.id === updatedTransporter.id);
+    if (existing) {
+      const wasPasswordUpdated = !!updatedTransporter.password;
+      const updated = { 
+        ...existing, 
+        ...updatedTransporter,
+        password: updatedTransporter.password || existing.password,
+        passwordChanged: wasPasswordUpdated ? false : existing.passwordChanged
+      };
+      await firebaseService.updateTransporter(updatedTransporter.id, updated);
     }
     setIsEditTransporterModalOpen(false);
     setEditingTransporter(null);
   };
 
   const handleDeleteTransporter = async (transporterId: string) => {
-    const updated = transporters.filter(t => t.id !== transporterId);
-    if (await handleSaveTransporters(updated)) {
-        setTransporters(updated);
-    }
+    await firebaseService.deleteTransporter(transporterId);
   };
 
   const handleAddJobCard = async (data: Omit<JobCard, 'id' | 'status' | 'timestamp'>) => {
     const newCard: JobCard = { ...data, id: Date.now().toString(), status: 'Assigned', timestamp: new Date().toLocaleString() };
-    const updated = [newCard, ...jobCards];
-    if (await handleSaveJobCards(updated)) {
-        setJobCards(updated);
-    }
+    await firebaseService.saveJobCard(newCard);
   };
 
   const handleUpdateJobCard = async (updatedCard: JobCard) => {
-    const updated = jobCards.map(c => c.id === updatedCard.id ? updatedCard : c);
-    if (await handleSaveJobCards(updated)) {
-        setJobCards(updated);
-    }
+    await firebaseService.updateJobCard(updatedCard.id, updatedCard);
     setIsEditJobCardModalOpen(false);
     setEditingJobCard(null);
   };
   
   const handleUpdateJobCardStatus = async (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => {
-    const updated = jobCards.map(card => card.id === cardId ? { ...card, status } : card);
-    if (await handleSaveJobCards(updated)) {
-        setJobCards(updated);
+    const card = jobCards.find(c => c.id === cardId);
+    if (card) {
+      await firebaseService.updateJobCard(cardId, { ...card, status });
     }
   };
 
@@ -703,29 +634,20 @@ const App: React.FC = () => {
     if (!requestToDelete) return;
 
     if (window.confirm(`Are you sure you want to delete the submission for "${requestToDelete.siteName}" created at ${requestToDelete.timestamp}? This action is permanent.`)) {
-        const updatedRequests = paymentRequests.filter(req => req.id !== requestId);
-        if (await handleSaveRequest(updatedRequests)) {
-            setPaymentRequests(updatedRequests);
-        }
+        await firebaseService.deletePaymentRequest(requestId);
     }
   };
 
   const handleAddSite = async (siteData: Omit<Site, 'id'>) => {
     const newSite: Site = { ...siteData, id: Date.now().toString() };
-    const updated = [newSite, ...sites];
-    if (await handleSaveSites(updated)) {
-        setSites(updated);
-        navigateBack();
-    }
+    await firebaseService.saveSite(newSite);
+    navigateBack();
   };
 
   const handleUpdateSite = async (updatedSite: Site) => {
-    const updated = sites.map(s => s.id === updatedSite.id ? updatedSite : s);
-    if (await handleSaveSites(updated)) {
-        setSites(updated);
-        setEditingSite(null);
-        navigateBack();
-    }
+    await firebaseService.updateSite(updatedSite.id, updatedSite);
+    setEditingSite(null);
+    navigateBack();
   };
 
   const handleDeleteSite = async (siteId: string) => {
@@ -739,10 +661,7 @@ const App: React.FC = () => {
     }
 
     if (window.confirm(`Are you sure you want to permanently delete the site "${siteToDelete.siteName}"? This action cannot be undone.`)) {
-        const updatedSites = sites.filter(s => s.id !== siteId);
-        if (await handleSaveSites(updatedSites)) {
-            setSites(updatedSites);
-        }
+        await firebaseService.deleteSite(siteId);
     }
   };
 
@@ -800,29 +719,25 @@ const App: React.FC = () => {
     
     const isTeamMember = teamMembers.some(m => m.id === currentUser.id);
     if (isTeamMember) {
-        const updatedTeam = teamMembers.map(m => 
-            m.id === currentUser.id ? { ...m, password: newPassword, passwordChanged: true } : m
-        );
-        if (await handleSaveTeamMembers(updatedTeam)) {
-            setTeamMembers(updatedTeam);
-            const updatedMemberRecord = updatedTeam.find(m => m.id === currentUser.id)!;
-            updatedUserForSession = { ...updatedMemberRecord };
+        const member = teamMembers.find(m => m.id === currentUser.id);
+        if (member) {
+            const updatedMember = { ...member, password: newPassword, passwordChanged: true };
+            await firebaseService.updateTeamMember(currentUser.id, updatedMember);
+            updatedUserForSession = { ...updatedMember };
             success = true;
         }
     } else {
         const isTransporter = transporters.some(t => t.id === currentUser.id);
         if (isTransporter) {
-            const updatedTransporters = transporters.map(t => 
-                t.id === currentUser.id ? { ...t, password: newPassword, passwordChanged: true } : t
-            );
-            if (await handleSaveTransporters(updatedTransporters)) {
-                setTransporters(updatedTransporters);
-                const updatedTransporterRecord = updatedTransporters.find(t => t.id === currentUser.id)!;
+            const transporter = transporters.find(t => t.id === currentUser.id);
+            if (transporter) {
+                const updatedTransporter = { ...transporter, password: newPassword, passwordChanged: true };
+                await firebaseService.updateTransporter(currentUser.id, updatedTransporter);
                 updatedUserForSession = {
-                    id: updatedTransporterRecord.id,
-                    name: updatedTransporterRecord.contactPerson,
+                    id: updatedTransporter.id,
+                    name: updatedTransporter.contactPerson,
                     role: 'Transporter',
-                    mobile: updatedTransporterRecord.contactNumber,
+                    mobile: updatedTransporter.contactNumber,
                     photo: null
                 };
                 success = true;
@@ -1018,12 +933,8 @@ const App: React.FC = () => {
     if (!site) return false;
     const updatedMaterials = (site.initialMaterials || []).map(m => m.name === materialName ? { ...m, units: String(newInitialUnits) } : m);
     const updatedSite = { ...site, initialMaterials: updatedMaterials };
-    const updatedSites = sites.map(s => s.id === site.id ? updatedSite : s);
-    if (await handleSaveSites(updatedSites)) {
-      setSites(updatedSites);
-      return true;
-    }
-    return false;
+    await firebaseService.updateSite(site.id, updatedSite);
+    return true;
   };
 
   const handleDeleteInventoryItem = async (siteName: string, materialName: string) => {
@@ -1036,12 +947,8 @@ const App: React.FC = () => {
     if (!site) return false;
     const updatedMaterials = (site.initialMaterials || []).filter(m => m.name !== materialName);
     const updatedSite = { ...site, initialMaterials: updatedMaterials };
-    const updatedSites = sites.map(s => s.id === site.id ? updatedSite : s);
-    if (await handleSaveSites(updatedSites)) {
-      setSites(updatedSites);
-      return true;
-    }
-    return false;
+    await firebaseService.updateSite(site.id, updatedSite);
+    return true;
   };
 
   const handleAddInventoryItem = async (siteId: string, name: string, units: number) => {
@@ -1054,12 +961,8 @@ const App: React.FC = () => {
     if (!site) return false;
     const newMat = { id: Date.now().toString(), name, units: String(units), used: '0' };
     const updatedSite = { ...site, initialMaterials: [...(site.initialMaterials || []), newMat] };
-    const updatedSites = sites.map(s => s.id === site.id ? updatedSite : s);
-    if (await handleSaveSites(updatedSites)) {
-      setSites(updatedSites);
-      return true;
-    }
-    return false;
+    await firebaseService.updateSite(site.id, updatedSite);
+    return true;
   };
 
   const [isMaterialUsageModalOpen, setIsMaterialUsageModalOpen] = useState(false);
@@ -1107,13 +1010,10 @@ const App: React.FC = () => {
 
       const mergedMaterials = [...keptExisting, ...uniqueNew];
 
-      const updatedMembers = teamMembers.map(t => t.id === member.id ? { ...t, assignedMaterials: mergedMaterials } : t);
-      if (await handleSaveTeamMembers(updatedMembers)) {
-        setTeamMembers(updatedMembers);
-        setIsOpeningBalanceModalOpen(false);
-        return true;
-      }
-      return false;
+      const updatedMember = { ...member, assignedMaterials: mergedMaterials };
+      await firebaseService.updateTeamMember(member.id, updatedMember);
+      setIsOpeningBalanceModalOpen(false);
+      return true;
     } catch (err) {
       console.error('Failed to save opening balance', err);
       setError('Failed to save opening balance.');
@@ -1144,10 +1044,11 @@ const App: React.FC = () => {
         if (!window.confirm(`${materialName} is not assigned to any team. Add it to your team's opening balance and log usage?`)) {
           return false;
         }
-        const newMat = { id: Date.now().toString(), name: materialName, units: String(quantityUsed), used: String(quantityUsed) };
-        const updatedMembers = teamMembers.map(tm => tm.id === currentUser.id ? { ...tm, assignedMaterials: [...(tm.assignedMaterials || []), newMat] } : tm);
-        if (await handleSaveTeamMembers(updatedMembers)) {
-          setTeamMembers(updatedMembers);
+        const currentMember = teamMembers.find(tm => tm.id === currentUser.id);
+        if (currentMember) {
+          const newMat = { id: Date.now().toString(), name: materialName, units: String(quantityUsed), used: String(quantityUsed) };
+          const updatedMember = { ...currentMember, assignedMaterials: [...(currentMember.assignedMaterials || []), newMat] };
+          await firebaseService.updateTeamMember(currentUser.id, updatedMember);
         }
       } else {
         // update owner's assignedMaterials used count
@@ -1160,14 +1061,9 @@ const App: React.FC = () => {
             return false;
           }
         }
-        const updatedMembers = teamMembers.map(tm => {
-          if (tm.id !== owner!.id) return tm;
-          const updatedAssigned = (tm.assignedMaterials || []).map(am => am.name === materialName ? { ...am, used: String(Number(am.used || 0) + quantityUsed) } : am);
-          return { ...tm, assignedMaterials: updatedAssigned };
-        });
-        if (await handleSaveTeamMembers(updatedMembers)) {
-          setTeamMembers(updatedMembers);
-        }
+        const updatedAssigned = (owner.assignedMaterials || []).map(am => am.name === materialName ? { ...am, used: String(Number(am.used || 0) + quantityUsed) } : am);
+        const updatedOwner = { ...owner, assignedMaterials: updatedAssigned };
+        await firebaseService.updateTeamMember(owner.id, updatedOwner);
       }
 
       const newLog: MaterialUsageLog = {
@@ -1182,10 +1078,8 @@ const App: React.FC = () => {
         notes,
       };
 
-      const newLogs = [newLog, ...materialUsageLogs];
-      if (await handleSaveMaterialUsageLogs(newLogs)) {
-        setMaterialUsageLogs(newLogs);
-      }
+      await firebaseService.saveMaterialUsageLog(newLog);
+      // State auto-updates via Firebase listener
 
       // Notify service worker / show notification
       if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
