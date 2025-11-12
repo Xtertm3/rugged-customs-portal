@@ -56,8 +56,8 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
     onClose();
   }, [jobCard, transporterId, pickFrom, dropPoints, description, onUpdate, onClose]);
 
-  const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
-  const labelStyles = "block text-sm font-medium text-zinc-300 mb-2";
+  const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+  const labelStyles = "block text-sm font-medium text-gray-700 mb-2";
 
   return (
     <div
@@ -65,12 +65,12 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
       onClick={onClose}
     >
       <div
-        className="bg-zinc-800 border border-zinc-700 w-full max-w-lg rounded-2xl shadow-2xl p-8 transform transition-all duration-300"
+        className="bg-white border border-gray-200 w-full max-w-lg rounded-2xl shadow-2xl p-8 transform transition-all duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-zinc-100">Edit Job Card</h2>
-          <button onClick={onClose} className="text-zinc-400 text-2xl font-bold hover:text-white transition-colors">&times;</button>
+          <h2 className="text-2xl font-bold text-gray-900">Edit Job Card</h2>
+          <button onClick={onClose} className="text-gray-600 text-2xl font-bold hover:text-gray-900 transition-colors">&times;</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -106,7 +106,7 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
                     className={inputStyles}
                   >
                     {[...new Set([...ongoingSites, dp])].sort().map(site => (
-                      <option key={site} value={site} className="bg-zinc-800 text-white">{site}</option>
+                      <option key={site} value={site}>{site}</option>
                     ))}
                   </select>
                   {dropPoints.length > 1 && (
@@ -140,7 +140,7 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 bg-zinc-600 text-white font-semibold rounded-lg hover:bg-zinc-700 transition-all"
+              className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all"
             >
               Cancel
             </button>

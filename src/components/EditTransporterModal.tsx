@@ -28,13 +28,13 @@ export const EditTransporterModal: React.FC<EditTransporterModalProps> = ({ tran
         onUpdate({ ...transporter, contactPerson, contactNumber, password: password || undefined });
     };
 
-    const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
-    const labelStyles = "block text-sm font-medium text-zinc-300 mb-1";
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const labelStyles = "block text-sm font-medium text-gray-700 mb-1";
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={onClose}>
-            <div className="bg-zinc-800 border border-zinc-700 w-full max-w-lg rounded-2xl shadow-2xl p-8" onClick={(e) => e.stopPropagation()}>
-                <h2 className="text-2xl font-bold text-zinc-100 mb-6">Edit Transporter</h2>
+            <div className="bg-white border border-gray-200 w-full max-w-lg rounded-2xl shadow-2xl p-8" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Edit Transporter</h2>
                 <div className="space-y-4">
                      <div>
                         <label htmlFor="edit-transporter-name" className={labelStyles}>Contact Person</label>
@@ -57,7 +57,7 @@ export const EditTransporterModal: React.FC<EditTransporterModalProps> = ({ tran
                     </div>
                     {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
                     <div className="flex justify-end pt-4 gap-4">
-                         <button onClick={onClose} className="px-6 py-2 bg-zinc-600 text-white font-semibold rounded-lg">Cancel</button>
+                         <button onClick={onClose} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">Cancel</button>
                          <button onClick={handleUpdateClick} className="px-8 py-2 bg-orange-600 text-white font-semibold rounded-lg">Update Transporter</button>
                     </div>
                 </div>

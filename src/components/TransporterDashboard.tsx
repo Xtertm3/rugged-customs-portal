@@ -1,88 +1,119 @@
 import React from 'react';
-import { Transporter, JobCard } from '../App';
+import { Transporter, JobCard, PaymentRequest } from '../App';
 
 interface TransporterDashboardProps {
   transporter: Transporter;
   jobCards: JobCard[];
+  paymentRequests: PaymentRequest[];
   onUpdateStatus: (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => void;
-  // new: allow transporters to request payment for a job
   onRequestPaymentForJob?: (siteId: string) => void;
   onLogout: () => void;
 }
 
 const statusColors = {
-  Assigned: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'In Transit': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  Completed: 'bg-green-500/20 text-green-400 border-green-500/30',
+  Assigned: 'bg-blue-100 text-blue-700 border-blue-300',
+  'In Transit': 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  Completed: 'bg-green-100 text-green-700 border-green-300',
 };
 
-const statusArrowColors = {
-  Assigned: '60a5fa',
-  'In Transit': 'facc15',
-  Completed: '4ade80',
+const paymentStatusColors = {
+  Pending: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  Approved: 'bg-blue-100 text-blue-700 border-blue-300',
+  Paid: 'bg-green-100 text-green-700 border-green-300',
 };
 
-export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, onUpdateStatus, onRequestPaymentForJob, onLogout }) => {
+export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, paymentRequests, onUpdateStatus, onRequestPaymentForJob, onLogout }) => {
+  // Filter payment requests made by this transporter
+  const myPaymentRequests = paymentRequests.filter(req => req.assignTo === transporter.id);
+
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center justify-start p-4 font-sans antialiased">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start p-4 font-sans antialiased">
       <div className="w-full max-w-5xl mx-auto my-8">
         <div className="relative text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-amber-500 mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-600 mb-2">
               Transporter Dashboard
             </h1>
-            <p className="text-zinc-400 text-lg">
-              Welcome, <span className="font-bold text-orange-400">{transporter.contactPerson}</span>
+            <p className="text-gray-600 text-lg">
+              Welcome, <span className="font-bold text-orange-600">{transporter.contactPerson}</span>
             </p>
             <div className="absolute top-0 right-0">
-               <button onClick={onLogout} className="text-sm px-3 py-1 bg-zinc-700 text-zinc-300 rounded-md hover:bg-zinc-600">Logout</button>
+               <button onClick={onLogout} className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Logout</button>
             </div>
         </div>
 
-        <div className="bg-zinc-800/50 backdrop-blur-sm border border-zinc-700 rounded-2xl shadow-2xl p-6 transition-all duration-500">
-        <h2 className="text-2xl font-semibold mb-4 text-zinc-200 border-b border-zinc-600 pb-3">
+        {/* Job Cards Section */}
+        <div className="bg-white backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg p-6 mb-6">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 border-b border-gray-200 pb-3">
           Your Assigned Jobs ({jobCards.length})
         </h2>
         {jobCards.length === 0 ? (
-          <div className="text-center py-12 text-zinc-400">
+          <div className="text-center py-12 text-gray-500">
             <p className="text-lg">You have no jobs assigned.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {jobCards.map((card) => (
-              <div key={card.id} className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-700 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div key={card.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-grow space-y-3">
                   <div className="text-sm">
-                    <p className="text-zinc-400">
+                    <p className="text-gray-700">
                       <span className="font-semibold">From:</span> {card.pickFrom}
                     </p>
-                    <p className="text-zinc-400">
+                    <p className="text-gray-700">
                       <span className="font-semibold">To:</span> {card.dropPoints.join(', ')}
                     </p>
                   </div>
-                  <p className="text-xs text-zinc-500 bg-zinc-800/50 p-2 rounded-md">{card.description || 'No description.'}</p>
+                  <p className="text-xs text-gray-600 bg-white p-2 rounded-md border border-gray-200">{card.description || 'No description.'}</p>
                 </div>
 
                 <div className="flex flex-col items-start md:items-end gap-2 flex-shrink-0">
                   <select
                     value={card.status}
                     onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
-                    className={`cursor-pointer text-xs font-medium pl-3 pr-8 py-1 rounded-full border appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors duration-300 ${statusColors[card.status]}`}
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23${statusArrowColors[card.status]}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em' }}
+                    className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors ${statusColors[card.status]}`}
                     aria-label={`Update status for job ${card.id}`}
                   >
-                    <option className="bg-zinc-800 text-white" value="Assigned">Assigned</option>
-                    <option className="bg-zinc-800 text-white" value="In Transit">In Transit</option>
-                    <option className="bg-zinc-800 text-white" value="Completed">Completed</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="In Transit">In Transit</option>
+                    <option value="Completed">Completed</option>
                   </select>
-                  <p className="text-xs text-zinc-500">{card.timestamp}</p>
+                  <p className="text-xs text-gray-500">{card.timestamp}</p>
                   {onRequestPaymentForJob && (
                     <button
                       onClick={() => onRequestPaymentForJob(card.dropPoints[0] || '')}
-                      className="text-xs px-3 py-1 bg-primary text-white rounded-lg hover:bg-primary-hover"
+                      className="text-xs px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                     >
                       Request Payment
                     </button>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Payment Requests Section */}
+      <div className="bg-white backdrop-blur-sm border border-gray-200 rounded-2xl shadow-lg p-6">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 border-b border-gray-200 pb-3">
+          My Payment Requests ({myPaymentRequests.length})
+        </h2>
+        {myPaymentRequests.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg">You have no payment requests.</p>
+            <p className="text-sm mt-2">Use "Request Payment" on a job card to submit one.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {myPaymentRequests.map((req) => (
+              <div key={req.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex-grow">
+                  <p className="font-semibold text-gray-900">{req.siteName}</p>
+                  <p className="text-sm text-gray-600">₹{req.amount} • {req.paymentFor}</p>
+                  <p className="text-xs text-gray-500">{req.timestamp}</p>
+                </div>
+                <div className={`text-xs font-medium px-3 py-1.5 rounded-full border self-start sm:self-center ${paymentStatusColors[req.status]}`}>
+                  {req.status}
                 </div>
               </div>
             ))}
