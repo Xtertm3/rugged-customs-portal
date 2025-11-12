@@ -5,8 +5,7 @@ interface TransporterDashboardProps {
   transporter: Transporter;
   jobCards: JobCard[];
   paymentRequests: PaymentRequest[];
-  onUpdateStatus: (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => void;
-  onRequestPaymentForJob?: (siteId: string) => void;
+  onRequestPaymentForJob?: (jobCard: JobCard) => void;
   onLogout: () => void;
 }
 
@@ -22,7 +21,7 @@ const paymentStatusColors = {
   Paid: 'bg-green-100 text-green-700 border-green-300',
 };
 
-export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, paymentRequests, onUpdateStatus, onRequestPaymentForJob, onLogout }) => {
+export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, paymentRequests, onRequestPaymentForJob, onLogout }) => {
   // Filter payment requests made by this transporter
   const myPaymentRequests = paymentRequests.filter(req => req.assignTo === transporter.id);
 
@@ -53,39 +52,39 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
         ) : (
           <div className="space-y-4">
             {jobCards.map((card) => (
-              <div key={card.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                <div className="flex-grow space-y-3">
-                  <div className="text-sm">
-                    <p className="text-gray-700">
-                      <span className="font-semibold">From:</span> {card.pickFrom}
-                    </p>
-                    <p className="text-gray-700">
-                      <span className="font-semibold">To:</span> {card.dropPoints.join(', ')}
-                    </p>
+              <div key={card.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                  <div className="flex-grow space-y-3">
+                    <div className="text-sm space-y-1">
+                      <p className="text-gray-700">
+                        <span className="font-semibold">From:</span> {card.pickFrom}
+                      </p>
+                      <p className="text-gray-700">
+                        <span className="font-semibold">To:</span> {card.dropPoints.join(', ')}
+                      </p>
+                      <p className="text-gray-700">
+                        <span className="font-semibold">Status:</span>{' '}
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[card.status]}`}>
+                          {card.status}
+                        </span>
+                      </p>
+                    </div>
+                    {card.description && (
+                      <p className="text-xs text-gray-600 bg-white p-2 rounded-md border border-gray-200">{card.description}</p>
+                    )}
+                    <p className="text-xs text-gray-500">{card.timestamp}</p>
                   </div>
-                  <p className="text-xs text-gray-600 bg-white p-2 rounded-md border border-gray-200">{card.description || 'No description.'}</p>
-                </div>
 
-                <div className="flex flex-col items-start md:items-end gap-2 flex-shrink-0">
-                  <select
-                    value={card.status}
-                    onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
-                    className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors ${statusColors[card.status]}`}
-                    aria-label={`Update status for job ${card.id}`}
-                  >
-                    <option value="Assigned">Assigned</option>
-                    <option value="In Transit">In Transit</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                  <p className="text-xs text-gray-500">{card.timestamp}</p>
-                  {onRequestPaymentForJob && (
-                    <button
-                      onClick={() => onRequestPaymentForJob(card.dropPoints[0] || '')}
-                      className="text-xs px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                    >
-                      Request Payment
-                    </button>
-                  )}
+                  <div className="flex flex-col items-start md:items-end gap-2 flex-shrink-0">
+                    {onRequestPaymentForJob && (
+                      <button
+                        onClick={() => onRequestPaymentForJob(card)}
+                        className="text-sm px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                      >
+                        Request Payment
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}

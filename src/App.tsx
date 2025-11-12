@@ -189,7 +189,6 @@ const App: React.FC = () => {
   const [editingTransporter, setEditingTransporter] = useState<Transporter | null>(null);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
   const [initialSiteIdForCompletion, setInitialSiteIdForCompletion] = useState<string | null>(null);
-  const [transporterRequestingPayment, setTransporterRequestingPayment] = useState<string | null>(null);
 
 
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -202,7 +201,6 @@ const App: React.FC = () => {
       setEditingPaymentRequest(null);
       setEditingSite(null);
       setInitialSiteIdForCompletion(null);
-      setTransporterRequestingPayment(null);
       setViewHistory(prev => {
           if (prev.length > 1) return prev.slice(0, -1);
           return ['dashboard'];
@@ -443,9 +441,7 @@ const App: React.FC = () => {
                 summary, 
                 photos: photoAttachments, 
                 documents: documentAttachments,
-                statusHistory: [statusEntry],
-                // If transporter is requesting payment, assign to them for tracking
-                ...(transporterRequestingPayment && { assignTo: transporterRequestingPayment })
+                statusHistory: [statusEntry]
             };
             await firebaseService.savePaymentRequest(newRequest);
             if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -462,7 +458,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [navigateBack, isSubscribed, currentUser, paymentRequests, transporterRequestingPayment]);
+  }, [navigateBack, isSubscribed, currentUser, paymentRequests]);
   
    const handleBulkUpload = useCallback(async (file: File): Promise<{success: number, failed: number, errors: string[]}> => {
     if (!currentUser) {
@@ -1229,19 +1225,71 @@ const App: React.FC = () => {
     if (!transporterDetails) {
       return <div>Error: Transporter details not found. <button onClick={handleLogout}>Logout</button></div>;
     }
-    const handleTransporterRequestPayment = (maybeSiteName: string) => {
-      // Try to map site name to site id for PaymentRequestForm
-      const site = sites.find(s => s.siteName === maybeSiteName);
-      if (site) setInitialSiteIdForCompletion(site.id);
-      // Track that this is a transporter-initiated payment request
-      setTransporterRequestingPayment(currentUser.id);
-      navigateTo('form');
+    
+    const handleTransporterRequestPayment = async (jobCard: JobCard) => {
+      // Find the destination site from job card
+      const siteName = jobCard.dropPoints[0];
+      const site = sites.find(s => s.siteName === siteName);
+      
+      if (!site) {
+        setError(`Site "${siteName}" not found.`);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Create payment request automatically for transportation
+        const initialStatus = 'Pending';
+        const statusEntry: StatusChange = {
+          status: initialStatus,
+          timestamp: new Date().toLocaleString(),
+          userId: currentUser.id,
+          userName: currentUser.name
+        };
+
+        const newRequest: PaymentRequest = {
+          siteName: site.siteName,
+          location: site.location,
+          projectType: site.projectType,
+          latitude: site.latitude,
+          longitude: site.longitude,
+          amount: '', // Amount will be filled by manager/admin
+          paymentFor: 'Transportation',
+          reasons: `Transportation service for job: ${jobCard.pickFrom} → ${jobCard.dropPoints.join(', ')}${jobCard.description ? ` - ${jobCard.description}` : ''}`,
+          id: new Date().toISOString(),
+          timestamp: new Date().toLocaleString(),
+          status: initialStatus,
+          summary: `Payment request for transportation service from ${jobCard.pickFrom} to ${jobCard.dropPoints.join(', ')}.`,
+          photos: [],
+          documents: [],
+          statusHistory: [statusEntry],
+          assignTo: currentUser.id // Assign to transporter for tracking
+        };
+
+        await firebaseService.savePaymentRequest(newRequest);
+        
+        if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: `Payment Request Created`,
+            body: `Transportation payment request for ${siteName} has been submitted.`
+          });
+        }
+        
+        setIsLoading(false);
+        // Show success message or refresh the view
+      } catch (err) {
+        setIsLoading(false);
+        setError(err instanceof Error ? err.message : 'Failed to create payment request');
+      }
     };
+    
     return <TransporterDashboard 
               transporter={transporterDetails}
               jobCards={jobCards.filter(j => j.transporterId === currentUser.id)}
               paymentRequests={paymentRequests}
-              onUpdateStatus={handleUpdateJobCardStatus}
               onRequestPaymentForJob={handleTransporterRequestPayment}
               onLogout={handleLogout}
            />;

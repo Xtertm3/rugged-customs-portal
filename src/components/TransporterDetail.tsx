@@ -6,9 +6,9 @@ interface TransporterDetailProps {
   jobCards: JobCard[];
   transporters: Transporter[];
   onBack: () => void;
-  onUpdateStatus: (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => void;
+  onUpdateStatus?: (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => void;
   onDownloadReport?: (transporterId: string) => void;
-  onEditJobCard: (jobCard: JobCard) => void;
+  onEditJobCard?: (jobCard: JobCard) => void;
   canEdit: boolean;
 }
 
@@ -80,22 +80,28 @@ export const TransporterDetail: React.FC<TransporterDetailProps> = ({ transporte
                     </div>
 
                     <div className="flex flex-col items-start md:items-end gap-2 flex-shrink-0">
-                        <select
-                            value={card.status}
-                            onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
-                            className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors ${statusColors[card.status]}`}
-                            aria-label={`Update status for job ${card.id}`}
-                        >
-                            <option value="Assigned">Assigned</option>
-                            <option value="In Transit">In Transit</option>
-                            <option value="Completed">Completed</option>
-                        </select>
+                        {onUpdateStatus ? (
+                          <select
+                              value={card.status}
+                              onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
+                              className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors ${statusColors[card.status]}`}
+                              aria-label={`Update status for job ${card.id}`}
+                          >
+                              <option value="Assigned">Assigned</option>
+                              <option value="In Transit">In Transit</option>
+                              <option value="Completed">Completed</option>
+                          </select>
+                        ) : (
+                          <span className={`text-xs font-medium px-3 py-1.5 rounded-full border ${statusColors[card.status]}`}>
+                            {card.status}
+                          </span>
+                        )}
                         <p className="text-xs text-gray-500">{card.timestamp}</p>
                     </div>
                 </div>
                  <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-end">
                     {/* FIX: Conditionally render the edit button based on the canEdit prop */}
-                    {canEdit && (
+                    {canEdit && onEditJobCard && (
                       <button onClick={() => onEditJobCard(card)} className="text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" /></svg>
                           Edit
