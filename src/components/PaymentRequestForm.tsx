@@ -116,8 +116,9 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
         onBack();
     };
 
-    const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition disabled:opacity-50";
-    const labelStyles = "block text-sm font-medium text-zinc-300 mb-2";
+    // Updated light theme styles for better readability
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition disabled:opacity-50";
+    const labelStyles = "block text-sm font-semibold text-gray-700 mb-2";
 
     const submitButtonText = isEditing ? 'Update Submission' : 'Submit for Review';
     return (
@@ -125,8 +126,8 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
             <button onClick={handleBackClick} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold mb-6">
                  &larr; Back
             </button>
-            <form onSubmit={handleSubmit} className="bg-zinc-800/50 border border-zinc-700 rounded-2xl shadow-2xl p-6 space-y-6">
-                 <h2 className="text-2xl font-bold text-zinc-100 border-b border-zinc-600 pb-4">
+          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 space-y-8">
+              <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-4">
                    {isEditing ? `Editing Submission for: ${initialData?.siteName}` : `Submit Completion Docs for: ${formData.siteName}`}
                  </h2>
 
@@ -138,22 +139,22 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
 
                 <div>
                     <label htmlFor="siteName" className={labelStyles}>Site Name</label>
-                    <input id="siteName" name="siteName" type="text" value={formData.siteName} readOnly className={`${inputStyles} bg-zinc-800/50`} />
+                    <input id="siteName" name="siteName" type="text" value={formData.siteName} readOnly className={`${inputStyles} bg-gray-100`} />
                     {validationErrors.siteName && <p className="text-red-400 text-xs mt-1">{validationErrors.siteName}</p>}
                 </div>
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="location" className={labelStyles}>Location</label>
-                        <input id="location" name="location" type="text" value={formData.location} readOnly className={`${inputStyles} bg-zinc-800/50`} />
+                        <input id="location" name="location" type="text" value={formData.location} readOnly className={`${inputStyles} bg-gray-100`} />
                     </div>
                     <div>
                         <label htmlFor="projectType" className={labelStyles}>Project Type</label>
-                        <input id="projectType" name="projectType" type="text" value={formData.projectType} readOnly className={`${inputStyles} bg-zinc-800/50`} />
+                        <input id="projectType" name="projectType" type="text" value={formData.projectType} readOnly className={`${inputStyles} bg-gray-100`} />
                     </div>
                  </div>
 
-                <div className="pt-4 border-t border-zinc-700/50 space-y-6">
+                <div className="pt-6 border-t border-gray-200 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label htmlFor="paymentFor" className={labelStyles}>Payment For</label>
@@ -173,7 +174,7 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-zinc-700/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
                     <FileInput
                         id="activity-photos"
                         label="Add Photos"
@@ -197,8 +198,8 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
 
                  {error && <div className="p-3 bg-red-900/30 text-red-300 border border-red-700 rounded-md text-sm">{error}</div>}
 
-                <div className="flex justify-end items-center gap-4 pt-4 border-t border-zinc-600">
-                    <button type="button" onClick={handleBackClick} className="px-6 py-2 bg-zinc-600 text-white font-semibold rounded-lg hover:bg-zinc-700">Cancel</button>
+                <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
+                    <button type="button" onClick={handleBackClick} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Cancel</button>
                     <button type="submit" disabled={isLoading || sites.length === 0} className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-800/50 disabled:cursor-not-allowed">
                         {isLoading ? <Spinner /> : submitButtonText}
                     </button>

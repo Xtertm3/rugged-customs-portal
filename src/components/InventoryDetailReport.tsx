@@ -38,14 +38,25 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
     return Array.from(teams).sort();
   }, [teamMembers]);
 
-  const allSites = useMemo(() => {
-    const sites = new Set(
-      materialUsageLogs
-        .map(log => log.siteName)
-        .filter(Boolean)
-    );
-    return Array.from(sites).sort();
-  }, [materialUsageLogs]);
+  // Sites dropdown: if a specific team is selected, only show sites allocated to that team
+  // Allocation = sites they manage (siteManagerId) OR sites where they have usage logs
+  const sitesForDropdown = useMemo(() => {
+    const allSiteNames = Array.from(new Set(sites.map(s => s.siteName))).sort();
+    if (teamFilter === 'All') return allSiteNames;
+    const member = teamMembers.find(m => m.name === teamFilter);
+    if (!member) return allSiteNames;
+    const managed = sites.filter(s => s.siteManagerId === member.id).map(s => s.siteName);
+    const usedAt = materialUsageLogs
+      .filter(log => log.teamMemberName === member.name)
+      .map(log => log.siteName)
+      .filter(Boolean);
+    return Array.from(new Set([...managed, ...usedAt])).sort();
+  }, [teamFilter, teamMembers, materialUsageLogs, sites]);
+
+  // When team changes, reset site filter
+  React.useEffect(() => {
+    setSiteFilter('All');
+  }, [teamFilter]);
 
   // Build comprehensive inventory data for ALL teams AND sites
   const inventoryDetails = useMemo(() => {
@@ -455,7 +466,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             onChange={(e) => setSiteFilter(e.target.value)}
           >
             <option value="All">All Sites</option>
-            {allSites.map(site => (
+            {sitesForDropdown.map(site => (
               <option key={site} value={site}>{site}</option>
             ))}
           </select>

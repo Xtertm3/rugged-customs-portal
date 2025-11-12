@@ -1225,10 +1225,17 @@ const App: React.FC = () => {
     if (!transporterDetails) {
       return <div>Error: Transporter details not found. <button onClick={handleLogout}>Logout</button></div>;
     }
+    const handleTransporterRequestPayment = (maybeSiteName: string) => {
+      // Try to map site name to site id for PaymentRequestForm
+      const site = sites.find(s => s.siteName === maybeSiteName);
+  if (site) setInitialSiteIdForCompletion(site.id);
+  navigateTo('form');
+    };
     return <TransporterDashboard 
               transporter={transporterDetails}
               jobCards={jobCards.filter(j => j.transporterId === currentUser.id)}
               onUpdateStatus={handleUpdateJobCardStatus}
+              onRequestPaymentForJob={handleTransporterRequestPayment}
               onLogout={handleLogout}
            />;
   }

@@ -143,16 +143,17 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         }
     };
 
-    const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
-    const labelStyles = "block text-sm font-medium text-zinc-300 mb-2";
+    // Updated modern light theme styles
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const labelStyles = "block text-sm font-semibold text-gray-700 mb-2";
 
     return (
         <div className="w-full animate-fade-in">
             <button onClick={onBack} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold mb-6">
                 &larr; Back
             </button>
-            <form onSubmit={handleSubmit} className="bg-zinc-800/50 border border-zinc-700 rounded-2xl shadow-2xl p-6 space-y-6">
-                 <h2 className="text-2xl font-bold text-zinc-100 border-b border-zinc-600 pb-4">
+          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 space-y-8">
+              <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-4">
                    {isEditing ? 'Edit Site' : 'Create New Site'}
                  </h2>
 
@@ -168,16 +169,22 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                         {errors.location && <p className="text-red-400 text-xs mt-1">{errors.location}</p>}
                     </div>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label htmlFor="latitude" className={labelStyles}>Latitude (Optional)</label>
-                        <input id="latitude" name="latitude" type="text" value={formData.latitude} onChange={handleChange} className={inputStyles} />
-                    </div>
-                    <div>
-                        <label htmlFor="longitude" className={labelStyles}>Longitude (Optional)</label>
-                        <input id="longitude" name="longitude" type="text" value={formData.longitude} onChange={handleChange} className={inputStyles} />
-                    </div>
-                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Coordinates (Optional)</label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <input aria-label="Latitude" placeholder="Latitude" name="latitude" type="text" value={formData.latitude} onChange={handleChange} className={inputStyles + ' text-sm'} />
+                                            </div>
+                                            <div>
+                                                <input aria-label="Longitude" placeholder="Longitude" name="longitude" type="text" value={formData.longitude} onChange={handleChange} className={inputStyles + ' text-sm'} />
+                                            </div>
+                                        </div>
+                                        {(formData.latitude || formData.longitude) && (
+                                            <p className="mt-2 text-xs text-gray-500">Lat: {formData.latitude || '—'} | Lng: {formData.longitude || '—'}</p>
+                                        )}
+                                    </div>
+                                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="projectType" className={labelStyles}>Project Type</label>
@@ -199,8 +206,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     </div>
                 </div>
                 
-                <div className="pt-4 border-t border-zinc-700/50">
-                    <h3 className="text-lg font-semibold text-zinc-200 mb-3">Initial Materials Sent</h3>
+                <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">Initial Materials Sent</h3>
                     <div className="space-y-3">
                         {formData.initialMaterials.map((mat, index) => (
                             <div key={mat.id} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
@@ -212,7 +219,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                     {predefinedMaterials.map(name => <option key={name} value={name}>{name}</option>)}
                                 </select>
                                 <div className="relative">
-                                    <label className="text-xs text-zinc-400">Units (m)</label>
+                                    <label className="text-xs text-gray-500">Units (m)</label>
                                     <input 
                                         type="text"
                                         placeholder="e.g., 100"
@@ -223,7 +230,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                     {errors[`material_units_${index}`] && <p className="text-red-400 text-xs mt-1 absolute">{errors[`material_units_${index}`]}</p>}
                                 </div>
                                 <div className="relative">
-                                    <label className="text-xs text-zinc-400">Used (m)</label>
+                                    <label className="text-xs text-gray-500">Used (m)</label>
                                     <input 
                                         type="text"
                                         placeholder="e.g., 20"
@@ -233,15 +240,15 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                     />
                                     {errors[`material_used_${index}`] && <p className="text-red-400 text-xs mt-1 absolute">{errors[`material_used_${index}`]}</p>}
                                 </div>
-                                <button type="button" onClick={() => removeMaterialRow(index)} className="text-red-500 hover:text-red-400 font-semibold justify-self-start md:justify-self-center self-center pt-5">Remove</button>
+                                <button type="button" onClick={() => removeMaterialRow(index)} className="text-red-600 hover:text-red-500 font-semibold justify-self-start md:justify-self-center self-center pt-5">Remove</button>
                             </div>
                         ))}
                     </div>
-                    <button type="button" onClick={addMaterialRow} className="mt-4 text-sm text-orange-400 font-semibold hover:text-orange-300">+ Add Material</button>
+                    <button type="button" onClick={addMaterialRow} className="mt-4 inline-flex items-center gap-1 text-sm text-orange-600 font-semibold hover:text-orange-700">+ Add Material</button>
                 </div>
 
                 {canAddAttachments && (
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-zinc-700/50">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
                         <FileInput 
                             id="photos"
                             label="Add Photos"
@@ -265,17 +272,17 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 )}
                 
                  {isEditing && (formData.photos?.length || 0) + (formData.documents?.length || 0) > 0 && (
-                     <div className="pt-4 border-t border-zinc-700/50">
-                        <h3 className="text-lg font-semibold text-zinc-200 mb-3">Existing Attachments</h3>
+                            <div className="pt-6 border-t border-gray-200">
+                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Existing Attachments</h3>
                         <div className="space-y-2">
                             {formData.photos?.map(photo => (
-                                <div key={photo.name} className="flex items-center justify-between bg-zinc-700/50 p-2 rounded-md text-sm text-zinc-300">
+                                <div key={photo.name} className="flex items-center justify-between bg-gray-50 p-2 rounded-md text-sm text-gray-700 border border-gray-200">
                                     <span className="truncate">{photo.name}</span>
                                     <button type="button" onClick={() => handleRemoveExistingAttachment('photos', photo.name)} className="text-red-500 hover:text-red-400">Remove</button>
                                 </div>
                             ))}
                             {formData.documents?.map(doc => (
-                                <div key={doc.name} className="flex items-center justify-between bg-zinc-700/50 p-2 rounded-md text-sm text-zinc-300">
+                                <div key={doc.name} className="flex items-center justify-between bg-gray-50 p-2 rounded-md text-sm text-gray-700 border border-gray-200">
                                     <span className="truncate">{doc.name}</span>
                                     <button type="button" onClick={() => handleRemoveExistingAttachment('documents', doc.name)} className="text-red-500 hover:text-red-400">Remove</button>
                                 </div>
@@ -285,8 +292,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                  )}
 
 
-                <div className="flex justify-end items-center gap-4 pt-4 border-t border-zinc-600">
-                    <button type="button" onClick={onBack} className="px-6 py-2 bg-zinc-600 text-white font-semibold rounded-lg hover:bg-zinc-700">Cancel</button>
+                <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
+                    <button type="button" onClick={onBack} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Cancel</button>
                     <button type="submit" className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700">
                         {isEditing ? 'Update Site' : 'Create Site'}
                     </button>

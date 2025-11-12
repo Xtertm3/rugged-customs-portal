@@ -80,7 +80,7 @@ export const OpeningBalanceModal: React.FC<OpeningBalanceModalProps> = ({
               onChange={e => {
                 handleTeamSelect(e.target.value);
               }}
-              className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg py-2 px-3 text-text-primary"
+              className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900"
             >
               <option value="">-- Select Team --</option>
               {teamMembers.map(t => (
@@ -111,7 +111,7 @@ export const OpeningBalanceModal: React.FC<OpeningBalanceModalProps> = ({
                       <select
                         value={mat.name}
                         onChange={e => handleMaterialChange(index, 'name', e.target.value)}
-                        className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg py-2 px-3 text-text-primary text-sm"
+                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 text-sm"
                       >
                         <option value="">-- Select Material --</option>
                         {PREDEFINED_MATERIALS.map(material => (
@@ -129,7 +129,7 @@ export const OpeningBalanceModal: React.FC<OpeningBalanceModalProps> = ({
                         placeholder="Balance (m)"
                         value={mat.openingBalance || ''}
                         onChange={e => handleMaterialChange(index, 'openingBalance', Number(e.target.value))}
-                        className="w-full bg-zinc-700/50 border border-zinc-600 rounded-lg py-2 px-3 text-text-primary text-sm"
+                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 text-sm"
                       />
                     </div>
                     <button
@@ -153,7 +153,7 @@ export const OpeningBalanceModal: React.FC<OpeningBalanceModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-zinc-700 rounded text-text-secondary"
+              className="px-4 py-2 bg-gray-600 rounded text-white"
             >
               Cancel
             </button>

@@ -5,6 +5,8 @@ interface TransporterDashboardProps {
   transporter: Transporter;
   jobCards: JobCard[];
   onUpdateStatus: (cardId: string, status: 'Assigned' | 'In Transit' | 'Completed') => void;
+  // new: allow transporters to request payment for a job
+  onRequestPaymentForJob?: (siteId: string) => void;
   onLogout: () => void;
 }
 
@@ -20,7 +22,7 @@ const statusArrowColors = {
   Completed: '4ade80',
 };
 
-export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, onUpdateStatus, onLogout }) => {
+export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, onUpdateStatus, onRequestPaymentForJob, onLogout }) => {
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center justify-start p-4 font-sans antialiased">
       <div className="w-full max-w-5xl mx-auto my-8">
@@ -73,6 +75,14 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
                     <option className="bg-zinc-800 text-white" value="Completed">Completed</option>
                   </select>
                   <p className="text-xs text-zinc-500">{card.timestamp}</p>
+                  {onRequestPaymentForJob && (
+                    <button
+                      onClick={() => onRequestPaymentForJob(card.dropPoints[0] || '')}
+                      className="text-xs px-3 py-1 bg-primary text-white rounded-lg hover:bg-primary-hover"
+                    >
+                      Request Payment
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
