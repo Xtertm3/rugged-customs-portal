@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Transporter, JobCard, PaymentRequest } from '../App';
+import { TransporterPaymentModal } from './TransporterPaymentModal';
 
 interface TransporterDashboardProps {
   transporter: Transporter;
   jobCards: JobCard[];
   paymentRequests: PaymentRequest[];
-  onRequestPaymentForJob?: (jobCard: JobCard) => void;
+  onRequestPaymentForJob?: (jobCard: JobCard, amount: string) => void;
   onLogout: () => void;
 }
 
@@ -24,8 +25,26 @@ const paymentStatusColors = {
 export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ transporter, jobCards, paymentRequests, onRequestPaymentForJob, onLogout }) => {
   // Filter payment requests made by this transporter
   const myPaymentRequests = paymentRequests.filter(req => req.assignTo === transporter.id);
+  
+  const [selectedJobForPayment, setSelectedJobForPayment] = useState<JobCard | null>(null);
+
+  const handlePaymentSubmit = (amount: string) => {
+    if (selectedJobForPayment && onRequestPaymentForJob) {
+      onRequestPaymentForJob(selectedJobForPayment, amount);
+    }
+    setSelectedJobForPayment(null);
+  };
 
   return (
+    <>
+      {selectedJobForPayment && (
+        <TransporterPaymentModal
+          jobCard={selectedJobForPayment}
+          onClose={() => setSelectedJobForPayment(null)}
+          onSubmit={handlePaymentSubmit}
+        />
+      )}
+    
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start p-4 font-sans antialiased">
       <div className="w-full max-w-5xl mx-auto my-8">
         <div className="relative text-center mb-8">
@@ -78,7 +97,7 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
                   <div className="flex flex-col items-start md:items-end gap-2 flex-shrink-0">
                     {onRequestPaymentForJob && (
                       <button
-                        onClick={() => onRequestPaymentForJob(card)}
+                        onClick={() => setSelectedJobForPayment(card)}
                         className="text-sm px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
                       >
                         Request Payment
@@ -121,5 +140,6 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
       </div>
       </div>
     </div>
+    </>
   );
 };

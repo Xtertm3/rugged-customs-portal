@@ -1226,7 +1226,7 @@ const App: React.FC = () => {
       return <div>Error: Transporter details not found. <button onClick={handleLogout}>Logout</button></div>;
     }
     
-    const handleTransporterRequestPayment = async (jobCard: JobCard) => {
+    const handleTransporterRequestPayment = async (jobCard: JobCard, amount: string) => {
       // Find the destination site from job card
       const siteName = jobCard.dropPoints[0];
       const site = sites.find(s => s.siteName === siteName);
@@ -1255,13 +1255,13 @@ const App: React.FC = () => {
           projectType: site.projectType,
           latitude: site.latitude,
           longitude: site.longitude,
-          amount: '', // Amount will be filled by manager/admin
+          amount: amount, // Amount entered by transporter
           paymentFor: 'Transportation',
           reasons: `Transportation service for job: ${jobCard.pickFrom} → ${jobCard.dropPoints.join(', ')}${jobCard.description ? ` - ${jobCard.description}` : ''}`,
           id: new Date().toISOString(),
           timestamp: new Date().toLocaleString(),
           status: initialStatus,
-          summary: `Payment request for transportation service from ${jobCard.pickFrom} to ${jobCard.dropPoints.join(', ')}.`,
+          summary: `Payment request for transportation service from ${jobCard.pickFrom} to ${jobCard.dropPoints.join(', ')}. Amount: ₹${amount}`,
           photos: [],
           documents: [],
           statusHistory: [statusEntry],
@@ -1274,7 +1274,7 @@ const App: React.FC = () => {
           navigator.serviceWorker.controller.postMessage({
             type: 'SHOW_NOTIFICATION',
             title: `Payment Request Created`,
-            body: `Transportation payment request for ${siteName} has been submitted.`
+            body: `Transportation payment request for ${siteName} (₹${amount}) has been submitted.`
           });
         }
         
