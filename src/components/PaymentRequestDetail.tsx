@@ -1,13 +1,54 @@
 import React, { useState } from 'react';
-import { PaymentRequest } from '../App';
+import { PaymentRequest, TeamMember } from '../App';
 
 interface PaymentRequestDetailProps {
   request: PaymentRequest;
   onBack: () => void;
+  currentUser?: TeamMember | null;
 }
 
-export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ request, onBack }) => {
+export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ request, onBack, currentUser }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Access control: Teams can only see their own requests, Admin/Manager/Backoffice/Accountant can see all
+  const canViewRequest = () => {
+    if (!currentUser) return false;
+    
+    // Admin, Manager, Backoffice, and Accountant can see all requests
+    if (['Admin', 'Manager', 'Backoffice', 'Accountant'].includes(currentUser.role)) {
+      return true;
+    }
+    
+    // Team members and transporters can only see their own requests
+    return request.assignTo === currentUser.id || request.transporterId === currentUser.id;
+  };
+
+  if (!canViewRequest()) {
+    return (
+      <div className="w-full animate-fade-in">
+        <div className="mb-6">
+          <button 
+            onClick={onBack} 
+            className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-semibold transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Back to Dashboard
+          </button>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
+          <div className="text-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h3>
+            <p className="text-gray-600">You don't have permission to view this payment request.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const downloadFile = (dataUrl: string, fileName: string) => {
     const link = document.createElement('a');

@@ -26,6 +26,7 @@ import { OpeningBalanceModal } from './components/OpeningBalanceModal';
 import { TransactionReport } from './components/TransactionReport';
 import { InventoryDetailReport } from './components/InventoryDetailReport';
 import { PaymentRequestDetail } from './components/PaymentRequestDetail';
+import { DocumentLibrary } from './components/DocumentLibrary';
 
 
 export interface StatusChange {
@@ -1310,7 +1311,8 @@ const App: React.FC = () => {
   siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
   teamMemberDetail: selectedTeamMember ? <TeamMemberDetail member={selectedTeamMember} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} /> : null,
     transporterDetail: selectedTransporter ? <TransporterDetail transporter={selectedTransporter} jobCards={jobCards} onBack={navigateBack} onUpdateStatus={handleUpdateJobCardStatus} onEditJobCard={handleEditJobCard} transporters={transporters} canEdit={permissions.canManageTransporters} onDownloadReport={handleDownloadTransporterJobReport} /> : null,
-    requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} /> : null,
+    requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} currentUser={currentUser} /> : null,
+    documentLibrary: <DocumentLibrary sites={sites} paymentRequests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} />,
     form: <PaymentRequestForm sites={sites} onSubmit={handleSubmitRequest} onBack={navigateBack} isLoading={isLoading} error={error} initialData={editingPaymentRequest} initialSiteId={initialSiteIdForCompletion} />,
   siteForm: <SiteForm onBack={navigateBack} onSubmit={async (siteData) => { if (editingSite) { await handleUpdateSite(siteData as Site); } else { await handleAddSite(siteData as Omit<Site, 'id'>); } }} initialData={editingSite} teamMembers={teamMembers} canAddAttachments={permissions.canManageSites} />,
   };
@@ -1354,6 +1356,10 @@ const App: React.FC = () => {
                 {/* Inventory Report for Admin/Manager/Accountant/Supervisor */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil'].includes(currentUser.role) && (
                   <button onClick={() => setIsInventoryDetailReportOpen(true)} className="px-4 py-2 bg-primary text-white rounded-lg font-semibold shadow-md hover:bg-primary-dark transition-all">Inventory Report</button>
+                )}
+                {/* Document Library for Admin/Manager/Backoffice/Accountant */}
+                {currentUser && ['Admin', 'Manager', 'Backoffice', 'Accountant'].includes(currentUser.role) && (
+                  <NavButton view="documentLibrary" label="Documents" />
                 )}
             </nav>
         )}
