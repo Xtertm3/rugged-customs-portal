@@ -239,29 +239,55 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
 
   const exportCSV = () => {
     if (viewMode === 'summary') {
+      // New format: Site Name | Inventory list | Stock Opening Balance | Inward | JMS Quantity | Balance
       const headers = [
-        'Team Member',
-        'Role',
-        'Material',
-        'Opening Balance',
-        'Used',
-        'Remaining',
+        'Site Name',
+        'Inventory list',
+        'Stock Opening Balance',
+        'Inward',
+        'JMS Quantity',
+        'Balance'
       ];
       const rows: string[][] = [];
 
-      summaryData.forEach((group) => {
-        group.materials.forEach((mat) => {
+      // Group by site
+      const sitesMap = new Map<string, { materials: Map<string, { inward: number; used: number }> }>();
+
+      // Collect materials for each site
+      inventoryDetails.forEach((item) => {
+        const siteName = item.siteName || 'N/A';
+        if (!sitesMap.has(siteName)) {
+          sitesMap.set(siteName, { materials: new Map() });
+        }
+        const siteData = sitesMap.get(siteName)!;
+        
+        if (!siteData.materials.has(item.materialName)) {
+          siteData.materials.set(item.materialName, { inward: 0, used: 0 });
+        }
+        
+        const matData = siteData.materials.get(item.materialName)!;
+        matData.inward += item.openingBalance;
+        matData.used += item.totalUsed;
+      });
+
+      // Convert to rows
+      sitesMap.forEach((siteData, siteName) => {
+        siteData.materials.forEach((matData, materialName) => {
+          const stockOpening = matData.inward; // Stock opening = inward materials
+          const balance = stockOpening - matData.used;
+          
           rows.push([
-            group.team,
-            group.role,
-            mat.name,
-            String(mat.opening),
-            String(mat.used),
-            String(mat.remaining),
+            siteName,
+            materialName,
+            String(stockOpening),
+            String(matData.inward),
+            String(matData.used),
+            String(balance)
           ]);
         });
       });
 
+      const BOM = '\uFEFF';
       const csv = [headers, ...rows]
         .map((r) =>
           r
@@ -269,7 +295,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             .join(',')
         )
         .join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -349,20 +375,47 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
     if (viewMode === 'summary') {
-      const headers = [['Team Member', 'Role', 'Material', 'Opening', 'Used', 'Remaining']];
+      // New format: Site Name | Inventory list | Stock Opening Balance | Inward | JMS Quantity | Balance
+      const headers = [['Site Name', 'Inventory list', 'Stock Opening Balance', 'Inward', 'JMS Quantity', 'Balance']];
       const rows: any[] = [];
-      summaryData.forEach((group) => {
-        group.materials.forEach((mat) => {
+
+      // Group by site
+      const sitesMap = new Map<string, { materials: Map<string, { inward: number; used: number }> }>();
+
+      // Collect materials for each site
+      inventoryDetails.forEach((item) => {
+        const siteName = item.siteName || 'N/A';
+        if (!sitesMap.has(siteName)) {
+          sitesMap.set(siteName, { materials: new Map() });
+        }
+        const siteData = sitesMap.get(siteName)!;
+        
+        if (!siteData.materials.has(item.materialName)) {
+          siteData.materials.set(item.materialName, { inward: 0, used: 0 });
+        }
+        
+        const matData = siteData.materials.get(item.materialName)!;
+        matData.inward += item.openingBalance;
+        matData.used += item.totalUsed;
+      });
+
+      // Convert to rows
+      sitesMap.forEach((siteData, siteName) => {
+        siteData.materials.forEach((matData, materialName) => {
+          const stockOpening = matData.inward;
+          const balance = stockOpening - matData.used;
+          
           rows.push([
-            group.team,
-            group.role,
-            mat.name,
-            String(mat.opening),
-            String(mat.used),
-            String(mat.remaining),
+            siteName,
+            materialName,
+            String(stockOpening),
+            String(matData.inward),
+            String(matData.used),
+            String(balance)
           ]);
         });
       });
+
       autoTable(doc, { head: headers, body: rows, startY: 28, styles: { fontSize: 8 } });
     } else {
       const headers = [['Team', 'Role', 'Material', 'Opening', 'Usage Date', 'Used', 'Notes', 'Total Used', 'Remaining']];

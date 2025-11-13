@@ -25,6 +25,10 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
   const [workType, setWorkType] = useState<'Civil' | 'Electrical' | ''>(site.workType || '');
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
   const [editedUsedValue, setEditedUsedValue] = useState<string>('');
+  const [showAddMaterial, setShowAddMaterial] = useState(false);
+  const [newMaterialName, setNewMaterialName] = useState('');
+  const [newMaterialUnits, setNewMaterialUnits] = useState('');
+  const [newMaterialUsed, setNewMaterialUsed] = useState('0');
 
   const siteRequests = useMemo(() => {
     return requests.filter(r => r.siteName === site.siteName).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -87,6 +91,52 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
     onEditSite({ ...site, initialMaterials: updatedMaterials });
     setEditingMaterial(null);
     setEditedUsedValue('');
+  };
+
+  const handleAddMaterial = () => {
+    if (!newMaterialName.trim()) {
+      alert('Please enter material name');
+      return;
+    }
+
+    const units = parseFloat(newMaterialUnits);
+    const used = parseFloat(newMaterialUsed);
+
+    if (isNaN(units) || units < 0) {
+      alert('Please enter a valid quantity');
+      return;
+    }
+
+    if (isNaN(used) || used < 0) {
+      alert('Please enter a valid used quantity');
+      return;
+    }
+
+    // Check if material already exists
+    const existingMaterials = site.initialMaterials || [];
+    if (existingMaterials.some(mat => mat.name.toLowerCase() === newMaterialName.trim().toLowerCase())) {
+      alert('Material already exists. Please edit the existing material instead.');
+      return;
+    }
+
+    // Add new material to site's initialMaterials
+    const updatedMaterials = [
+      ...existingMaterials,
+      {
+        id: `mat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        name: newMaterialName.trim(),
+        units: newMaterialUnits,
+        used: newMaterialUsed
+      }
+    ];
+
+    onEditSite({ ...site, initialMaterials: updatedMaterials });
+    
+    // Reset form
+    setNewMaterialName('');
+    setNewMaterialUnits('');
+    setNewMaterialUsed('0');
+    setShowAddMaterial(false);
   };
 
   if (!site) {
@@ -204,7 +254,53 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
 
             {site.initialMaterials && site.initialMaterials.length > 0 && (
                 <div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-800">Initial Materials & Usage</h3>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xl font-semibold text-gray-800">Initial Materials & Usage</h3>
+                        {canEdit && (
+                            <button
+                                onClick={() => setShowAddMaterial(!showAddMaterial)}
+                                className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                            >
+                                {showAddMaterial ? '✕ Cancel' : '+ Add Material'}
+                            </button>
+                        )}
+                    </div>
+
+                    {showAddMaterial && (
+                        <div className="mb-4 p-4 bg-blue-50/50 border border-blue-200 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-800 mb-3">Add New Material</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="Material Name"
+                                    value={newMaterialName}
+                                    onChange={(e) => setNewMaterialName(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Quantity (m)"
+                                    value={newMaterialUnits}
+                                    onChange={(e) => setNewMaterialUnits(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Used (m)"
+                                    value={newMaterialUsed}
+                                    onChange={(e) => setNewMaterialUsed(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <button
+                                    onClick={handleAddMaterial}
+                                    className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    ✓ Add Material
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="overflow-x-auto bg-gray-50/50 p-3 rounded-md">
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase">
@@ -270,6 +366,59 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                             </tbody>
                         </table>
                     </div>
+                </div>
+            )}
+
+            {(!site.initialMaterials || site.initialMaterials.length === 0) && canEdit && (
+                <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xl font-semibold text-gray-800">Initial Materials & Usage</h3>
+                        <button
+                            onClick={() => setShowAddMaterial(!showAddMaterial)}
+                            className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                        >
+                            {showAddMaterial ? '✕ Cancel' : '+ Add Material'}
+                        </button>
+                    </div>
+
+                    {showAddMaterial ? (
+                        <div className="mb-4 p-4 bg-blue-50/50 border border-blue-200 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-800 mb-3">Add New Material</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                <input
+                                    type="text"
+                                    placeholder="Material Name"
+                                    value={newMaterialName}
+                                    onChange={(e) => setNewMaterialName(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Quantity (m)"
+                                    value={newMaterialUnits}
+                                    onChange={(e) => setNewMaterialUnits(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <input
+                                    type="number"
+                                    placeholder="Used (m)"
+                                    value={newMaterialUsed}
+                                    onChange={(e) => setNewMaterialUsed(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                />
+                                <button
+                                    onClick={handleAddMaterial}
+                                    className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    ✓ Add Material
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500 bg-gray-50/50 rounded-lg border border-gray-200">
+                            No materials added yet. Click "Add Material" to get started.
+                        </div>
+                    )}
                 </div>
             )}
 
