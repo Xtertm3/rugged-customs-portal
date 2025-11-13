@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PaymentRequest, TeamMember, Site, SiteAttachment, RequestAttachment } from '../App';
+import * as firebaseService from '../services/firebaseService';
 
 const cardStatusColors = {
   Pending: 'bg-amber-900/20 border-amber-500/30',
@@ -77,7 +78,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
 
   const managerName = useMemo(() => teamMembers.find(m => m.id === site.siteManagerId)?.name, [teamMembers, site.siteManagerId]);
 
-  const handleSaveMaterialUsed = (materialName: string) => {
+  const handleSaveMaterialUsed = async (materialName: string) => {
     const newUsedValue = parseFloat(editedUsedValue);
     if (isNaN(newUsedValue) || newUsedValue < 0) {
       alert('Please enter a valid positive number');
@@ -89,12 +90,19 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
       mat.name === materialName ? { ...mat, used: editedUsedValue } : mat
     );
 
-    onEditSite({ ...site, initialMaterials: updatedMaterials });
+    // Persist directly to Firestore so all reports reflect the change
+    try {
+      await firebaseService.updateSite(site.id, { initialMaterials: updatedMaterials });
+    } catch (e) {
+      console.error('Failed to update material usage', e);
+      alert('Failed to save changes. Please try again.');
+      return;
+    }
     setEditingMaterial(null);
     setEditedUsedValue('');
   };
 
-  const handleAddMaterial = () => {
+  const handleAddMaterial = async () => {
     if (!newMaterialName.trim()) {
       alert('Please enter material name');
       return;
@@ -131,7 +139,13 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
       }
     ];
 
-    onEditSite({ ...site, initialMaterials: updatedMaterials });
+    try {
+      await firebaseService.updateSite(site.id, { initialMaterials: updatedMaterials });
+    } catch (e) {
+      console.error('Failed to add material', e);
+      alert('Failed to add material. Please try again.');
+      return;
+    }
     
     // Reset form
     setNewMaterialName('');
