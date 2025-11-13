@@ -21,12 +21,23 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => {
       // Find the team member who the payment is for (not who approved it)
       let teamMemberName = 'Unknown';
+      
+      // Try to find who the payment is for
       if (req.assignTo) {
+        // Payment assigned to specific team member
         const member = teamMembers.find(m => m.id === req.assignTo);
         teamMemberName = member?.name || 'Unknown Team Member';
       } else if (req.transporterId) {
+        // Payment for transporter
         const member = teamMembers.find(m => m.id === req.transporterId);
         teamMemberName = member?.name || 'Unknown Transporter';
+      } else if (req.statusHistory && req.statusHistory.length > 0) {
+        // Get the person who created the request (first entry in status history)
+        const creator = req.statusHistory[0];
+        if (creator && creator.userId) {
+          const member = teamMembers.find(m => m.id === creator.userId);
+          teamMemberName = member?.name || creator.userName || 'Unknown';
+        }
       }
       
       return {
