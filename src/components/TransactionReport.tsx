@@ -134,7 +134,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         return [
           req.siteName || 'Unknown Site',
           paymentDetails,
-          `₹${(Number(req.amount) || 0).toLocaleString()}`,
+          `Rs ${(Number(req.amount) || 0).toLocaleString()}`,
           paidOn,
           teamMemberName
         ];
@@ -148,13 +148,15 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       ['']
     ];
     
+    // Add BOM for proper UTF-8 encoding
+    const BOM = '\uFEFF';
     const csvRows = [
       ...companyHeader.map(row => row.join(',')),
       headers.map(h => `"${h}"`).join(','),
       ...paidPayments.map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
     ].join('\n');
 
-    const blob = new Blob([csvRows], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([BOM + csvRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -209,7 +211,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         return [
           req.siteName || 'Unknown Site',
           paymentDetails,
-          `₹${(Number(req.amount) || 0).toLocaleString()}`,
+          `Rs ${(Number(req.amount) || 0).toLocaleString()}`,
           paidOn,
           teamMemberName
         ];
