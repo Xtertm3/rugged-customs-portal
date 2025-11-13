@@ -369,7 +369,14 @@ const App: React.FC = () => {
     return {
       canApprove: role === 'Admin' || role === 'Manager',
   canEdit: role === 'Admin' || role === 'Manager' || role === 'Accountant',
-  canEditMaterials: role === 'Admin' || role === 'Manager' || role === 'Accountant' || role === 'Team Member',
+      // Teams can edit only materials: Civil, Electricals, Electrical + Civil; keep Admin/Manager/Accountant too
+      canEditMaterials:
+        role === 'Admin' ||
+        role === 'Manager' ||
+        role === 'Accountant' ||
+        role === 'Civil' ||
+        role === 'Electricals' ||
+        role === 'Electrical + Civil',
       canManageSites: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTeam: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTransporters: role === 'Admin' || role === 'Manager' || role === 'Accountant',
