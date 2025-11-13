@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { PaymentRequest, MaterialUsageLog, Site } from '../App';
+import { PaymentRequest, MaterialUsageLog, Site, TeamMember } from '../App';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -9,24 +9,37 @@ interface TransactionReportProps {
   paymentRequests: PaymentRequest[];
   materialUsageLogs: MaterialUsageLog[];
   sites: Site[];
+  teamMembers: TeamMember[];
 }
 
-export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites }) => {
+export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites, teamMembers }) => {
   const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'all'>('bySite');
   const [textFilter, setTextFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
 
   const paymentEntries = useMemo(() => {
-    return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => ({
-      id: `${req.id}-${h.timestamp}`,
-      type: 'Payment' as const,
-      siteName: req.siteName,
-      teamMemberName: h.userName,
-      timestamp: h.timestamp,
-      detail: `${h.status} - ${req.paymentFor || ''} (${req.amount || ''})`,
-      status: h.status
-    })));
-  }, [paymentRequests]);
+    return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => {
+      // Find the team member who the payment is for (not who approved it)
+      let teamMemberName = 'Unknown';
+      if (req.assignTo) {
+        const member = teamMembers.find(m => m.id === req.assignTo);
+        teamMemberName = member?.name || 'Unknown Team Member';
+      } else if (req.transporterId) {
+        const member = teamMembers.find(m => m.id === req.transporterId);
+        teamMemberName = member?.name || 'Unknown Transporter';
+      }
+      
+      return {
+        id: `${req.id}-${h.timestamp}`,
+        type: 'Payment' as const,
+        siteName: req.siteName,
+        teamMemberName,
+        timestamp: h.timestamp,
+        detail: `${h.status} - ${req.paymentFor || ''} (${req.amount || ''})`,
+        status: h.status
+      };
+    }));
+  }, [paymentRequests, teamMembers]);
 
   // Only show PAID payment records (filter out Pending and Approved)
   const paidPaymentEntries = useMemo(() => {

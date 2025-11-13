@@ -35,6 +35,7 @@ const initialFormData: Omit<Site, 'id'> = {
     latitude: '',
     longitude: '',
     projectType: 'Solar',
+    workType: undefined,
     initialMaterials: [],
     siteManagerId: '',
     photos: [],
@@ -63,6 +64,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 latitude: initialData.latitude || '',
                 longitude: initialData.longitude || '',
                 projectType: initialData.projectType,
+                workType: initialData.workType,
                 initialMaterials: initialData.initialMaterials || [],
                 siteManagerId: initialData.siteManagerId || '',
                 photos: initialData.photos || [],
@@ -196,6 +198,16 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                             <option>Sharing</option>
                         </select>
                     </div>
+                    <div>
+                        <label htmlFor="workType" className={labelStyles}>Work Type</label>
+                        <select id="workType" name="workType" value={formData.workType || ''} onChange={handleChange} className={inputStyles}>
+                            <option value="">Select Work Type</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Electrical">Electrical</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="siteManagerId" className={labelStyles}>Assign To</label>
                         <select id="siteManagerId" name="siteManagerId" value={formData.siteManagerId} onChange={handleChange} className={inputStyles} disabled={assignableTeamMembers.length === 0}>

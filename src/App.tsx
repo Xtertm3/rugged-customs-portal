@@ -1443,6 +1443,7 @@ const App: React.FC = () => {
               paymentRequests={paymentRequests}
               materialUsageLogs={materialUsageLogs}
               sites={sites}
+              teamMembers={teamMembers}
             />
           )}
           {isInventoryDetailReportOpen && (
