@@ -22,6 +22,9 @@ interface SiteDetailProps {
 
 export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMembers, onBack, onUpdateRequestStatus, onEditRequest, onDeleteRequest, canApprove, canEdit, onEditSite }) => {
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
+  const [workType, setWorkType] = useState<'Civil' | 'Electrical' | ''>(site.workType || '');
+  const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
+  const [editedUsedValue, setEditedUsedValue] = useState<string>('');
 
   const siteRequests = useMemo(() => {
     return requests.filter(r => r.siteName === site.siteName).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -68,6 +71,23 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
   }, [site.initialMaterials, siteRequests, teamMembers, site.siteManagerId]);
 
   const managerName = useMemo(() => teamMembers.find(m => m.id === site.siteManagerId)?.name, [teamMembers, site.siteManagerId]);
+
+  const handleSaveMaterialUsed = (materialName: string) => {
+    const newUsedValue = parseFloat(editedUsedValue);
+    if (isNaN(newUsedValue) || newUsedValue < 0) {
+      alert('Please enter a valid positive number');
+      return;
+    }
+
+    // Update the site's initialMaterials with the new used value
+    const updatedMaterials = site.initialMaterials.map(mat => 
+      mat.name === materialName ? { ...mat, used: editedUsedValue } : mat
+    );
+
+    onEditSite({ ...site, initialMaterials: updatedMaterials });
+    setEditingMaterial(null);
+    setEditedUsedValue('');
+  };
 
   if (!site) {
     return (
@@ -140,6 +160,25 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                  {site.latitude && site.longitude && (
                    <p className="text-xs text-gray-600 mt-1">Coords: {site.latitude}, {site.longitude}</p>
                  )}
+                 
+                 {/* Work Type Dropdown */}
+                 <div className="mt-3">
+                   <label className="block text-sm font-semibold text-gray-700 mb-1">Work Type</label>
+                   <select
+                     value={workType}
+                     onChange={(e) => {
+                       const newWorkType = e.target.value as 'Civil' | 'Electrical' | '';
+                       setWorkType(newWorkType);
+                       // Update the site immediately
+                       onEditSite({ ...site, workType: newWorkType || undefined });
+                     }}
+                     className="w-48 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                   >
+                     <option value="">Select Work Type</option>
+                     <option value="Civil">Civil</option>
+                     <option value="Electrical">Electrical</option>
+                   </select>
+                 </div>
               </div>
               {canEdit && (
                 <button onClick={() => onEditSite(site)} className="text-sm px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">
@@ -176,7 +215,50 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                                     <tr key={name} className="border-t border-gray-200/50">
                                         <td className="px-4 py-2 font-medium">{name}</td>
                                         <td className="px-4 py-2 text-right">{data.initial.toLocaleString()}</td>
-                                        <td className="px-4 py-2 text-right text-amber-400">{data.used.toLocaleString()}</td>
+                                        <td className="px-4 py-2 text-right text-amber-400">
+                                            {canEdit && editingMaterial === name ? (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <input
+                                                        type="number"
+                                                        value={editedUsedValue}
+                                                        onChange={(e) => setEditedUsedValue(e.target.value)}
+                                                        className="w-24 px-2 py-1 border border-amber-400 rounded text-right focus:ring-2 focus:ring-amber-500"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={() => handleSaveMaterialUsed(name)}
+                                                        className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
+                                                    >
+                                                        ✓
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingMaterial(null);
+                                                            setEditedUsedValue('');
+                                                        }}
+                                                        className="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <span>{data.used.toLocaleString()}</span>
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingMaterial(name);
+                                                                setEditedUsedValue(data.used.toString());
+                                                            }}
+                                                            className="text-xs text-blue-500 hover:text-blue-700 ml-2"
+                                                            title="Edit total used"
+                                                        >
+                                                            ✏️
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-2 text-right font-bold text-green-400">{(data.initial - data.used).toLocaleString()}</td>
                                     </tr>
                                 ))}

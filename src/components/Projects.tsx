@@ -131,6 +131,14 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             <p className="text-sm text-gray-500">Status:</p>
                                             <p className={`text-sm font-bold ${statusStyle.text}`}>{summary.siteStatus}</p>
                                         </div>
+                                        {site.latitude && site.longitude && (
+                                            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                                <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>
+                                                <p className="text-base font-bold text-blue-900 tracking-wide">
+                                                    {site.latitude}, {site.longitude}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-end items-center">
                                         <button

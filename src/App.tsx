@@ -67,6 +67,7 @@ export interface Site {
   latitude?: string;
   longitude?: string;
   projectType: string;
+  workType?: 'Civil' | 'Electrical';
   initialMaterials: MaterialItem[];
   siteManagerId?: string;
   photos?: SiteAttachment[];
@@ -320,7 +321,7 @@ const App: React.FC = () => {
 
   const handleLogin = (mobile: string, pass: string): boolean => {
     if (mobile === '9986277180' && pass === '9986') {
-      const adminUser: TeamMember = { id: 'admin', name: 'Super Admin', role: 'Admin', mobile, photo: null, passwordChanged: true };
+      const adminUser: TeamMember = { id: 'admin', name: 'Admin', role: 'Admin', mobile, photo: null, passwordChanged: true };
       setCurrentUser(adminUser);
       sessionStorage.setItem('currentUser', JSON.stringify(adminUser));
       return true;
