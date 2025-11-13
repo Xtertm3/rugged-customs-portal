@@ -25,6 +25,7 @@ import { MaterialUsageModal } from './components/MaterialUsageModal';
 import { OpeningBalanceModal } from './components/OpeningBalanceModal';
 import { TransactionReport } from './components/TransactionReport';
 import { InventoryDetailReport } from './components/InventoryDetailReport';
+import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 
 
 export interface StatusChange {
@@ -182,6 +183,7 @@ const App: React.FC = () => {
   const [selectedSiteName, setSelectedSiteName] = useState<string | null>(null);
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   const [selectedTransporterId, setSelectedTransporterId] = useState<string | null>(null);
+  const [selectedPaymentRequestId, setSelectedPaymentRequestId] = useState<string | null>(null);
   
   const [editingPaymentRequest, setEditingPaymentRequest] = useState<PaymentRequest | null>(null);
   const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
@@ -666,6 +668,7 @@ const App: React.FC = () => {
   };
 
   const handleViewSiteDetails = (siteName: string) => { setSelectedSiteName(siteName); navigateTo('siteDetail'); };
+  const handleViewRequestDetails = (requestId: string) => { setSelectedPaymentRequestId(requestId); navigateTo('requestDetail'); };
   const handleViewTeamMemberDetails = (memberId: string) => { setSelectedTeamMemberId(memberId); navigateTo('teamMemberDetail'); };
   const handleViewTransporterDetails = (transporterId: string) => { setSelectedTransporterId(transporterId); navigateTo('transporterDetail'); };
   const handleEditRequest = (request: PaymentRequest) => { setEditingPaymentRequest(request); navigateTo('form'); };
@@ -1196,6 +1199,7 @@ const App: React.FC = () => {
   const selectedTeamMember = teamMembers.find(m => m.id === selectedTeamMemberId);
   const selectedTransporter = transporters.find(t => t.id === selectedTransporterId);
   const selectedSite = sites.find(s => s.siteName === selectedSiteName);
+  const selectedPaymentRequest = paymentRequests.find(r => r.id === selectedPaymentRequestId);
 
   if (isDbLoading) {
     return (
@@ -1298,7 +1302,7 @@ const App: React.FC = () => {
   const getPageTitle = () => `Logged in as: ${currentUser.name} (${currentUser.role})`;
 
   const MainViews: { [key: string]: React.ReactNode } = {
-  dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} onUpdateRequestStatus={handleUpdateRequestStatus} onViewSiteDetails={handleViewSiteDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
+  dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} onUpdateRequestStatus={handleUpdateRequestStatus} onViewSiteDetails={handleViewSiteDetails} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
     projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,
@@ -1306,6 +1310,7 @@ const App: React.FC = () => {
   siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
   teamMemberDetail: selectedTeamMember ? <TeamMemberDetail member={selectedTeamMember} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} /> : null,
     transporterDetail: selectedTransporter ? <TransporterDetail transporter={selectedTransporter} jobCards={jobCards} onBack={navigateBack} onUpdateStatus={handleUpdateJobCardStatus} onEditJobCard={handleEditJobCard} transporters={transporters} canEdit={permissions.canManageTransporters} onDownloadReport={handleDownloadTransporterJobReport} /> : null,
+    requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} /> : null,
     form: <PaymentRequestForm sites={sites} onSubmit={handleSubmitRequest} onBack={navigateBack} isLoading={isLoading} error={error} initialData={editingPaymentRequest} initialSiteId={initialSiteIdForCompletion} />,
   siteForm: <SiteForm onBack={navigateBack} onSubmit={async (siteData) => { if (editingSite) { await handleUpdateSite(siteData as Site); } else { await handleAddSite(siteData as Omit<Site, 'id'>); } }} initialData={editingSite} teamMembers={teamMembers} canAddAttachments={permissions.canManageSites} />,
   };

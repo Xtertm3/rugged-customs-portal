@@ -13,6 +13,7 @@ interface DashboardProps {
   sites: Site[];
   onUpdateRequestStatus: (requestId: string, newStatus: 'Pending' | 'Approved' | 'Paid') => void;
   onViewSiteDetails: (siteName: string) => void;
+  onViewRequestDetails?: (requestId: string) => void;
   onEditRequest: (request: PaymentRequest) => void;
   onDeleteRequest: (requestId: string) => void;
   canApprove: boolean;
@@ -57,7 +58,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenTransactionsReport,
   sites,
   onUpdateRequestStatus, 
-  onViewSiteDetails, 
+  onViewSiteDetails,
+  onViewRequestDetails,
   onEditRequest, 
   onDeleteRequest, 
   canApprove, 
@@ -77,11 +79,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const paymentOnlyRequests = requests.filter(req => req.amount && req.paymentFor);
 
+  // Filter out Paid requests from approval queue and sort by newest first
   const filteredRequests = paymentOnlyRequests
+    .filter(req => req.status !== 'Paid') // Hide paid requests from approval queue
     .filter(req => statusFilter === 'All' || req.status === statusFilter)
     .filter(req => 
       req.siteName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    )
+    .sort((a, b) => {
+      // Sort by timestamp, newest first
+      const dateA = new Date(a.timestamp).getTime();
+      const dateB = new Date(b.timestamp).getTime();
+      return dateB - dateA;
+    });
     
   // Limit approval queue visibility for non-admin users to only sites they manage / are assigned to
   const visibleRequests = (() => {
@@ -202,43 +212,80 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           ) : (
             <div className="space-y-4">
-              {sitePaymentRequests.map(req => (
-                <div key={req.id} className={`p-4 rounded-lg border ${cardStatusColors[req.status]}`}>
+              {sitePaymentRequests.map(req => {
+                const photoCount = req.photos?.length || 0;
+                const documentCount = req.documents?.length || 0;
+                const hasAttachments = photoCount > 0 || documentCount > 0;
+                
+                return (
+                <div 
+                  key={req.id} 
+                  className={`p-4 rounded-lg border ${cardStatusColors[req.status]} ${onViewRequestDetails ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+                  onClick={() => onViewRequestDetails && onViewRequestDetails(req.id)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                     <div>
-                      <p className="font-semibold text-zinc-100">{req.siteName}</p>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Payment For:</span> {req.paymentFor}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Amount:</span> ₹{req.amount?.toLocaleString()}
-                      </p>
+                      <h3 className="font-bold text-xl text-gray-900 mb-1">{req.siteName}</h3>
+                      <p className="text-sm text-gray-700 font-semibold">{req.paymentFor}</p>
+                      <p className="text-xs text-gray-500 mt-1">{req.timestamp}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Date:</span> {req.timestamp}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        <span className="font-semibold">Reasons:</span>
-                      </p>
-                      <p className="text-xs text-gray-600 bg-white p-2 rounded-md mt-1">
+                      <p className="text-2xl font-bold text-orange-600">₹{req.amount?.toLocaleString()}</p>
+                      <p className="text-xs text-gray-600 mt-2">
                         {req.reasons || 'No reasons provided'}
                       </p>
+                      
+                      {/* Document indicators */}
+                      {hasAttachments && (
+                        <div className="flex items-center gap-3 mt-3">
+                          {photoCount > 0 && (
+                            <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                              </svg>
+                              <span>{photoCount}</span>
+                            </div>
+                          )}
+                          {documentCount > 0 && (
+                            <div className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                              </svg>
+                              <span>{documentCount}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col items-start md:items-end gap-2">
-                      <span className={`text-sm font-bold px-3 py-1 rounded-full ${statusColors[req.status]}`}>
+                      <span className={`text-sm font-bold px-3 py-1 rounded-full ${statusColors[req.status].text} ${statusColors[req.status].bg}`}>
                         {req.status}
                       </span>
+                      {onViewRequestDetails && (
+                        <button 
+                          className="text-xs text-orange-600 hover:text-orange-700 font-semibold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onViewRequestDetails(req.id);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      )}
                       <button
-                        onClick={() => onEditRequest(req)}
-                        className="text-orange-400 hover:text-orange-300 text-sm font-semibold transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditRequest(req);
+                        }}
+                        className="text-orange-600 hover:text-orange-700 text-xs font-semibold transition-colors"
                       >
                         Edit
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -331,46 +378,109 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
             ) : (
                 <div className="space-y-4">
-          {visibleRequests.map(req => (
-                        <div key={req.id} className={`p-4 rounded-lg border ${cardStatusColors[req.status]}`}>
+          {visibleRequests.map(req => {
+            const photoCount = req.photos?.length || 0;
+            const documentCount = req.documents?.length || 0;
+            const hasAttachments = photoCount > 0 || documentCount > 0;
+            
+            return (
+                        <div 
+                          key={req.id} 
+                          className={`p-4 rounded-lg border ${cardStatusColors[req.status]} ${onViewRequestDetails ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+                          onClick={() => onViewRequestDetails && onViewRequestDetails(req.id)}
+                        >
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                                 <div>
-                                    <button onClick={() => onViewSiteDetails(req.siteName)} className="font-bold text-lg text-left text-zinc-100 hover:text-orange-400">{req.siteName}</button>
-                                    <p className="text-sm text-gray-500">{req.location}</p>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-1">{req.siteName}</h3>
+                                    <p className="text-sm text-gray-600">{req.location}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{req.timestamp}</p>
                                 </div>
                                 <div>
-                                  <p className="text-sm text-gray-700 font-semibold">{req.paymentFor}</p>
-                                  <p className="text-lg font-bold text-amber-400">{req.amount}</p>
-                                  {req.reasons && <p className="text-xs text-gray-500 italic">"{req.reasons}"</p>}
+                                  <p className="text-sm text-gray-700 font-semibold mb-1">{req.paymentFor}</p>
+                                  <p className="text-2xl font-bold text-orange-600">₹{req.amount?.toLocaleString()}</p>
+                                  {req.reasons && <p className="text-xs text-gray-600 italic mt-2">"{req.reasons}"</p>}
+                                  
+                                  {/* Document indicators */}
+                                  {hasAttachments && (
+                                    <div className="flex items-center gap-3 mt-3">
+                                      {photoCount > 0 && (
+                                        <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                          </svg>
+                                          <span>{photoCount} {photoCount === 1 ? 'Photo' : 'Photos'}</span>
+                                        </div>
+                                      )}
+                                      {documentCount > 0 && (
+                                        <div className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                                          </svg>
+                                          <span>{documentCount} {documentCount === 1 ? 'Doc' : 'Docs'}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="flex flex-col items-start md:items-end">
+                                <div className="flex flex-col items-start md:items-end gap-2">
                   <select
                                         value={req.status}
-                                        onChange={(e) => onUpdateRequestStatus(req.id, e.target.value as any)}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          onUpdateRequestStatus(req.id, e.target.value as any);
+                                        }}
                                         disabled={!canApprove}
                                         className={`cursor-pointer text-xs font-medium rounded-full px-3 py-1 border focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${statusColors[req.status].text} ${statusColors[req.status].bg} ${statusColors[req.status].ring}`}
+                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <option value="Pending">Pending</option>
                                         <option value="Approved">Approved</option>
                                         <option value="Paid">Paid</option>
                                     </select>
-                                    <p className="text-xs text-gray-600 mt-2">{req.timestamp}</p>
+                                    {onViewRequestDetails && (
+                                      <button 
+                                        className="text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onViewRequestDetails(req.id);
+                                        }}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                        </svg>
+                                        View Details
+                                      </button>
+                                    )}
                                 </div>
                            </div>
                            <div className="mt-4 pt-3 border-t border-gray-200/50 flex items-center justify-end gap-4">
                                 {canEdit && (
                                   <>
-                                    <button onClick={() => onEditRequest(req)} className="text-xs font-semibold text-gray-500 hover:text-white">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEditRequest(req);
+                                      }} 
+                                      className="text-xs font-semibold text-gray-600 hover:text-gray-900"
+                                    >
                                       Edit
                                     </button>
-                                    <button onClick={() => onDeleteRequest(req.id)} className="text-xs font-semibold text-red-500 hover:text-red-400">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteRequest(req.id);
+                                      }} 
+                                      className="text-xs font-semibold text-red-500 hover:text-red-700"
+                                    >
                                       Delete
                                     </button>
                                   </>
                                 )}
                            </div>
                         </div>
-                    ))}
+            );
+          })}
                 </div>
             )}
         </div>
