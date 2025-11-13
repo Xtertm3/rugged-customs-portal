@@ -158,7 +158,12 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 <p className="text-md text-gray-500">{site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
                  {site.latitude && site.longitude && (
-                   <p className="text-xs text-gray-600 mt-1">Coords: {site.latitude}, {site.longitude}</p>
+                   <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 inline-block">
+                     <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>
+                     <p className="text-lg font-bold text-blue-900 tracking-wide">
+                       {site.latitude}, {site.longitude}
+                     </p>
+                   </div>
                  )}
                  
                  {/* Work Type Dropdown */}

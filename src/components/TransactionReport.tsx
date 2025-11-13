@@ -187,7 +187,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
                     <tr>
                       <th className="px-3 py-2">Type</th>
                       <th className="px-3 py-2">When</th>
-                      <th className="px-3 py-2">User/Team</th>
+                      <th className="px-3 py-2">Team</th>
                       <th className="px-3 py-2">Detail</th>
                     </tr>
                   </thead>
@@ -241,7 +241,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
                   <tr>
                     <th className="px-3 py-2">Type</th>
                     <th className="px-3 py-2">Site</th>
-                    <th className="px-3 py-2">User/Team</th>
+                    <th className="px-3 py-2">Team</th>
                     <th className="px-3 py-2">When</th>
                     <th className="px-3 py-2">Detail</th>
                   </tr>
