@@ -17,10 +17,11 @@ interface SiteDetailProps {
   onDeleteRequest: (requestId: string) => void;
   canApprove: boolean;
   canEdit: boolean;
+  canEditMaterials?: boolean;
   onEditSite: (site: Site) => void;
 }
 
-export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMembers, onBack, onUpdateRequestStatus, onEditRequest, onDeleteRequest, canApprove, canEdit, onEditSite }) => {
+export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMembers, onBack, onUpdateRequestStatus, onEditRequest, onDeleteRequest, canApprove, canEdit, canEditMaterials, onEditSite }) => {
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
   const [workType, setWorkType] = useState<'Civil' | 'Electrical' | ''>(site.workType || '');
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
@@ -256,7 +257,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 <div>
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-xl font-semibold text-gray-800">Initial Materials & Usage</h3>
-                        {canEdit && (
+                        {canEditMaterials && (
                             <button
                                 onClick={() => setShowAddMaterial(!showAddMaterial)}
                                 className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
@@ -317,7 +318,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                                         <td className="px-4 py-2 font-medium">{name}</td>
                                         <td className="px-4 py-2 text-right">{data.initial.toLocaleString()}</td>
                                         <td className="px-4 py-2 text-right text-amber-400">
-                                            {canEdit && editingMaterial === name ? (
+                                            {canEditMaterials && editingMaterial === name ? (
                                                 <div className="flex items-center justify-end gap-2">
                                                     <input
                                                         type="number"
@@ -345,7 +346,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                                             ) : (
                                                 <div className="flex items-center justify-end gap-2">
                                                     <span>{data.used.toLocaleString()}</span>
-                                                    {canEdit && (
+                                                    {canEditMaterials && (
                                                         <button
                                                             onClick={() => {
                                                                 setEditingMaterial(name);
@@ -369,7 +370,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 </div>
             )}
 
-            {(!site.initialMaterials || site.initialMaterials.length === 0) && canEdit && (
+            {(!site.initialMaterials || site.initialMaterials.length === 0) && canEditMaterials && (
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-xl font-semibold text-gray-800">Initial Materials & Usage</h3>

@@ -368,7 +368,8 @@ const App: React.FC = () => {
     const role = currentUser?.role;
     return {
       canApprove: role === 'Admin' || role === 'Manager',
-      canEdit: role === 'Admin' || role === 'Manager' || role === 'Accountant' || role === 'Team Member',
+  canEdit: role === 'Admin' || role === 'Manager' || role === 'Accountant',
+  canEditMaterials: role === 'Admin' || role === 'Manager' || role === 'Accountant' || role === 'Team Member',
       canManageSites: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTeam: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTransporters: role === 'Admin' || role === 'Manager' || role === 'Accountant',
@@ -1309,7 +1310,7 @@ const App: React.FC = () => {
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,
     transporter: <TransporterPage transporters={transporters} onAddTransporter={handleAddTransporter} onDeleteTransporter={handleDeleteTransporter} onNewJobCard={() => setIsNewJobCardModalOpen(true)} onViewDetails={handleViewTransporterDetails} onEditTransporter={handleEditTransporter} />,
-  siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
+  siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} canEditMaterials={permissions.canEditMaterials} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
   teamMemberDetail: selectedTeamMember ? <TeamMemberDetail member={selectedTeamMember} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} /> : null,
     transporterDetail: selectedTransporter ? <TransporterDetail transporter={selectedTransporter} jobCards={jobCards} onBack={navigateBack} onUpdateStatus={handleUpdateJobCardStatus} onEditJobCard={handleEditJobCard} transporters={transporters} canEdit={permissions.canManageTransporters} onDownloadReport={handleDownloadTransporterJobReport} /> : null,
     requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} currentUser={currentUser} /> : null,
