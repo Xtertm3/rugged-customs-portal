@@ -12,7 +12,6 @@ interface DashboardProps {
   onOpenTransactionsReport?: () => void;
   sites: Site[];
   onUpdateRequestStatus: (requestId: string, newStatus: 'Pending' | 'Approved' | 'Paid') => void;
-  onViewSiteDetails: (siteName: string) => void;
   onViewRequestDetails?: (requestId: string) => void;
   onEditRequest: (request: PaymentRequest) => void;
   onDeleteRequest: (requestId: string) => void;
@@ -58,7 +57,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onOpenTransactionsReport,
   sites,
   onUpdateRequestStatus, 
-  onViewSiteDetails,
   onViewRequestDetails,
   onEditRequest, 
   onDeleteRequest, 
