@@ -203,6 +203,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
+          {/* Site Documents from Admin/Manager */}
+          {selectedSiteId && (() => {
+            const selectedSite = managedSites.find(s => s.id === selectedSiteId);
+            const sitePhotos = selectedSite?.photos || [];
+            const siteDocs = selectedSite?.documents || [];
+            const hasDocuments = sitePhotos.length > 0 || siteDocs.length > 0;
+            
+            if (!hasDocuments) return null;
+            
+            return (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                  </svg>
+                  Site Documents
+                </h3>
+                <p className="text-sm text-blue-700 mb-4">Documents and photos shared by management for this site</p>
+                <div className="flex flex-wrap gap-3">
+                  {sitePhotos.map((photo, idx) => (
+                    <a
+                      key={`photo-${idx}`}
+                      href={photo.dataUrl}
+                      download={photo.name}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors text-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-blue-900">{photo.name}</span>
+                    </a>
+                  ))}
+                  {siteDocs.map((doc, idx) => (
+                    <a
+                      key={`doc-${idx}`}
+                      href={doc.dataUrl}
+                      download={doc.name}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 rounded-lg hover:bg-green-100 transition-colors text-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-green-900">{doc.name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Payment Requests List */}
           {sitePaymentRequests.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
