@@ -65,8 +65,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       teamMemberRole: string;
       materialName: string;
       openingBalance: number;
-      inward: number;
-      totalStock: number;
       totalUsed: number;
       remaining: number;
       siteName: string;
@@ -78,17 +76,9 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       if (!member.assignedMaterials || member.assignedMaterials.length === 0) return;
 
       member.assignedMaterials.forEach(mat => {
-        // Extract opening balance and inward from material
-        const openingBalance = Number(mat.openingBalance || 0);
-        const inward = Number(mat.inward || 0);
-        const totalStock = Number(mat.units || 0); // Backward compatibility: if no split, use units
+        const openingBalance = Number(mat.units || 0);
         const totalUsed = Number(mat.used || 0);
-        
-        // Calculate actual values (backward compatible)
-        const actualOpening = openingBalance > 0 ? openingBalance : (inward > 0 ? 0 : totalStock);
-        const actualInward = inward > 0 ? inward : (openingBalance > 0 ? totalStock - openingBalance : 0);
-        const actualTotal = actualOpening + actualInward;
-        const remaining = actualTotal - totalUsed;
+        const remaining = openingBalance - totalUsed;
 
         // Get all usage records for this team member & material
         const usageRecords = materialUsageLogs
@@ -122,9 +112,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           teamMemberName: member.name,
           teamMemberRole: member.role,
           materialName: mat.name,
-          openingBalance: actualOpening,
-          inward: actualInward,
-          totalStock: actualTotal,
+          openingBalance,
           totalUsed,
           remaining,
           siteName,
@@ -143,17 +131,9 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       const managerRole = manager ? manager.role : 'Site';
 
       site.initialMaterials.forEach(mat => {
-        // Extract opening balance and inward from material
-        const openingBalance = Number(mat.openingBalance || 0);
-        const inward = Number(mat.inward || 0);
-        const totalStock = Number(mat.units || 0); // Backward compatibility
+        const openingBalance = Number(mat.units || 0);
         const totalUsed = Number(mat.used || 0);
-        
-        // Calculate actual values (backward compatible)
-        const actualOpening = openingBalance > 0 ? openingBalance : (inward > 0 ? 0 : totalStock);
-        const actualInward = inward > 0 ? inward : (openingBalance > 0 ? totalStock - openingBalance : 0);
-        const actualTotal = actualOpening + actualInward;
-        const remaining = actualTotal - totalUsed;
+        const remaining = openingBalance - totalUsed;
 
         // Get usage records for this material at this site
         const usageRecords = materialUsageLogs
@@ -172,9 +152,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           teamMemberName: managerName,
           teamMemberRole: managerRole,
           materialName: mat.name,
-          openingBalance: actualOpening,
-          inward: actualInward,
-          totalStock: actualTotal,
+          openingBalance,
           totalUsed,
           remaining,
           siteName: site.siteName,
@@ -210,7 +188,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
     return filtered;
   }, [teamMembers, materialUsageLogs, sites, textFilter, teamFilter, siteFilter]);
 
-  // Summary: group by team & material, show opening, inward, total, used, remaining
+  // Summary: group by team & material, show opening, used, remaining
   const summaryData = useMemo(() => {
     const grouped: Record<
       string,
@@ -220,8 +198,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
         materials: {
           name: string;
           opening: number;
-          inward: number;
-          totalStock: number;
           used: number;
           remaining: number;
         }[];
@@ -253,8 +229,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       grouped[key].materials.push({
         name: item.materialName,
         opening: item.openingBalance,
-        inward: item.inward,
-        totalStock: item.totalStock,
         used: item.totalUsed,
         remaining: item.remaining,
       });
@@ -265,19 +239,19 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
 
   const exportCSV = () => {
     if (viewMode === 'summary') {
-      // Proper format: Site Name | Material | Opening Balance | Inward | JMS Quantity (Used) | Balance
+      // New format: Site Name | Inventory list | Stock Opening Balance | Inward | JMS Quantity | Balance
       const headers = [
         'Site Name',
-        'Material',
-        'Opening Balance (m)',
-        'Inward (m)',
-        'JMS Quantity (Used) (m)',
-        'Balance (m)'
+        'Inventory list',
+        'Stock Opening Balance',
+        'Inward',
+        'JMS Quantity',
+        'Balance'
       ];
       const rows: string[][] = [];
 
       // Group by site
-      const sitesMap = new Map<string, { materials: Map<string, { opening: number; inward: number; used: number }> }>();
+      const sitesMap = new Map<string, { materials: Map<string, { inward: number; used: number }> }>();
 
       // Collect materials for each site
       inventoryDetails.forEach((item) => {
@@ -288,25 +262,24 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
         const siteData = sitesMap.get(siteName)!;
         
         if (!siteData.materials.has(item.materialName)) {
-          siteData.materials.set(item.materialName, { opening: 0, inward: 0, used: 0 });
+          siteData.materials.set(item.materialName, { inward: 0, used: 0 });
         }
         
         const matData = siteData.materials.get(item.materialName)!;
-        matData.opening += item.openingBalance;
-        matData.inward += item.inward;
+        matData.inward += item.openingBalance;
         matData.used += item.totalUsed;
       });
 
       // Convert to rows
       sitesMap.forEach((siteData, siteName) => {
         siteData.materials.forEach((matData, materialName) => {
-          const totalStock = matData.opening + matData.inward;
-          const balance = totalStock - matData.used;
+          const stockOpening = matData.inward; // Stock opening = inward materials
+          const balance = stockOpening - matData.used;
           
           rows.push([
             siteName,
             materialName,
-            String(matData.opening),
+            String(stockOpening),
             String(matData.inward),
             String(matData.used),
             String(balance)
@@ -337,14 +310,12 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       'Team Member',
       'Role',
       'Material',
-      'Opening Balance (m)',
-      'Inward (m)',
-      'Total Stock (m)',
+      'Opening Balance',
       'Usage Date',
-      'Quantity Used (m)',
+      'Quantity Used',
       'Notes',
-      'Total Used (m)',
-      'Remaining (m)',
+      'Total Used',
+      'Remaining',
     ];
     const rows: string[][] = [];
 
@@ -356,8 +327,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           item.teamMemberRole,
           item.materialName,
           String(item.openingBalance),
-          String(item.inward),
-          String(item.totalStock),
           '',
           '',
           '',
@@ -372,8 +341,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             idx === 0 ? item.teamMemberRole : '',
             idx === 0 ? item.materialName : '',
             idx === 0 ? String(item.openingBalance) : '',
-            idx === 0 ? String(item.inward) : '',
-            idx === 0 ? String(item.totalStock) : '',
             usage.date,
             String(usage.quantity),
             usage.notes,
@@ -408,12 +375,12 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
     if (viewMode === 'summary') {
-      // Proper format: Site Name | Material | Opening Balance | Inward | Used | Balance
-      const headers = [['Site Name', 'Material', 'Opening', 'Inward', 'Used', 'Balance']];
+      // New format: Site Name | Inventory list | Stock Opening Balance | Inward | JMS Quantity | Balance
+      const headers = [['Site Name', 'Inventory list', 'Stock Opening Balance', 'Inward', 'JMS Quantity', 'Balance']];
       const rows: any[] = [];
 
       // Group by site
-      const sitesMap = new Map<string, { materials: Map<string, { opening: number; inward: number; used: number }> }>();
+      const sitesMap = new Map<string, { materials: Map<string, { inward: number; used: number }> }>();
 
       // Collect materials for each site
       inventoryDetails.forEach((item) => {
@@ -424,25 +391,24 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
         const siteData = sitesMap.get(siteName)!;
         
         if (!siteData.materials.has(item.materialName)) {
-          siteData.materials.set(item.materialName, { opening: 0, inward: 0, used: 0 });
+          siteData.materials.set(item.materialName, { inward: 0, used: 0 });
         }
         
         const matData = siteData.materials.get(item.materialName)!;
-        matData.opening += item.openingBalance;
-        matData.inward += item.inward;
+        matData.inward += item.openingBalance;
         matData.used += item.totalUsed;
       });
 
       // Convert to rows
       sitesMap.forEach((siteData, siteName) => {
         siteData.materials.forEach((matData, materialName) => {
-          const totalStock = matData.opening + matData.inward;
-          const balance = totalStock - matData.used;
+          const stockOpening = matData.inward;
+          const balance = stockOpening - matData.used;
           
           rows.push([
             siteName,
             materialName,
-            String(matData.opening),
+            String(stockOpening),
             String(matData.inward),
             String(matData.used),
             String(balance)
@@ -450,14 +416,9 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
         });
       });
 
-      autoTable(doc, { head: headers, body: rows, startY: 28, styles: { fontSize: 7 } });
-      
-      // Add explanatory note
-      doc.setFontSize(8);
-      const finalY = (doc as any).lastAutoTable.finalY || 28;
-      doc.text('Note: Opening Balance = leftover materials from previous work | Inward = new materials sent', 14, finalY + 10);
+      autoTable(doc, { head: headers, body: rows, startY: 28, styles: { fontSize: 8 } });
     } else {
-      const headers = [['Team', 'Role', 'Material', 'Open', 'Inward', 'Total', 'Usage Date', 'Used', 'Notes', 'Total Used', 'Remaining']];
+      const headers = [['Team', 'Role', 'Material', 'Opening', 'Usage Date', 'Used', 'Notes', 'Total Used', 'Remaining']];
       const rows: any[] = [];
       inventoryDetails.forEach((item) => {
         if (item.usageRecords.length === 0) {
@@ -466,8 +427,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             item.teamMemberRole,
             item.materialName,
             String(item.openingBalance),
-            String(item.inward),
-            String(item.totalStock),
             '',
             '',
             '',
@@ -481,8 +440,6 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
               idx === 0 ? item.teamMemberRole : '',
               idx === 0 ? item.materialName : '',
               idx === 0 ? String(item.openingBalance) : '',
-              idx === 0 ? String(item.inward) : '',
-              idx === 0 ? String(item.totalStock) : '',
               usage.date,
               String(usage.quantity),
               usage.notes,
@@ -604,16 +561,10 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                             <tr>
                               <th className="px-3 py-2">Material</th>
                               <th className="px-3 py-2 text-right">
-                                Opening
-                              </th>
-                              <th className="px-3 py-2 text-right">
-                                Inward
-                              </th>
-                              <th className="px-3 py-2 text-right">
-                                Total
+                                Opening Balance
                               </th>
                               <th className="px-3 py-2 text-right">Used</th>
-                              <th className="px-3 py-2 text-right">Balance</th>
+                              <th className="px-3 py-2 text-right">Remaining</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -623,14 +574,8 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                                 className="border-b border-gray-200 hover:bg-gray-50"
                               >
                                 <td className="px-3 py-2">{mat.name}</td>
-                                <td className="px-3 py-2 text-right text-blue-500">
+                                <td className="px-3 py-2 text-right">
                                   {mat.opening}m
-                                </td>
-                                <td className="px-3 py-2 text-right text-green-500">
-                                  {mat.inward}m
-                                </td>
-                                <td className="px-3 py-2 text-right font-semibold">
-                                  {mat.totalStock}m
                                 </td>
                                 <td className="px-3 py-2 text-right text-orange-400">
                                   {mat.used}m
@@ -639,7 +584,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                                   className={`px-3 py-2 text-right font-semibold ${
                                     mat.remaining < 0
                                       ? 'text-red-400'
-                                      : mat.remaining < mat.totalStock * 0.1
+                                      : mat.remaining < mat.opening * 0.1
                                       ? 'text-yellow-400'
                                       : 'text-green-400'
                                   }`}
@@ -672,23 +617,11 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                         {item.teamMemberName} ({item.teamMemberRole}) -{' '}
                         {item.materialName}
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-3 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
                         <div>
                           <span className="text-gray-500">Opening:</span>
-                          <div className="font-semibold text-blue-500">
-                            {item.openingBalance}m
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Inward:</span>
-                          <div className="font-semibold text-green-500">
-                            {item.inward}m
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Total Stock:</span>
                           <div className="font-semibold text-gray-800">
-                            {item.totalStock}m
+                            {item.openingBalance}m
                           </div>
                         </div>
                         <div>
@@ -698,13 +631,13 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                           </div>
                         </div>
                         <div>
-                          <span className="text-gray-500">Balance:</span>
+                          <span className="text-gray-500">Remaining:</span>
                           <div
                             className={`font-semibold ${
                               item.remaining < 0
                                 ? 'text-red-400'
                                 : item.remaining <
-                                  item.totalStock * 0.1
+                                  item.openingBalance * 0.1
                                 ? 'text-yellow-400'
                                 : 'text-green-400'
                             }`}
@@ -713,7 +646,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                           </div>
                         </div>
                         <div>
-                          <span className="text-gray-500">Records:</span>
+                          <span className="text-gray-500">Usage Records:</span>
                           <div className="font-semibold text-gray-800">
                             {item.usageRecords.length}
                           </div>

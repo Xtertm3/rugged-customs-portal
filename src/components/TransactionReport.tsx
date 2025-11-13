@@ -40,13 +40,19 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         }
       }
       
+      // Build detail with payment info and reason/description
+      const paymentInfo = req.paymentFor || 'Payment';
+      const amount = req.amount ? `Rs ${req.amount}` : '';
+      const reason = req.reasons ? ` - ${req.reasons}` : '';
+      const detail = `${h.status} - ${paymentInfo}${amount ? ` (${amount})` : ''}${reason}`;
+      
       return {
         id: `${req.id}-${h.timestamp}`,
         type: 'Payment' as const,
         siteName: req.siteName,
         teamMemberName,
         timestamp: h.timestamp,
-        detail: `${h.status} - ${req.paymentFor || ''} (${req.amount || ''})`,
+        detail,
         status: h.status
       };
     }));
@@ -128,8 +134,10 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
         const paidOn = paidEntry?.timestamp || req.timestamp;
 
-        // Payment details/reason
-        const paymentDetails = req.paymentFor || req.reasons || 'No details provided';
+        // Payment details/reason - combine paymentFor and reasons if both exist
+        const paymentFor = req.paymentFor || 'Payment';
+        const reason = req.reasons ? ` - ${req.reasons}` : '';
+        const paymentDetails = `${paymentFor}${reason}`;
 
         return [
           req.siteName || 'Unknown Site',
@@ -205,8 +213,10 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
         const paidOn = paidEntry?.timestamp || req.timestamp;
 
-        // Payment details/reason
-        const paymentDetails = req.paymentFor || req.reasons || 'No details provided';
+        // Payment details/reason - combine paymentFor and reasons if both exist
+        const paymentFor = req.paymentFor || 'Payment';
+        const reason = req.reasons ? ` - ${req.reasons}` : '';
+        const paymentDetails = `${paymentFor}${reason}`;
 
         return [
           req.siteName || 'Unknown Site',
