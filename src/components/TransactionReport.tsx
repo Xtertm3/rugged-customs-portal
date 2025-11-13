@@ -12,7 +12,7 @@ interface TransactionReportProps {
   teamMembers: TeamMember[];
 }
 
-export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites, teamMembers }) => {
+export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, teamMembers }) => {
   const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'all'>('bySite');
   const [textFilter, setTextFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
@@ -101,72 +101,148 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
   }, [allEntries]);
 
   const exportCSV = () => {
-    if (viewMode === 'bySite') {
-      const headers = ['Site','Initial Materials','Material Used (agg)','Payment Requests Count (Paid Only)','Total Paid'];
-      const rows = groupedBySite.map(g => {
-        const siteObj = sites.find(s => s.siteName === g.site);
-        const initial = siteObj && siteObj.initialMaterials ? siteObj.initialMaterials.map((m: any) => `${m.name}:${m.units}`).join('; ') : '';
-        // aggregate material used for this site
-        const usedForSite = materialUsageLogs.filter(m => (m.siteName || 'Unknown Site') === g.site);
-        const usedAggMap: Record<string, number> = {};
-        usedForSite.forEach(u => { usedAggMap[u.materialName] = (usedAggMap[u.materialName] || 0) + Number(u.quantityUsed || 0); });
-        const usedAgg = Object.keys(usedAggMap).map(k => `${k}:${usedAggMap[k]}m`).join('; ');
-        // Only count PAID requests for this site
-        const reqs = paymentRequests.filter(r => r.siteName === g.site && r.status === 'Paid');
-        const totalPaid = reqs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-        return [g.site, initial, usedAgg, String(reqs.length), String(totalPaid)];
-      });
-      const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'transactions_by_site_report.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
+    // Site Wise Payment Report with exact columns as specified
+    const headers = ['Site Name', 'Payment details / Reason for Payment', 'Amount', 'Paid On', 'Paid to / Team Name'];
+    
+    // Get only PAID payment entries grouped by site
+    const paidPayments = paymentRequests
+      .filter(req => req.status === 'Paid')
+      .map(req => {
+        // Find the team member who the payment is for
+        let teamMemberName = 'Unknown';
+        if (req.assignTo) {
+          const member = teamMembers.find(m => m.id === req.assignTo);
+          teamMemberName = member?.name || 'Unknown Team Member';
+        } else if (req.transporterId) {
+          const member = teamMembers.find(m => m.id === req.transporterId);
+          teamMemberName = member?.name || 'Unknown Transporter';
+        } else if (req.statusHistory && req.statusHistory.length > 0) {
+          const creator = req.statusHistory[0];
+          if (creator && creator.userId) {
+            const member = teamMembers.find(m => m.id === creator.userId);
+            teamMemberName = member?.name || creator.userName || 'Unknown';
+          }
+        }
 
-    const headers = ['Type','Site','Team/Updated By','Timestamp','Detail'];
-    const rows = allEntries.map(e => ([e.type, e.siteName, e.teamMemberName, e.timestamp, e.detail]));
-    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+        // Find when it was paid (last status change to Paid)
+        const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
+        const paidOn = paidEntry?.timestamp || req.timestamp;
+
+        // Payment details/reason
+        const paymentDetails = req.paymentFor || req.reasons || 'No details provided';
+
+        return [
+          req.siteName || 'Unknown Site',
+          paymentDetails,
+          `₹${(Number(req.amount) || 0).toLocaleString()}`,
+          paidOn,
+          teamMemberName
+        ];
+      });
+
+    // Create CSV with header and company info
+    const companyHeader = [
+      ['Rugged Customs'],
+      ['#11, Ground Floor, 26th Cross Cubbonpet, Bangalore- 560002'],
+      ['Site Wise Payment Report'],
+      ['']
+    ];
+    
+    const csvRows = [
+      ...companyHeader.map(row => row.join(',')),
+      headers.map(h => `"${h}"`).join(','),
+      ...paidPayments.map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvRows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'transactions_report.csv';
+    a.download = `Site_Wise_Payment_Report_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const exportPDF = () => {
     const doc = new jsPDF();
+    
+    // Company Header
     doc.setFontSize(16);
-    doc.text('Transactions Report', 14, 15);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Rugged Customs', 105, 15, { align: 'center' });
+    
     doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    doc.setFont('helvetica', 'normal');
+    doc.text('#11, Ground Floor, 26th Cross Cubbonpet, Bangalore- 560002', 105, 22, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Site Wise Payment Report', 105, 32, { align: 'center' });
 
-    if (viewMode === 'bySite') {
-      const headers = [['Site', 'Initial Materials', 'Material Used', 'Paid Requests', 'Total Paid']];
-      const rows = groupedBySite.map(g => {
-        const siteObj = sites.find(s => s.siteName === g.site);
-        const initial = siteObj && siteObj.initialMaterials ? siteObj.initialMaterials.map((m: any) => `${m.name}:${m.units}`).join('; ') : '';
-        const usedForSite = materialUsageLogs.filter(m => (m.siteName || 'Unknown Site') === g.site);
-        const usedAggMap: Record<string, number> = {};
-        usedForSite.forEach(u => { usedAggMap[u.materialName] = (usedAggMap[u.materialName] || 0) + Number(u.quantityUsed || 0); });
-        const usedAgg = Object.keys(usedAggMap).map(k => `${k}:${usedAggMap[k]}m`).join('; ');
-        const reqs = paymentRequests.filter(r => r.siteName === g.site && r.status === 'Paid');
-        const totalPaid = reqs.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-        return [g.site, initial, usedAgg, String(reqs.length), String(totalPaid)];
+    // Get only PAID payment entries
+    const paidPayments = paymentRequests
+      .filter(req => req.status === 'Paid')
+      .map(req => {
+        // Find the team member who the payment is for
+        let teamMemberName = 'Unknown';
+        if (req.assignTo) {
+          const member = teamMembers.find(m => m.id === req.assignTo);
+          teamMemberName = member?.name || 'Unknown Team Member';
+        } else if (req.transporterId) {
+          const member = teamMembers.find(m => m.id === req.transporterId);
+          teamMemberName = member?.name || 'Unknown Transporter';
+        } else if (req.statusHistory && req.statusHistory.length > 0) {
+          const creator = req.statusHistory[0];
+          if (creator && creator.userId) {
+            const member = teamMembers.find(m => m.id === creator.userId);
+            teamMemberName = member?.name || creator.userName || 'Unknown';
+          }
+        }
+
+        // Find when it was paid
+        const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
+        const paidOn = paidEntry?.timestamp || req.timestamp;
+
+        // Payment details/reason
+        const paymentDetails = req.paymentFor || req.reasons || 'No details provided';
+
+        return [
+          req.siteName || 'Unknown Site',
+          paymentDetails,
+          `₹${(Number(req.amount) || 0).toLocaleString()}`,
+          paidOn,
+          teamMemberName
+        ];
       });
-      autoTable(doc, { head: headers, body: rows, startY: 28, styles: { fontSize: 8 } });
-    } else {
-      const headers = [['Type', 'Site', 'Team/User', 'Timestamp', 'Detail']];
-      const rows = allEntries.map(e => ([e.type, e.siteName, e.teamMemberName, e.timestamp, e.detail]));
-      autoTable(doc, { head: headers, body: rows, startY: 28, styles: { fontSize: 8 } });
-    }
 
-    doc.save('transactions_report.pdf');
+    const headers = [['Site Name', 'Payment details / Reason for Payment', 'Amount', 'Paid On', 'Paid to / Team Name']];
+
+    autoTable(doc, {
+      head: headers,
+      body: paidPayments,
+      startY: 40,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [255, 140, 0],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      columnStyles: {
+        0: { cellWidth: 30 }, // Site Name
+        1: { cellWidth: 60 }, // Payment details
+        2: { cellWidth: 25 }, // Amount
+        3: { cellWidth: 35 }, // Paid On
+        4: { cellWidth: 30 }, // Team Name
+      },
+    });
+
+    doc.save(`Site_Wise_Payment_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   if (!isOpen) return null;
