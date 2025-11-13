@@ -17,8 +17,10 @@ try {
 export interface MaterialItem {
   id: string;
   name: string;
-  units: string;
+  units: string; // Total stock (opening + inward)
   used: string;
+  openingBalance?: string; // Materials from previous work (leftover stock)
+  inward?: string; // New materials sent to site
 }
 
 export interface PaymentRequestData {
