@@ -368,7 +368,7 @@ const App: React.FC = () => {
     const role = currentUser?.role;
     return {
       canApprove: role === 'Admin' || role === 'Manager',
-      canEdit: role === 'Admin' || role === 'Manager' || role === 'Accountant',
+      canEdit: role === 'Admin' || role === 'Manager' || role === 'Accountant' || role === 'Team Member',
       canManageSites: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTeam: role === 'Admin' || role === 'Manager' || role === 'Accountant',
       canManageTransporters: role === 'Admin' || role === 'Manager' || role === 'Accountant',
