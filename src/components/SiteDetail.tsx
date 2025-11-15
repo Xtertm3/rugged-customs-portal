@@ -321,7 +321,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                             <thead className="text-xs text-gray-500 uppercase">
                                 <tr>
                                     <th className="px-4 py-2">Material</th>
-                                    <th className="px-4 py-2 text-right">Initially Sent (m)</th>
+                                    <th className="px-4 py-2 text-right">Opening Material (m)</th>
                                     <th className="px-4 py-2 text-right">Total Used (m)</th>
                                     <th className="px-4 py-2 text-right">Remaining (m)</th>
                                 </tr>
