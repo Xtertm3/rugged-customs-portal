@@ -790,6 +790,17 @@ const App: React.FC = () => {
           const amount = parseFloat(cleanAmount) || 0;
           return sum + amount;
         }, 0);
+      
+      // Debug logging
+      if (requestsForSite.some(r => r.status === 'Paid')) {
+        console.log(`Site: ${site.siteName}, Total Paid: ₹${totalPaid}, Paid Requests:`, 
+          requestsForSite.filter(r => r.status === 'Paid').map(r => ({
+            id: r.id,
+            status: r.status,
+            amount: r.amount
+          }))
+        );
+      }
 
       return { 
         id: site.id, 
