@@ -27,6 +27,7 @@ import { TransactionReport } from './components/TransactionReport';
 import { InventoryDetailReport } from './components/InventoryDetailReport';
 import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 import { DocumentLibrary } from './components/DocumentLibrary';
+import { CleanupButton } from './components/CleanupButton';
 
 
 export interface StatusChange {
@@ -1463,6 +1464,9 @@ const App: React.FC = () => {
               sites={sites}
             />
           )}
+          
+          {/* Cleanup button - only visible for Admin */}
+          <CleanupButton isAdmin={currentUser?.role === 'Admin'} />
     </div>
   );
 };
