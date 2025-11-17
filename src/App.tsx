@@ -769,8 +769,28 @@ const App: React.FC = () => {
 };
 
   const projectSummaries = useMemo((): ProjectSummary[] => {
+    // Debug: Log all payment requests to see what's in the database
+    console.log('All Payment Requests:', paymentRequests.map(r => ({
+      id: r.id,
+      siteName: r.siteName,
+      status: r.status,
+      amount: r.amount
+    })));
+    
+    console.log('All Sites:', sites.map(s => ({
+      id: s.id,
+      siteName: s.siteName
+    })));
+    
     return sites.map(site => {
       const requestsForSite = paymentRequests.filter(req => req.siteName === site.siteName);
+      
+      console.log(`Matching requests for site "${site.siteName}":`, requestsForSite.length, requestsForSite.map(r => ({
+        id: r.id,
+        siteName: r.siteName,
+        status: r.status,
+        amount: r.amount
+      })));
       
       let siteStatus: 'Open' | 'Closed' | 'No Activity' = 'No Activity';
       if (requestsForSite.length > 0) {
@@ -791,16 +811,7 @@ const App: React.FC = () => {
           return sum + amount;
         }, 0);
       
-      // Debug logging
-      if (requestsForSite.some(r => r.status === 'Paid')) {
-        console.log(`Site: ${site.siteName}, Total Paid: ₹${totalPaid}, Paid Requests:`, 
-          requestsForSite.filter(r => r.status === 'Paid').map(r => ({
-            id: r.id,
-            status: r.status,
-            amount: r.amount
-          }))
-        );
-      }
+      console.log(`Site "${site.siteName}" - Total Paid: ₹${totalPaid}`);
 
       return { 
         id: site.id, 
