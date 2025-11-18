@@ -211,7 +211,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
         </button>
         <div className="bg-white/50 p-6 rounded-2xl space-y-6">
             <div className="border-b border-gray-300 pb-4 flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                  <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-bold text-gray-900">{site.siteName}</h2>
                     {siteStatus === 'Closed' && (
@@ -222,6 +222,114 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                  </div>
                 <p className="text-md text-gray-500">{site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
+                
+                {/* Work Stage Progress Indicator */}
+                {site.currentStage && site.stages && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg border border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">📊 Work Stage Progress</h4>
+                    <div className="flex items-center gap-4">
+                      {/* Civil Stage Badge */}
+                      <div className={`flex-1 p-3 rounded-lg border-2 ${
+                        site.stages.civil.status === 'completed' ? 'bg-green-100 border-green-500' :
+                        site.stages.civil.status === 'in-progress' ? 'bg-blue-100 border-blue-500' :
+                        'bg-gray-100 border-gray-300'
+                      }`}>
+                        <div className="text-xs font-semibold text-gray-600 mb-1">CIVIL STAGE</div>
+                        <div className="text-sm font-bold">
+                          {site.stages.civil.status === 'completed' && '✓ Completed'}
+                          {site.stages.civil.status === 'in-progress' && '⚙️ In Progress'}
+                          {site.stages.civil.status === 'not-started' && '⏸ Not Started'}
+                        </div>
+                        {site.stages.civil.assignedTeamIds.length > 0 && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            Team: {site.stages.civil.assignedTeamIds.map(id => 
+                              teamMembers.find(m => m.id === id)?.name || 'Unknown'
+                            ).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="text-2xl text-gray-400">→</div>
+                      
+                      {/* Electrical Stage Badge */}
+                      <div className={`flex-1 p-3 rounded-lg border-2 ${
+                        site.stages.electrical.status === 'completed' ? 'bg-green-100 border-green-500' :
+                        site.stages.electrical.status === 'in-progress' ? 'bg-amber-100 border-amber-500' :
+                        'bg-gray-100 border-gray-300'
+                      }`}>
+                        <div className="text-xs font-semibold text-gray-600 mb-1">ELECTRICAL STAGE</div>
+                        <div className="text-sm font-bold">
+                          {site.stages.electrical.status === 'completed' && '✓ Completed'}
+                          {site.stages.electrical.status === 'in-progress' && '⚡ In Progress'}
+                          {site.stages.electrical.status === 'not-started' && '⏸ Not Started'}
+                        </div>
+                        {site.stages.electrical.assignedTeamIds.length > 0 && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            Team: {site.stages.electrical.assignedTeamIds.map(id => 
+                              teamMembers.find(m => m.id === id)?.name || 'Unknown'
+                            ).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Complete Stage Button */}
+                    {canEdit && site.currentStage === 'civil' && site.stages.civil.status === 'in-progress' && (
+                      <button
+                        onClick={async () => {
+                          if (confirm('Complete Civil Stage and move to Electrical Stage?\n\nThis will:\n- Mark civil work as completed\n- Start electrical stage\n- Allow electrical team to access the site')) {
+                            const updatedSite = {
+                              ...site,
+                              currentStage: 'electrical' as const,
+                              stages: {
+                                ...site.stages,
+                                civil: {
+                                  ...site.stages.civil,
+                                  status: 'completed' as const,
+                                  completionDate: new Date().toISOString()
+                                },
+                                electrical: {
+                                  ...site.stages.electrical,
+                                  status: 'in-progress' as const,
+                                  startDate: new Date().toISOString()
+                                }
+                              }
+                            };
+                            onEditSite(updatedSite);
+                          }
+                        }}
+                        className="mt-3 w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        ✓ Complete Civil Stage & Start Electrical
+                      </button>
+                    )}
+                    
+                    {canEdit && site.currentStage === 'electrical' && site.stages.electrical.status === 'in-progress' && (
+                      <button
+                        onClick={async () => {
+                          if (confirm('Complete Electrical Stage?\n\nThis will mark the entire site as completed.')) {
+                            const updatedSite = {
+                              ...site,
+                              currentStage: 'completed' as const,
+                              stages: {
+                                ...site.stages,
+                                electrical: {
+                                  ...site.stages.electrical,
+                                  status: 'completed' as const,
+                                  completionDate: new Date().toISOString()
+                                }
+                              }
+                            };
+                            onEditSite(updatedSite);
+                          }
+                        }}
+                        className="mt-3 w-full px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition-colors"
+                      >
+                        ✓ Complete Electrical Stage
+                      </button>
+                    )}
+                  </div>
+                )}
                  {site.latitude && site.longitude && (
                    <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 inline-block">
                      <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>

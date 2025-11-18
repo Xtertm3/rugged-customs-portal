@@ -51,7 +51,8 @@ export interface PaymentRequest extends PaymentRequestData {
   statusHistory: StatusChange[];
   materials?: MaterialItem[];
   assignTo?: string;
-  stage?: 'Civil' | 'Electricals';
+  stage?: 'Civil' | 'Electricals'; // Legacy field
+  workStage?: 'civil' | 'electrical'; // New stage tracking field
   transporterId?: string;
   siteId?: string; // Added to reliably match payments to sites
 }
@@ -61,6 +62,13 @@ export interface SiteAttachment {
   dataUrl: string;
 }
 
+export interface WorkStageInfo {
+  status: 'not-started' | 'in-progress' | 'completed';
+  assignedTeamIds: string[]; // Team member IDs assigned to this stage
+  startDate?: string;
+  completionDate?: string;
+}
+
 export interface Site {
   id: string;
   siteName: string;
@@ -68,11 +76,17 @@ export interface Site {
   latitude?: string;
   longitude?: string;
   projectType: string;
-  workType?: 'Civil' | 'Electrical';
+  workType?: 'Civil' | 'Electrical'; // Legacy field, kept for backward compatibility
   initialMaterials: MaterialItem[];
   siteManagerId?: string;
   photos?: SiteAttachment[];
   documents?: SiteAttachment[];
+  // New work stage tracking
+  currentStage: 'civil' | 'electrical' | 'completed';
+  stages: {
+    civil: WorkStageInfo;
+    electrical: WorkStageInfo;
+  };
 }
 
 export interface ProjectSummary {
@@ -111,6 +125,8 @@ export interface JobCard {
   description: string;
   status: 'Assigned' | 'In Transit' | 'Completed';
   timestamp: string;
+  workStage?: 'civil' | 'electrical'; // Track which work stage this job card belongs to
+  siteId?: string; // Link to site for stage validation
 }
 
 export interface InventoryItem {

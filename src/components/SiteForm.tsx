@@ -40,6 +40,21 @@ const initialFormData: Omit<Site, 'id'> = {
     siteManagerId: '',
     photos: [],
     documents: [],
+    currentStage: 'civil', // Start with civil stage
+    stages: {
+        civil: {
+            status: 'not-started',
+            assignedTeamIds: [],
+            startDate: undefined,
+            completionDate: undefined
+        },
+        electrical: {
+            status: 'not-started',
+            assignedTeamIds: [],
+            startDate: undefined,
+            completionDate: undefined
+        }
+    }
 };
 
 export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialData, teamMembers, canAddAttachments }) => {
@@ -69,10 +84,36 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 siteManagerId: initialData.siteManagerId || '',
                 photos: initialData.photos || [],
                 documents: initialData.documents || [],
+                // Handle backward compatibility for sites created before stage tracking
+                currentStage: initialData.currentStage || 'civil',
+                stages: initialData.stages || {
+                    civil: {
+                        status: 'not-started',
+                        assignedTeamIds: initialData.siteManagerId ? [initialData.siteManagerId] : [],
+                        startDate: undefined,
+                        completionDate: undefined
+                    },
+                    electrical: {
+                        status: 'not-started',
+                        assignedTeamIds: [],
+                        startDate: undefined,
+                        completionDate: undefined
+                    }
+                }
             });
         } else {
             const defaultManagerId = assignableTeamMembers.length > 0 ? assignableTeamMembers[0].id : '';
-            setFormData({ ...initialFormData, siteManagerId: defaultManagerId });
+            setFormData({ 
+                ...initialFormData, 
+                siteManagerId: defaultManagerId,
+                stages: {
+                    ...initialFormData.stages,
+                    civil: {
+                        ...initialFormData.stages.civil,
+                        assignedTeamIds: defaultManagerId ? [defaultManagerId] : []
+                    }
+                }
+            });
         }
     }, [initialData, assignableTeamMembers]);
 
@@ -134,7 +175,18 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             const submissionData = {
                 ...formData,
                 photos: [...(formData.photos || []), ...photoAttachments],
-                documents: [...(formData.documents || []), ...documentAttachments]
+                documents: [...(formData.documents || []), ...documentAttachments],
+                // Initialize civil stage as 'in-progress' if team members are assigned
+                stages: {
+                    ...formData.stages,
+                    civil: {
+                        ...formData.stages.civil,
+                        status: formData.stages.civil.assignedTeamIds.length > 0 ? 'in-progress' as const : 'not-started' as const,
+                        startDate: formData.stages.civil.assignedTeamIds.length > 0 && !formData.stages.civil.startDate 
+                            ? new Date().toISOString() 
+                            : formData.stages.civil.startDate
+                    }
+                }
             };
 
             if (isEditing && initialData) {
@@ -209,13 +261,94 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label htmlFor="siteManagerId" className={labelStyles}>Assign To</label>
+                        <label htmlFor="siteManagerId" className={labelStyles}>Site Manager (Legacy)</label>
                         <select id="siteManagerId" name="siteManagerId" value={formData.siteManagerId} onChange={handleChange} className={inputStyles} disabled={assignableTeamMembers.length === 0}>
                             <option value="">{assignableTeamMembers.length > 0 ? 'Select a Team Member' : 'No Civil or Electrical members available'}</option>
                             {assignableTeamMembers.map(m => <option key={m.id} value={m.id}>{m.name} ({m.role})</option>)}
                         </select>
                         {errors.siteManagerId && <p className="text-red-400 text-xs mt-1">{errors.siteManagerId}</p>}
                     </div>
+                </div>
+                
+                {/* Work Stage Team Assignment */}
+                <div className="pt-6 border-t border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Work Stage Team Assignment</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Civil Stage Team */}
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                            <label className={labelStyles + " text-blue-800"}>
+                                Civil Stage Team
+                                <span className="ml-2 text-xs font-normal text-blue-600">(Stage 1)</span>
+                            </label>
+                            <select 
+                                multiple
+                                size={5}
+                                value={formData.stages.civil.assignedTeamIds}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        stages: {
+                                            ...prev.stages,
+                                            civil: { ...prev.stages.civil, assignedTeamIds: selected }
+                                        }
+                                    }));
+                                }}
+                                className={inputStyles + " h-32"}
+                            >
+                                {assignableTeamMembers
+                                    .filter(m => m.role === 'Civil' || m.role === 'Electrical + Civil')
+                                    .map(m => (
+                                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                                    ))}
+                            </select>
+                            <p className="text-xs text-blue-600 mt-2">Hold Ctrl/Cmd to select multiple team members</p>
+                            {formData.stages.civil.assignedTeamIds.length > 0 && (
+                                <div className="mt-2 text-xs text-blue-700">
+                                    Selected: {formData.stages.civil.assignedTeamIds.length} member(s)
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Electrical Stage Team */}
+                        <div className="bg-amber-50 p-4 rounded-lg">
+                            <label className={labelStyles + " text-amber-800"}>
+                                Electrical Stage Team
+                                <span className="ml-2 text-xs font-normal text-amber-600">(Stage 2)</span>
+                            </label>
+                            <select 
+                                multiple
+                                size={5}
+                                value={formData.stages.electrical.assignedTeamIds}
+                                onChange={(e) => {
+                                    const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        stages: {
+                                            ...prev.stages,
+                                            electrical: { ...prev.stages.electrical, assignedTeamIds: selected }
+                                        }
+                                    }));
+                                }}
+                                className={inputStyles + " h-32"}
+                            >
+                                {assignableTeamMembers
+                                    .filter(m => m.role === 'Electricals' || m.role === 'Electrical + Civil')
+                                    .map(m => (
+                                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                                    ))}
+                            </select>
+                            <p className="text-xs text-amber-600 mt-2">Hold Ctrl/Cmd to select multiple team members</p>
+                            {formData.stages.electrical.assignedTeamIds.length > 0 && (
+                                <div className="mt-2 text-xs text-amber-700">
+                                    Selected: {formData.stages.electrical.assignedTeamIds.length} member(s)
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3">
+                        💡 <strong>Tip:</strong> Assign civil team now. You can add electrical team later when civil work completes.
+                    </p>
                 </div>
                 
                 <div className="pt-6 border-t border-gray-200">
