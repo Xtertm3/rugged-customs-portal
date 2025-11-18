@@ -807,10 +807,23 @@ const App: React.FC = () => {
     return sites.map(site => {
       // Robust matching: by siteId, else fuzzy siteName
       const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+      
+      console.log(`\nProcessing site: "${site.siteName}"`);
+      console.log(`Normalized site name: "${normalize(site.siteName)}"`);
+      
       const requestsForSite = paymentRequests.filter(req => {
-        if (req.siteId && req.siteId === site.id) return true;
+        if (req.siteId && req.siteId === site.id) {
+          console.log(`  ✓ Matched by siteId: ${req.id}`);
+          return true;
+        }
         if (req.siteName && site.siteName) {
-          return normalize(req.siteName) === normalize(site.siteName);
+          const normalizedReqSite = normalize(req.siteName);
+          const normalizedSiteName = normalize(site.siteName);
+          console.log(`  Comparing: "${normalizedReqSite}" vs "${normalizedSiteName}"`);
+          if (normalizedReqSite === normalizedSiteName) {
+            console.log(`  ✓ Matched by fuzzy name: ${req.id}`);
+            return true;
+          }
         }
         return false;
       });
