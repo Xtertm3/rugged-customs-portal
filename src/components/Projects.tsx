@@ -122,10 +122,22 @@ export const Projects: React.FC<ProjectsProps> = ({
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Manager: <span className="font-semibold">{manager}</span></span>
                                         <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Submissions: <span className="font-semibold">{summary.requestCount}</span></span>
-                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700">Paid: ₹{summary.totalPaid.toLocaleString()}</span>
                                         {site.paymentsLocked && (
                                             <span className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-600">Payments Closed</span>
                                         )}
+                                    </div>
+                                    
+                                    {/* Stage-wise payments breakdown */}
+                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
+                                            Civil: ₹{summary.civilPaid.toLocaleString()}
+                                        </span>
+                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
+                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
+                                        </span>
+                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                            Total: ₹{summary.totalPaid.toLocaleString()}
+                                        </span>
                                     </div>
 
                                     {/* Simple stage badges */}

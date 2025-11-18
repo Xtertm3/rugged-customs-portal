@@ -100,6 +100,9 @@ export interface ProjectSummary {
   siteStatus: 'Open' | 'Closed' | 'No Activity';
   siteManagerId?: string;
   totalPaid: number;
+  // Stage-wise breakdown for clarity
+  civilPaid: number;
+  electricalPaid: number;
 }
 
 export interface TeamMember {
@@ -884,33 +887,15 @@ const App: React.FC = () => {
       return locationMatch && (refMatch || inMatch);
     };
     
-    // Determine the current user's relevant work stage(s) to filter payments
-    const getUserStages = (): ('civil' | 'electrical')[] | null => {
-      if (!currentUser) return null;
-      // Admin/Manager/Accountant see all payments (no stage filter)
-      if (['Admin', 'Manager', 'Accountant'].includes(currentUser.role)) return null;
-      // Civil team sees only civil stage payments
-      if (currentUser.role === 'Civil') return ['civil'];
-      // Electrical team sees only electrical stage payments
-      if (currentUser.role === 'Electricals') return ['electrical'];
-      // Electrical + Civil sees both
-      if (currentUser.role === 'Electrical + Civil') return ['civil', 'electrical'];
-      // Default: no filter for other roles
-      return null;
-    };
-    
-    const userStages = getUserStages();
-    
     console.log('=== SITE MATCHING DEBUG ===');
     console.log('Sites:', sites.map(s => s.siteName));
     console.log('Payment Requests:', paymentRequests.map(r => ({ siteName: r.siteName, status: r.status, amount: r.amount, workStage: r.workStage })));
-    if (userStages) console.log('User Stage Filter:', userStages);
     
     return sites.map(site => {
       console.log(`\n--- Processing Site: "${site.siteName}" ---`);
       
       // Match by siteId first, then by intelligent name matching
-      let requestsForSite = paymentRequests.filter(req => {
+      const requestsForSite = paymentRequests.filter(req => {
         if (req.siteId && req.siteId === site.id) {
           console.log(`✓ Matched by siteId: "${req.siteName}"`);
           return true;
@@ -921,24 +906,6 @@ const App: React.FC = () => {
         }
         return false;
       });
-      
-      // If user has a stage filter, apply it to show only their stage's payments
-      if (userStages) {
-        requestsForSite = requestsForSite.filter(req => {
-          const reqStage = req.workStage;
-          if (!reqStage) {
-            // Legacy request without workStage: infer from the user's assignment to the site
-            const inCivil = Array.isArray(site.stages?.civil?.assignedTeamIds) && site.stages.civil.assignedTeamIds.includes(currentUser!.id);
-            const inElectrical = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser!.id);
-            // If user is in civil, assume legacy civil; if electrical, assume electrical; otherwise exclude
-            if (inCivil && userStages.includes('civil')) return true;
-            if (inElectrical && userStages.includes('electrical')) return true;
-            return false;
-          }
-          return userStages.includes(reqStage);
-        });
-        console.log(`Stage-filtered requests: ${requestsForSite.length}`);
-      }
       
       console.log(`Total matched requests: ${requestsForSite.length}`);
       
@@ -951,16 +918,36 @@ const App: React.FC = () => {
         }
       }
 
-      // Calculate total paid: sum of all PAID requests for this site (filtered by stage if applicable)
+      // Calculate total paid BY STAGE for clarity
       const paidRequests = requestsForSite.filter(r => r.status === 'Paid' && r.amount);
-      const totalPaid = paidRequests.reduce((sum, req) => {
+      
+      let civilPaid = 0;
+      let electricalPaid = 0;
+      
+      paidRequests.forEach(req => {
         const cleanAmount = (req.amount || '').replace(/[^0-9.-]/g, '');
         const amount = parseFloat(cleanAmount) || 0;
-        console.log(`  Adding paid request: Rs ${amount} (${req.siteName}, stage: ${req.workStage || 'legacy'})`);
-        return sum + amount;
-      }, 0);
+        
+        // Determine stage: use workStage if available, else infer from site assignment
+        let stage = req.workStage;
+        if (!stage) {
+          // Legacy request: infer from site's current stage or team assignment
+          // Default to civil for old data
+          stage = site.currentStage === 'electrical' ? 'electrical' : 'civil';
+        }
+        
+        if (stage === 'civil') {
+          civilPaid += amount;
+          console.log(`  Adding CIVIL paid request: ₹${amount} (${req.siteName})`);
+        } else if (stage === 'electrical') {
+          electricalPaid += amount;
+          console.log(`  Adding ELECTRICAL paid request: ₹${amount} (${req.siteName})`);
+        }
+      });
       
-      console.log(`✓ Total Paid for "${site.siteName}": ₹${totalPaid}`);
+      const totalPaid = civilPaid + electricalPaid;
+      
+      console.log(`✓ Total Paid for "${site.siteName}": Civil=₹${civilPaid}, Electrical=₹${electricalPaid}, Total=₹${totalPaid}`);
 
       return { 
         id: site.id, 
@@ -968,10 +955,12 @@ const App: React.FC = () => {
         requestCount: requestsForSite.length, 
         siteStatus, 
         siteManagerId: site.siteManagerId,
-        totalPaid
+        totalPaid,
+        civilPaid,
+        electricalPaid
       };
     }).sort((a, b) => a.name.localeCompare(b.name));
-  }, [sites, paymentRequests, currentUser]);
+  }, [sites, paymentRequests]);
   
   const ongoingSiteNames = useMemo(() => {
     return projectSummaries
