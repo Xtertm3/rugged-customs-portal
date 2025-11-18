@@ -131,6 +131,40 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             <p className="text-sm text-gray-500">Status:</p>
                                             <p className={`text-sm font-bold ${statusStyle.text}`}>{summary.siteStatus}</p>
                                         </div>
+                                        
+                                        {/* Work Stage Progress Indicator */}
+                                        {site.currentStage && site.stages && (
+                                            <div className="mt-3 p-2 bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg border border-gray-200">
+                                                <p className="text-xs font-semibold text-gray-600 mb-2">Work Stage Progress</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`flex-1 text-center py-1 px-2 rounded text-xs font-bold ${
+                                                        site.stages.civil.status === 'completed' ? 'bg-green-500 text-white' :
+                                                        site.stages.civil.status === 'in-progress' ? 'bg-blue-500 text-white' :
+                                                        'bg-gray-300 text-gray-600'
+                                                    }`}>
+                                                        {site.stages.civil.status === 'completed' ? '✓ Civil' :
+                                                         site.stages.civil.status === 'in-progress' ? '⚙️ Civil' :
+                                                         'Civil'}
+                                                    </div>
+                                                    <span className="text-gray-400">→</span>
+                                                    <div className={`flex-1 text-center py-1 px-2 rounded text-xs font-bold ${
+                                                        site.stages.electrical.status === 'completed' ? 'bg-green-500 text-white' :
+                                                        site.stages.electrical.status === 'in-progress' ? 'bg-amber-500 text-white' :
+                                                        'bg-gray-300 text-gray-600'
+                                                    }`}>
+                                                        {site.stages.electrical.status === 'completed' ? '✓ Elec' :
+                                                         site.stages.electrical.status === 'in-progress' ? '⚡ Elec' :
+                                                         'Elec'}
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-gray-600 mt-1 text-center">
+                                                    {site.currentStage === 'civil' && 'Civil work in progress'}
+                                                    {site.currentStage === 'electrical' && 'Electrical work in progress'}
+                                                    {site.currentStage === 'completed' && 'All stages completed'}
+                                                </p>
+                                            </div>
+                                        )}
+                                        
                                         {site.latitude && site.longitude && (
                                             <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                                                 <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>

@@ -13,9 +13,10 @@ interface TransactionReportProps {
 }
 
 export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites, teamMembers }) => {
-  const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'all'>('bySite');
+  const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'byStage' | 'all'>('bySite');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
+  const [selectedStage, setSelectedStage] = useState<'all' | 'civil' | 'electrical'>('all');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
 
   // Extract key identifiers from site names for matching - more precise
@@ -131,9 +132,21 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       arr = arr.filter(e => e.teamMemberName === selectedTeam);
     }
     
+    // Filter by work stage (when a specific stage is selected)
+    if (selectedStage !== 'all') {
+      arr = arr.filter(e => {
+        if (e.type === 'Payment') {
+          // @ts-ignore - Check workStage field
+          return (e as any).workStage === selectedStage;
+        }
+        // Materials don't have stage tracking yet, so include all if filtering by stage
+        return e.type === 'Material';
+      });
+    }
+    
     // sort by newest first
     return arr.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [paidPaymentEntries, materialEntries, typeFilter, selectedSite, selectedTeam, viewMode, sites]);
+  }, [paidPaymentEntries, materialEntries, typeFilter, selectedSite, selectedTeam, selectedStage, viewMode, sites]);
 
   const groupedBySite = useMemo(() => {
     const map: Record<string, typeof allEntries> = {};
@@ -166,6 +179,37 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       map[team].push(e);
     });
     return Object.keys(map).sort().map(team => ({ team, entries: map[team] }));
+  }, [allEntries]);
+
+  const groupedByStage = useMemo(() => {
+    const map: Record<string, typeof allEntries> = {
+      'civil': [],
+      'electrical': [],
+      'unknown': []
+    };
+    allEntries.forEach(e => {
+      if (e.type === 'Payment') {
+        // @ts-ignore - Get workStage from payment
+        const stage = (e as any).workStage || 'unknown';
+        if (stage === 'civil' || stage === 'electrical') {
+          map[stage].push(e);
+        } else {
+          map['unknown'].push(e);
+        }
+      } else {
+        // Materials don't have stage info yet
+        map['unknown'].push(e);
+      }
+    });
+    
+    // Return only stages that have entries
+    return Object.keys(map)
+      .filter(stage => map[stage].length > 0)
+      .sort()
+      .map(stage => ({ 
+        stage: stage === 'civil' ? 'Civil Work' : stage === 'electrical' ? 'Electrical Work' : 'Unassigned Stage', 
+        entries: map[stage] 
+      }));
   }, [allEntries]);
 
   const exportCSV = () => {
@@ -424,13 +468,25 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
               </select>
             )}
             
-            {viewMode === 'all' && (
+            {(viewMode === 'byStage' || viewMode === 'all') && (
               <div className="w-full text-gray-600 py-2 px-3">
-                Showing all transactions (no filter available in flat list view)
+                {viewMode === 'byStage' ? 'Grouped by work stage' : 'Showing all transactions'}
               </div>
             )}
           </div>
           <div className="flex items-center gap-2">
+            {/* Global stage filter - works across all view modes */}
+            <select 
+              className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+              value={selectedStage} 
+              onChange={e => setSelectedStage(e.target.value as any)}
+              title="Filter by work stage (applies to all views)"
+            >
+              <option value="all">All Stages</option>
+              <option value="civil">🔨 Civil Only</option>
+              <option value="electrical">⚡ Electrical Only</option>
+            </select>
+            
             <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}>
               <option value="All">All</option>
               <option value="Payments">Payments</option>
@@ -440,9 +496,11 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
               setViewMode(e.target.value as any);
               setSelectedSite('all');
               setSelectedTeam('all');
+              setSelectedStage('all');
             }}>
               <option value="bySite">Group: Site</option>
               <option value="byTeam">Group: Team</option>
+              <option value="byStage">Group: Stage</option>
               <option value="all">Flat List</option>
             </select>
           </div>
@@ -496,6 +554,44 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
                         <td className="px-3 py-2">{e.type}</td>
                         <td className="px-3 py-2">{e.timestamp}</td>
                         <td className="px-3 py-2">{e.siteName}</td>
+                        <td className="px-3 py-2">{e.detail}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+
+          {viewMode === 'byStage' && groupedByStage.map(g => (
+            <div key={g.stage} className="border border-gray-200 rounded-lg mb-3 overflow-hidden">
+              <div className={`px-4 py-3 font-semibold text-gray-900 ${
+                g.stage === 'Civil Work' ? 'bg-blue-100' : 
+                g.stage === 'Electrical Work' ? 'bg-amber-100' : 
+                'bg-gray-100'
+              }`}>
+                {g.stage === 'Civil Work' && '🔨 '}
+                {g.stage === 'Electrical Work' && '⚡ '}
+                {g.stage} • {g.entries.length} item{g.entries.length !== 1 ? 's' : ''}
+              </div>
+              <div className="p-3">
+                <table className="w-full text-sm text-left text-gray-700">
+                  <thead className="text-xs text-gray-500 uppercase bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2">Type</th>
+                      <th className="px-3 py-2">When</th>
+                      <th className="px-3 py-2">Site</th>
+                      <th className="px-3 py-2">Team</th>
+                      <th className="px-3 py-2">Detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.entries.map((e: any) => (
+                      <tr key={e.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="px-3 py-2">{e.type}</td>
+                        <td className="px-3 py-2">{e.timestamp}</td>
+                        <td className="px-3 py-2">{e.siteName}</td>
+                        <td className="px-3 py-2">{e.teamMemberName}</td>
                         <td className="px-3 py-2">{e.detail}</td>
                       </tr>
                     ))}
