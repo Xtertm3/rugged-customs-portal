@@ -56,6 +56,34 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
   };
 
   const paymentEntries = useMemo(() => {
+    const parseDateSafe = (value?: string): Date | null => {
+      if (!value) return null;
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const inferWorkStage = (req: PaymentRequest, eventTimestamp?: string): 'civil' | 'electrical' | 'unknown' => {
+      // 1) Prefer explicit new field
+      if (req.workStage === 'civil' || req.workStage === 'electrical') return req.workStage;
+      // 2) Fallback to legacy field
+      if (req.stage === 'Electricals') return 'electrical';
+      if (req.stage === 'Civil') return 'civil';
+      // 3) Use site stage transition dates if we can resolve the site
+      const site = (req.siteId ? sites.find(s => s.id === req.siteId) : sites.find(s => s.siteName && req.siteName && s.siteName.toLowerCase() === req.siteName.toLowerCase())) || undefined;
+      if (site) {
+        const ts = parseDateSafe(eventTimestamp || req.timestamp);
+        const electricalStart = parseDateSafe(site.stages?.electrical?.startDate || undefined);
+        const civilCompletedAt = parseDateSafe(site.stages?.civil?.completionDate || undefined);
+        if (ts) {
+          if (electricalStart && ts < electricalStart) return 'civil';
+          if (civilCompletedAt && ts <= civilCompletedAt) return 'civil';
+          if (electricalStart && ts >= electricalStart) return 'electrical';
+        }
+      }
+      // 4) Conservative default is civil (to avoid over-counting electrical)
+      return 'civil';
+    };
+
     return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => {
       // Find the team member who the payment is for (not who approved it)
       let teamMemberName = 'Unknown';
@@ -76,6 +104,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       const paymentInfo = req.paymentFor || 'Payment';
       const reason = req.reasons ? ` - ${req.reasons}` : '';
       const detail = `${h.status} - ${paymentInfo}${req.amount ? ` (Rs ${req.amount})` : ''}${reason}`;
+      const workStage = inferWorkStage(req, h.timestamp);
       return {
         id: `${req.id}-${h.timestamp}`,
         type: 'Payment' as const,
@@ -84,7 +113,8 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
         teamMemberName,
         timestamp: h.timestamp,
         detail,
-        status: h.status
+        status: h.status,
+        workStage
       };
     }));
   }, [paymentRequests, teamMembers]);
