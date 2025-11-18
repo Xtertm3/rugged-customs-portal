@@ -480,8 +480,28 @@ const App: React.FC = () => {
         } else {
             // Find the site to get its ID
             const matchingSite = sites.find(s => s.siteName === formData.siteName);
+            // Infer work stage for this request so previous (civil) team can still submit after stage moves
+            const inferWorkStage = (): 'civil' | 'electrical' | undefined => {
+              if (!matchingSite) {
+                // Fallback to role-based inference (no site context)
+                if (currentUser.role === 'Civil') return 'civil';
+                if (currentUser.role === 'Electricals') return 'electrical';
+                if (currentUser.role === 'Electrical + Civil') return 'civil';
+                return undefined;
+              }
+              const inCivil = Array.isArray(matchingSite.stages?.civil?.assignedTeamIds) && matchingSite.stages.civil.assignedTeamIds.includes(currentUser.id);
+              const inElectrical = Array.isArray(matchingSite.stages?.electrical?.assignedTeamIds) && matchingSite.stages.electrical.assignedTeamIds.includes(currentUser.id);
+              if (inCivil) return 'civil';
+              if (inElectrical) return 'electrical';
+              // If not explicitly assigned, fall back to role
+              if (currentUser.role === 'Civil') return 'civil';
+              if (currentUser.role === 'Electricals') return 'electrical';
+              if (currentUser.role === 'Electrical + Civil') return matchingSite.currentStage === 'electrical' ? 'electrical' : 'civil';
+              return undefined;
+            };
+            const workStage = inferWorkStage();
             
-            const newRequest: PaymentRequest = { 
+      const newRequest: PaymentRequest = { 
                 ...formData, 
                 id: new Date().toISOString(), 
                 timestamp: new Date().toLocaleString(), 
@@ -490,7 +510,9 @@ const App: React.FC = () => {
                 photos: photoAttachments, 
                 documents: documentAttachments,
                 statusHistory: [statusEntry],
-                siteId: matchingSite?.id // Add siteId for reliable matching
+        siteId: matchingSite?.id, // Add siteId for reliable matching
+        // Tag the request with the correct work stage so reports and permissions remain accurate
+        workStage: workStage
             };
             await firebaseService.savePaymentRequest(newRequest);
             if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {

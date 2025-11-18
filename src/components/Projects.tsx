@@ -40,13 +40,19 @@ export const Projects: React.FC<ProjectsProps> = ({
     onCompletionSubmitClick
 }) => {
     const displayedSummaries = useMemo(() => {
+        // Admin-like roles see all sites
         if (!currentUser || currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Accountant') {
             return projectSummaries;
         }
+        // Field roles see sites where they are part of any stage team OR legacy manager
         if (currentUser.role === 'Civil' || currentUser.role === 'Electricals' || currentUser.role === 'Electrical + Civil' || currentUser.role === 'Supervisor') {
             return projectSummaries.filter(summary => {
                 const site = sites.find(s => s.id === summary.id);
-                return site?.siteManagerId === currentUser.id;
+                if (!site) return false;
+                const isLegacyManager = site.siteManagerId === currentUser.id;
+                const inCivilTeam = Array.isArray(site.stages?.civil?.assignedTeamIds) && site.stages.civil.assignedTeamIds.includes(currentUser.id);
+                const inElectricalTeam = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser.id);
+                return isLegacyManager || inCivilTeam || inElectricalTeam;
             });
         }
         return [];
