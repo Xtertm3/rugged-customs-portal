@@ -439,12 +439,12 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-2 flex items-center gap-2">
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Filter dropdown based on view mode */}
             {viewMode === 'bySite' && (
               <select 
-                className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+                className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
                 value={selectedSite} 
                 onChange={e => setSelectedSite(e.target.value)}
               >
@@ -457,7 +457,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
             
             {viewMode === 'byTeam' && (
               <select 
-                className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+                className="flex-1 min-w-[200px] bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
                 value={selectedTeam} 
                 onChange={e => setSelectedTeam(e.target.value)}
               >
@@ -469,15 +469,14 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
             )}
             
             {(viewMode === 'byStage' || viewMode === 'all') && (
-              <div className="w-full text-gray-600 py-2 px-3">
+              <div className="flex-1 min-w-[200px] text-gray-600 py-2 px-3">
                 {viewMode === 'byStage' ? 'Grouped by work stage' : 'Showing all transactions'}
               </div>
             )}
-          </div>
-          <div className="flex items-center gap-2">
+            
             {/* Global stage filter - works across all view modes */}
             <select 
-              className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+              className="flex-1 min-w-[150px] bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
               value={selectedStage} 
               onChange={e => setSelectedStage(e.target.value as any)}
               title="Filter by work stage (applies to all views)"
@@ -487,12 +486,13 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
               <option value="electrical">⚡ Electrical Only</option>
             </select>
             
-            <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}>
+            <select className="flex-1 min-w-[130px] bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}>
               <option value="All">All</option>
               <option value="Payments">Payments</option>
               <option value="Materials">Materials</option>
             </select>
-            <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={viewMode} onChange={e => {
+            
+            <select className="flex-1 min-w-[150px] bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={viewMode} onChange={e => {
               setViewMode(e.target.value as any);
               setSelectedSite('all');
               setSelectedTeam('all');

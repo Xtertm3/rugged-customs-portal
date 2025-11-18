@@ -223,6 +223,44 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 <p className="text-md text-gray-500">{site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
                 
+                {/* Work Stage Initialization for Old Sites */}
+                {canEdit && (!site.currentStage || !site.stages) && (
+                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded-lg">
+                    <h4 className="text-sm font-semibold text-yellow-800 mb-2">⚠️ Work Stage Tracking Not Set Up</h4>
+                    <p className="text-xs text-yellow-700 mb-3">
+                      This site was created before work stage tracking. Click below to initialize stages and mark civil work as completed.
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (confirm('Initialize Work Stage Tracking?\n\nThis will:\n- Mark civil work as COMPLETED\n- Move site to Electrical Stage\n- Keep all existing data intact')) {
+                          const updatedSite = {
+                            ...site,
+                            currentStage: 'electrical' as const,
+                            stages: {
+                              civil: {
+                                status: 'completed' as const,
+                                assignedTeamIds: site.siteManagerId ? [site.siteManagerId] : [],
+                                startDate: undefined,
+                                completionDate: new Date().toISOString()
+                              },
+                              electrical: {
+                                status: 'in-progress' as const,
+                                assignedTeamIds: [],
+                                startDate: new Date().toISOString(),
+                                completionDate: undefined
+                              }
+                            }
+                          };
+                          onEditSite(updatedSite);
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition-colors"
+                    >
+                      ✓ Mark Civil as Completed & Start Electrical Stage
+                    </button>
+                  </div>
+                )}
+                
                 {/* Work Stage Progress Indicator */}
                 {site.currentStage && site.stages && (
                   <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg border border-gray-200">
