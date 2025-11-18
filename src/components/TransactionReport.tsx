@@ -12,44 +12,40 @@ interface TransactionReportProps {
   teamMembers: TeamMember[];
 }
 
-export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, teamMembers }) => {
+export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites, teamMembers }) => {
   const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'all'>('bySite');
   const [textFilter, setTextFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
+
+  // Utility for fuzzy site name matching
+  const normalize = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '');
 
   const paymentEntries = useMemo(() => {
     return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => {
       // Find the team member who the payment is for (not who approved it)
       let teamMemberName = 'Unknown';
-      
-      // Try to find who the payment is for
       if (req.assignTo) {
-        // Payment assigned to specific team member
         const member = teamMembers.find(m => m.id === req.assignTo);
         teamMemberName = member?.name || 'Unknown Team Member';
       } else if (req.transporterId) {
-        // Payment for transporter
         const member = teamMembers.find(m => m.id === req.transporterId);
         teamMemberName = member?.name || 'Unknown Transporter';
       } else if (req.statusHistory && req.statusHistory.length > 0) {
-        // Get the person who created the request (first entry in status history)
         const creator = req.statusHistory[0];
         if (creator && creator.userId) {
           const member = teamMembers.find(m => m.id === creator.userId);
           teamMemberName = member?.name || creator.userName || 'Unknown';
         }
       }
-      
       // Build detail with payment info and reason/description
       const paymentInfo = req.paymentFor || 'Payment';
-      const amount = req.amount ? `Rs ${req.amount}` : '';
       const reason = req.reasons ? ` - ${req.reasons}` : '';
-      const detail = `${h.status} - ${paymentInfo}${amount ? ` (${amount})` : ''}${reason}`;
-      
+      const detail = `${h.status} - ${paymentInfo}${req.amount ? ` (Rs ${req.amount})` : ''}${reason}`;
       return {
         id: `${req.id}-${h.timestamp}`,
         type: 'Payment' as const,
         siteName: req.siteName,
+        siteId: req.siteId,
         teamMemberName,
         timestamp: h.timestamp,
         detail,
@@ -87,14 +83,23 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
   }, [paidPaymentEntries, materialEntries, typeFilter, textFilter]);
 
   const groupedBySite = useMemo(() => {
-    const map: Record<string, typeof allEntries> = {} as any;
+    const map: Record<string, typeof allEntries> = {};
     allEntries.forEach(e => {
-      const site = e.siteName || 'Unknown Site';
-      if (!map[site]) map[site] = [] as any;
-      map[site].push(e);
+      let siteKey = e.siteName || 'Unknown Site';
+      if (e.type === 'Payment') {
+        // Find the actual site object by fuzzy match or siteId
+        let matchedSite = (sites || []).find(s => {
+          // @ts-ignore
+          if ((e as any).siteId && s.id === (e as any).siteId) return true;
+          return normalize(s.siteName) === normalize(e.siteName);
+        });
+        siteKey = matchedSite ? matchedSite.siteName : siteKey;
+      }
+      if (!map[siteKey]) map[siteKey] = [];
+      map[siteKey].push(e);
     });
     return Object.keys(map).sort().map(site => ({ site, entries: map[site] }));
-  }, [allEntries]);
+  }, [allEntries, sites]);
 
   const groupedByTeam = useMemo(() => {
     const map: Record<string, typeof allEntries> = {} as any;
@@ -109,45 +114,48 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
   const exportCSV = () => {
     // Site Wise Payment Report with exact columns as specified
     const headers = ['Site Name', 'Payment details / Reason for Payment', 'Amount', 'Paid On', 'Paid to / Team Name'];
-    
-    // Get only PAID payment entries grouped by site
-    const paidPayments = paymentRequests
-      .filter(req => req.status === 'Paid')
-      .map(req => {
-        // Find the team member who the payment is for
-        let teamMemberName = 'Unknown';
-        if (req.assignTo) {
-          const member = teamMembers.find(m => m.id === req.assignTo);
-          teamMemberName = member?.name || 'Unknown Team Member';
-        } else if (req.transporterId) {
-          const member = teamMembers.find(m => m.id === req.transporterId);
-          teamMemberName = member?.name || 'Unknown Transporter';
-        } else if (req.statusHistory && req.statusHistory.length > 0) {
-          const creator = req.statusHistory[0];
-          if (creator && creator.userId) {
-            const member = teamMembers.find(m => m.id === creator.userId);
-            teamMemberName = member?.name || creator.userName || 'Unknown';
-          }
+    let paidPayments = paymentRequests.filter(req => req.status === 'Paid');
+    if (viewMode === 'bySite' && groupedBySite.length === 1) {
+      const selectedSiteName = groupedBySite[0].site;
+      paidPayments = paidPayments.filter(req => {
+        if (req.siteId) {
+          const siteObj = (sites || []).find(s => s.id === req.siteId);
+          return siteObj && siteObj.siteName === selectedSiteName;
         }
-
-        // Find when it was paid (last status change to Paid)
-        const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
-        const paidOn = paidEntry?.timestamp || req.timestamp;
-
-        // Payment details/reason - combine paymentFor and reasons if both exist
-        const paymentFor = req.paymentFor || 'Payment';
-        const reason = req.reasons ? ` - ${req.reasons}` : '';
-        const paymentDetails = `${paymentFor}${reason}`;
-
-        return [
-          req.siteName || 'Unknown Site',
-          paymentDetails,
-          `Rs ${(Number(req.amount) || 0).toLocaleString()}`,
-          paidOn,
-          teamMemberName
-        ];
+        return normalize(req.siteName) === normalize(selectedSiteName);
       });
-
+    }
+    const rows = paidPayments.map(req => {
+      // Find the team member who the payment is for
+      let teamMemberName = 'Unknown';
+      if (req.assignTo) {
+        const member = teamMembers.find(m => m.id === req.assignTo);
+        teamMemberName = member?.name || 'Unknown Team Member';
+      } else if (req.transporterId) {
+        const member = teamMembers.find(m => m.id === req.transporterId);
+        teamMemberName = member?.name || 'Unknown Transporter';
+      } else if (req.statusHistory && req.statusHistory.length > 0) {
+        const creator = req.statusHistory[0];
+        if (creator && creator.userId) {
+          const member = teamMembers.find(m => m.id === creator.userId);
+          teamMemberName = member?.name || creator.userName || 'Unknown';
+        }
+      }
+      // Find when it was paid (last status change to Paid)
+      const paidEntry = req.statusHistory.find(h => h.status === 'Paid');
+      const paidOn = paidEntry?.timestamp || req.timestamp;
+      // Payment details/reason - combine paymentFor and reasons if both exist
+      const paymentFor = req.paymentFor || 'Payment';
+      const reason = req.reasons ? ` - ${req.reasons}` : '';
+      const paymentDetails = `${paymentFor}${reason}`;
+      return [
+        req.siteName || 'Unknown Site',
+        paymentDetails,
+        `Rs ${(Number(req.amount) || 0).toLocaleString()}`,
+        paidOn,
+        teamMemberName
+      ];
+    });
     // Create CSV with header and company info
     const companyHeader = [
       ['Rugged Customs'],
@@ -155,20 +163,18 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       ['Site Wise Payment Report'],
       ['']
     ];
-    
-    // Add BOM for proper UTF-8 encoding
     const BOM = '\uFEFF';
     const csvRows = [
-      ...companyHeader.map(row => row.join(',')),
-      headers.map(h => `"${h}"`).join(','),
-      ...paidPayments.map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
-
-    const blob = new Blob([BOM + csvRows], { type: 'text/csv;charset=utf-8;' });
+      ...companyHeader,
+      headers,
+      ...rows.map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+    ];
+    const csvContent = BOM + csvRows.map(r => Array.isArray(r) ? r.join(',') : r).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Site_Wise_Payment_Report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = 'site_wise_payment_report.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
