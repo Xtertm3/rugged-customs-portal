@@ -790,27 +790,38 @@ const App: React.FC = () => {
 };
 
   const projectSummaries = useMemo((): ProjectSummary[] => {
-    // Extract key identifiers from site names for matching
+    // Extract key identifiers from site names for matching - more precise
     const extractIdentifiers = (name: string) => {
-      const normalized = name.toLowerCase();
-      // Extract patterns like "in-1076081", "rrl-7820378", "bisarhalli", "honniganur"
-      const patterns = normalized.match(/[a-z]+|(?:in|rrl|rl)-?\d+/g) || [];
-      return new Set(patterns);
+      const normalized = name.toLowerCase().replace(/\s+/g, '');
+      
+      // Extract specific patterns
+      const locationMatch = normalized.match(/[a-z]{4,}/g) || []; // Location names (4+ letters)
+      const refNumbers = normalized.match(/(?:rrl|rl)-?\d+/gi) || []; // Reference numbers
+      const inNumbers = normalized.match(/in-?\d+/gi) || []; // IN numbers
+      
+      return {
+        location: locationMatch.map(l => l.toLowerCase()),
+        refNumbers: refNumbers.map(r => r.toLowerCase().replace(/[^a-z0-9]/g, '')),
+        inNumbers: inNumbers.map(i => i.toLowerCase().replace(/[^a-z0-9]/g, ''))
+      };
     };
     
-    // Check if two site names have significant overlap in identifiers
+    // Check if two site names match - must have matching location AND at least one matching number
     const sitesMatch = (siteName1: string, siteName2: string) => {
       const ids1 = extractIdentifiers(siteName1);
       const ids2 = extractIdentifiers(siteName2);
       
-      // Count how many identifiers match
-      let matchCount = 0;
-      ids1.forEach(id => {
-        if (ids2.has(id)) matchCount++;
-      });
+      // Check if location matches (at least one common location name)
+      const locationMatch = ids1.location.some(l1 => ids2.location.some(l2 => l1 === l2));
       
-      // If at least 2 identifiers match (e.g., location name + reference number), consider it a match
-      return matchCount >= 2;
+      // Check if reference numbers match
+      const refMatch = ids1.refNumbers.some(r1 => ids2.refNumbers.some(r2 => r1 === r2));
+      
+      // Check if IN numbers match
+      const inMatch = ids1.inNumbers.some(i1 => ids2.inNumbers.some(i2 => i1 === i2));
+      
+      // Must have location match AND at least one number match for a valid match
+      return locationMatch && (refMatch || inMatch);
     };
     
     console.log('=== SITE MATCHING DEBUG ===');
