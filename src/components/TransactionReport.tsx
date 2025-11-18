@@ -14,7 +14,8 @@ interface TransactionReportProps {
 
 export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, onClose, paymentRequests, materialUsageLogs, sites, teamMembers }) => {
   const [viewMode, setViewMode] = useState<'bySite' | 'byTeam' | 'all'>('bySite');
-  const [textFilter, setTextFilter] = useState('');
+  const [selectedSite, setSelectedSite] = useState<string>('all');
+  const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
 
   // Utility for fuzzy site name matching
@@ -74,13 +75,30 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     let arr = [...paidPaymentEntries, ...materialEntries];
     if (typeFilter === 'Payments') arr = paidPaymentEntries;
     if (typeFilter === 'Materials') arr = materialEntries;
-    if (textFilter) {
-      const f = textFilter.toLowerCase();
-      arr = arr.filter(e => (e.siteName || '').toLowerCase().includes(f) || (e.teamMemberName || '').toLowerCase().includes(f) || (e.detail || '').toLowerCase().includes(f));
+    
+    // Filter by selected site (when viewMode is bySite and a specific site is selected)
+    if (viewMode === 'bySite' && selectedSite !== 'all') {
+      arr = arr.filter(e => {
+        if (e.type === 'Payment') {
+          // @ts-ignore
+          if ((e as any).siteId) {
+            const siteObj = (sites || []).find(s => s.id === (e as any).siteId);
+            return siteObj && siteObj.siteName === selectedSite;
+          }
+          return normalize(e.siteName) === normalize(selectedSite);
+        }
+        return normalize(e.siteName) === normalize(selectedSite);
+      });
     }
+    
+    // Filter by selected team (when viewMode is byTeam and a specific team is selected)
+    if (viewMode === 'byTeam' && selectedTeam !== 'all') {
+      arr = arr.filter(e => e.teamMemberName === selectedTeam);
+    }
+    
     // sort by newest first
     return arr.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [paidPaymentEntries, materialEntries, typeFilter, textFilter]);
+  }, [paidPaymentEntries, materialEntries, typeFilter, selectedSite, selectedTeam, viewMode, sites]);
 
   const groupedBySite = useMemo(() => {
     const map: Record<string, typeof allEntries> = {};
@@ -115,14 +133,36 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     // Site Wise Payment Report with exact columns as specified
     const headers = ['Site Name', 'Payment details / Reason for Payment', 'Amount', 'Paid On', 'Paid to / Team Name'];
     let paidPayments = paymentRequests.filter(req => req.status === 'Paid');
-    if (viewMode === 'bySite' && groupedBySite.length === 1) {
-      const selectedSiteName = groupedBySite[0].site;
+    
+    // Apply site filter if a specific site is selected
+    if (viewMode === 'bySite' && selectedSite !== 'all') {
       paidPayments = paidPayments.filter(req => {
         if (req.siteId) {
           const siteObj = (sites || []).find(s => s.id === req.siteId);
-          return siteObj && siteObj.siteName === selectedSiteName;
+          return siteObj && siteObj.siteName === selectedSite;
         }
-        return normalize(req.siteName) === normalize(selectedSiteName);
+        return normalize(req.siteName) === normalize(selectedSite);
+      });
+    }
+    
+    // Apply team filter if a specific team is selected
+    if (viewMode === 'byTeam' && selectedTeam !== 'all') {
+      paidPayments = paidPayments.filter(req => {
+        let teamMemberName = 'Unknown';
+        if (req.assignTo) {
+          const member = teamMembers.find(m => m.id === req.assignTo);
+          teamMemberName = member?.name || 'Unknown Team Member';
+        } else if (req.transporterId) {
+          const member = teamMembers.find(m => m.id === req.transporterId);
+          teamMemberName = member?.name || 'Unknown Transporter';
+        } else if (req.statusHistory && req.statusHistory.length > 0) {
+          const creator = req.statusHistory[0];
+          if (creator && creator.userId) {
+            const member = teamMembers.find(m => m.id === creator.userId);
+            teamMemberName = member?.name || creator.userName || 'Unknown';
+          }
+        }
+        return teamMemberName === selectedTeam;
       });
     }
     const rows = paidPayments.map(req => {
@@ -193,12 +233,49 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Site Wise Payment Report', 105, 32, { align: 'center' });
+    
+    // Report title based on view mode
+    let reportTitle = 'Transaction Report';
+    if (viewMode === 'bySite') reportTitle = 'Site Wise Payment Report';
+    else if (viewMode === 'byTeam') reportTitle = 'Team Wise Payment Report';
+    doc.text(reportTitle, 105, 32, { align: 'center' });
 
-    // Get only PAID payment entries
-    const paidPayments = paymentRequests
-      .filter(req => req.status === 'Paid')
-      .map(req => {
+    // Get only PAID payment entries and apply filters
+    let filteredPayments = paymentRequests.filter(req => req.status === 'Paid');
+    
+    // Apply site filter if a specific site is selected
+    if (viewMode === 'bySite' && selectedSite !== 'all') {
+      filteredPayments = filteredPayments.filter(req => {
+        if (req.siteId) {
+          const siteObj = (sites || []).find(s => s.id === req.siteId);
+          return siteObj && siteObj.siteName === selectedSite;
+        }
+        return normalize(req.siteName) === normalize(selectedSite);
+      });
+    }
+    
+    // Apply team filter if a specific team is selected
+    if (viewMode === 'byTeam' && selectedTeam !== 'all') {
+      filteredPayments = filteredPayments.filter(req => {
+        let teamMemberName = 'Unknown';
+        if (req.assignTo) {
+          const member = teamMembers.find(m => m.id === req.assignTo);
+          teamMemberName = member?.name || 'Unknown Team Member';
+        } else if (req.transporterId) {
+          const member = teamMembers.find(m => m.id === req.transporterId);
+          teamMemberName = member?.name || 'Unknown Transporter';
+        } else if (req.statusHistory && req.statusHistory.length > 0) {
+          const creator = req.statusHistory[0];
+          if (creator && creator.userId) {
+            const member = teamMembers.find(m => m.id === creator.userId);
+            teamMemberName = member?.name || creator.userName || 'Unknown';
+          }
+        }
+        return teamMemberName === selectedTeam;
+      });
+    }
+    
+    const paidPayments = filteredPayments.map(req => {
         // Find the team member who the payment is for
         let teamMemberName = 'Unknown';
         if (req.assignTo) {
@@ -279,7 +356,38 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="md:col-span-2 flex items-center gap-2">
-            <input value={textFilter} onChange={e => setTextFilter(e.target.value)} placeholder="Search site, user or details..." className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" />
+            {/* Filter dropdown based on view mode */}
+            {viewMode === 'bySite' && (
+              <select 
+                className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+                value={selectedSite} 
+                onChange={e => setSelectedSite(e.target.value)}
+              >
+                <option value="all">All Sites</option>
+                {sites.map(site => (
+                  <option key={site.id} value={site.siteName}>{site.siteName}</option>
+                ))}
+              </select>
+            )}
+            
+            {viewMode === 'byTeam' && (
+              <select 
+                className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" 
+                value={selectedTeam} 
+                onChange={e => setSelectedTeam(e.target.value)}
+              >
+                <option value="all">All Team Members</option>
+                {teamMembers.map(member => (
+                  <option key={member.id} value={member.name}>{member.name}</option>
+                ))}
+              </select>
+            )}
+            
+            {viewMode === 'all' && (
+              <div className="w-full text-gray-600 py-2 px-3">
+                Showing all transactions (no filter available in flat list view)
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}>
@@ -287,7 +395,11 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
               <option value="Payments">Payments</option>
               <option value="Materials">Materials</option>
             </select>
-            <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={viewMode} onChange={e => setViewMode(e.target.value as any)}>
+            <select className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800" value={viewMode} onChange={e => {
+              setViewMode(e.target.value as any);
+              setSelectedSite('all');
+              setSelectedTeam('all');
+            }}>
               <option value="bySite">Group: Site</option>
               <option value="byTeam">Group: Team</option>
               <option value="all">Flat List</option>
