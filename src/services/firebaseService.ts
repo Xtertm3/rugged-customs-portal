@@ -25,6 +25,25 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// Utility: remove undefined values recursively to satisfy Firestore constraints
+const pruneUndefined = (value: any): any => {
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => pruneUndefined(v))
+      .filter((v) => v !== undefined);
+  }
+  if (value && typeof value === 'object') {
+    const result: any = {};
+    for (const [key, val] of Object.entries(value)) {
+      const cleaned = pruneUndefined(val);
+      if (cleaned !== undefined) {
+        result[key] = cleaned;
+      }
+    }
+    return result;
+  }
+  return value === undefined ? undefined : value;
+};
 
 // Collection names
 const COLLECTIONS = {
@@ -64,7 +83,8 @@ export const subscribeToTeamMembers = (callback: (members: any[]) => void) => {
 
 // ============ SITES ============
 export const saveSite = async (site: any) => {
-  await setDoc(doc(db, COLLECTIONS.SITES, site.id), site);
+  const cleaned = pruneUndefined(site);
+  await setDoc(doc(db, COLLECTIONS.SITES, site.id), cleaned);
 };
 
 export const getAllSites = async (): Promise<any[]> => {
@@ -77,7 +97,8 @@ export const deleteSite = async (id: string) => {
 };
 
 export const updateSite = async (id: string, updates: any) => {
-  await updateDoc(doc(db, COLLECTIONS.SITES, id), updates);
+  const cleaned = pruneUndefined(updates);
+  await updateDoc(doc(db, COLLECTIONS.SITES, id), cleaned);
 };
 
 export const subscribeToSites = (callback: (sites: any[]) => void) => {

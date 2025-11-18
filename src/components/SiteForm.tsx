@@ -221,9 +221,9 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             }
 
             if (isEditing && initialData) {
-                onSubmit({ ...submissionData, id: initialData.id });
+                await onSubmit({ ...submissionData, id: initialData.id });
             } else {
-                onSubmit(submissionData);
+                await onSubmit(submissionData);
             }
         }
     };
