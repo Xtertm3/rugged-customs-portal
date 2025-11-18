@@ -62,6 +62,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
     const [photos, setPhotos] = useState<File[]>([]);
     const [documents, setDocuments] = useState<File[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [markCivilCompleted, setMarkCivilCompleted] = useState(false);
 
     const isEditing = !!initialData;
 
@@ -101,6 +102,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     }
                 }
             });
+            // If civil is already completed in existing data, reflect that in the UI toggle
+            setMarkCivilCompleted((initialData.stages?.civil?.status === 'completed') || false);
         } else {
             const defaultManagerId = assignableTeamMembers.length > 0 ? assignableTeamMembers[0].id : '';
             setFormData({ 
@@ -114,6 +117,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     }
                 }
             });
+            setMarkCivilCompleted(false);
         }
     }, [initialData, assignableTeamMembers]);
 
@@ -153,7 +157,11 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         const newErrors: Record<string, string> = {};
         if (!formData.siteName.trim()) newErrors.siteName = "Site Name is required.";
         if (!formData.location.trim()) newErrors.location = "Location is required.";
-        if (!formData.siteManagerId) newErrors.siteManagerId = "A team member must be assigned to the site.";
+        // Relax legacy requirement: require EITHER a legacy manager OR at least one stage team assignment
+        const hasAnyTeamAssigned = (formData.stages?.civil?.assignedTeamIds?.length || 0) > 0 || (formData.stages?.electrical?.assignedTeamIds?.length || 0) > 0;
+        if (!formData.siteManagerId && !hasAnyTeamAssigned) {
+            newErrors.siteManagerId = "Assign a legacy manager or at least one stage team.";
+        }
         formData.initialMaterials.forEach((mat, index) => {
             if (!mat.units.trim() || isNaN(Number(mat.units))) {
                 newErrors[`material_units_${index}`] = "Must be a number.";
@@ -172,7 +180,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             const photoAttachments = await Promise.all(photos.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
             const documentAttachments = await Promise.all(documents.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
 
-            const submissionData = {
+            let submissionData: Omit<Site, 'id'> = {
                 ...formData,
                 photos: [...(formData.photos || []), ...photoAttachments],
                 documents: [...(formData.documents || []), ...documentAttachments],
@@ -181,13 +189,36 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     ...formData.stages,
                     civil: {
                         ...formData.stages.civil,
-                        status: formData.stages.civil.assignedTeamIds.length > 0 ? 'in-progress' as const : 'not-started' as const,
+                        status: formData.stages.civil.assignedTeamIds.length > 0 ? 'in-progress' : 'not-started',
                         startDate: formData.stages.civil.assignedTeamIds.length > 0 && !formData.stages.civil.startDate 
                             ? new Date().toISOString() 
                             : formData.stages.civil.startDate
                     }
                 }
             };
+
+            // If user chooses to mark civil as completed now, override stage transitions accordingly
+            if (markCivilCompleted) {
+                const now = new Date().toISOString();
+                submissionData = {
+                    ...submissionData,
+                    currentStage: 'electrical',
+                    stages: {
+                        ...submissionData.stages,
+                        civil: {
+                            ...submissionData.stages.civil,
+                            status: 'completed',
+                            startDate: submissionData.stages.civil.startDate || now,
+                            completionDate: submissionData.stages.civil.completionDate || now
+                        },
+                        electrical: {
+                            ...submissionData.stages.electrical,
+                            status: (submissionData.stages.electrical.assignedTeamIds.length > 0) ? 'in-progress' : (submissionData.stages.electrical.status || 'not-started'),
+                            startDate: submissionData.stages.electrical.assignedTeamIds.length > 0 && !submissionData.stages.electrical.startDate ? now : submissionData.stages.electrical.startDate
+                        }
+                    }
+                };
+            }
 
             if (isEditing && initialData) {
                 onSubmit({ ...submissionData, id: initialData.id });
@@ -413,6 +444,25 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                 icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-full w-full" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2V4a2 2 0 00-2-2H9z" /><path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm10.293-9.293a1 1 0 00-1.414 1.414L13 7.414V13a1 1 0 102 0V7.414l-.293.293a1 1 0 00-1.414-1.414z" clipRule="evenodd" /></svg>}
                                 showCameraButton={true}
                             />
+                    </div>
+                )}
+
+                {/* Civil completion control */}
+                {formData.currentStage !== 'electrical' && (formData.stages?.civil?.status !== 'completed') && (
+                    <div className="pt-6 border-t border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Stage Transition</h3>
+                        <label className="inline-flex items-start gap-3">
+                            <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={markCivilCompleted}
+                                onChange={(e) => setMarkCivilCompleted(e.target.checked)}
+                            />
+                            <span className="text-sm text-gray-700">
+                                Mark Civil as <span className="font-semibold">Completed</span> and move to <span className="font-semibold">Electrical</span> now.
+                                <span className="block text-xs text-gray-500">Electrical will start immediately if a team is assigned.</span>
+                            </span>
+                        </label>
                     </div>
                 )}
                 
