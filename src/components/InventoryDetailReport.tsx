@@ -18,10 +18,11 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
   materialUsageLogs,
   sites,
 }) => {
-  const [viewMode, setViewMode] = useState<'summary' | 'detailed'>('summary');
+  const [viewMode, setViewMode] = useState<'summary' | 'detailed' | 'byStage'>('summary');
   const [textFilter, setTextFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('All');
   const [siteFilter, setSiteFilter] = useState('All');
+  const [stageFilter, setStageFilter] = useState<'all' | 'civil' | 'electrical'>('all');
 
   // Reset filters when modal opens
   React.useEffect(() => {
@@ -68,6 +69,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
       totalUsed: number;
       remaining: number;
       siteName: string;
+      workStage?: 'civil' | 'electrical'; // Track which work stage
       usageRecords: { date: string; quantity: number; notes: string }[];
     }[] = [];
 
@@ -148,6 +150,11 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             notes: log.notes || '',
           }));
 
+        // Determine work stage based on site's current stage
+        const workStage = site.currentStage === 'civil' ? 'civil' as const : 
+                         site.currentStage === 'electrical' ? 'electrical' as const : 
+                         undefined;
+
         details.push({
           teamMemberName: managerName,
           teamMemberRole: managerRole,
@@ -156,6 +163,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           totalUsed,
           remaining,
           siteName: site.siteName,
+          workStage,
           usageRecords,
         });
       });
@@ -172,6 +180,11 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
     // Site filter
     if (siteFilter !== 'All') {
       filtered = filtered.filter(d => d.siteName === siteFilter);
+    }
+
+    // Stage filter
+    if (stageFilter !== 'all') {
+      filtered = filtered.filter(d => d.workStage === stageFilter);
     }
 
     // Text filter
@@ -236,6 +249,31 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
 
     return Object.values(grouped);
   }, [inventoryDetails, teamMembers]);
+
+  // Group by work stage
+  const groupedByStage = useMemo(() => {
+    const stages: Record<'civil' | 'electrical' | 'unknown', typeof inventoryDetails> = {
+      civil: [],
+      electrical: [],
+      unknown: []
+    };
+
+    inventoryDetails.forEach(item => {
+      if (item.workStage === 'civil') {
+        stages.civil.push(item);
+      } else if (item.workStage === 'electrical') {
+        stages.electrical.push(item);
+      } else {
+        stages.unknown.push(item);
+      }
+    });
+
+    return [
+      { stage: 'Civil Work', key: 'civil' as const, items: stages.civil },
+      { stage: 'Electrical Work', key: 'electrical' as const, items: stages.electrical },
+      { stage: 'Unassigned', key: 'unknown' as const, items: stages.unknown }
+    ].filter(g => g.items.length > 0);
+  }, [inventoryDetails]);
 
   const exportCSV = () => {
     if (viewMode === 'summary') {
@@ -491,7 +529,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">
           <input
             value={textFilter}
             onChange={(e) => setTextFilter(e.target.value)}
@@ -525,11 +563,22 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
           </select>
           <select
             className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800"
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value as any)}
+            title="Filter by work stage"
+          >
+            <option value="all">All Stages</option>
+            <option value="civil">🔨 Civil Only</option>
+            <option value="electrical">⚡ Electrical Only</option>
+          </select>
+          <select
+            className="bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800"
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as any)}
           >
             <option value="summary">View: Summary</option>
             <option value="detailed">View: Detailed</option>
+            <option value="byStage">View: By Stage</option>
           </select>
         </div>
 
@@ -680,6 +729,70 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'byStage' && (
+            <div className="space-y-3">
+              {groupedByStage.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No inventory data found.
+                </div>
+              ) : (
+                groupedByStage.map((stageGroup) => (
+                  <div
+                    key={stageGroup.key}
+                    className="border border-gray-200 rounded-lg overflow-hidden"
+                  >
+                    <div className={`px-4 py-3 font-semibold text-gray-900 ${
+                      stageGroup.key === 'civil' ? 'bg-blue-100' :
+                      stageGroup.key === 'electrical' ? 'bg-amber-100' :
+                      'bg-gray-100'
+                    }`}>
+                      {stageGroup.key === 'civil' && '🔨 '}
+                      {stageGroup.key === 'electrical' && '⚡ '}
+                      {stageGroup.stage} • {stageGroup.items.length} material allocation{stageGroup.items.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className="p-3">
+                      <table className="w-full text-sm text-left text-gray-700">
+                        <thead className="text-xs text-gray-500 uppercase bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2">Site</th>
+                            <th className="px-3 py-2">Team Member</th>
+                            <th className="px-3 py-2">Material</th>
+                            <th className="px-3 py-2 text-right">Opening</th>
+                            <th className="px-3 py-2 text-right">Used</th>
+                            <th className="px-3 py-2 text-right">Remaining</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stageGroup.items.map((item, idx) => (
+                            <tr
+                              key={idx}
+                              className="border-b border-gray-200 hover:bg-gray-50"
+                            >
+                              <td className="px-3 py-2">{item.siteName}</td>
+                              <td className="px-3 py-2">{item.teamMemberName}</td>
+                              <td className="px-3 py-2">{item.materialName}</td>
+                              <td className="px-3 py-2 text-right">{item.openingBalance}m</td>
+                              <td className="px-3 py-2 text-right text-orange-400">{item.totalUsed}m</td>
+                              <td className={`px-3 py-2 text-right font-semibold ${
+                                item.remaining < 0
+                                  ? 'text-red-400'
+                                  : item.remaining < item.openingBalance * 0.1
+                                  ? 'text-yellow-400'
+                                  : 'text-green-400'
+                              }`}>
+                                {item.remaining}m
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           )}
