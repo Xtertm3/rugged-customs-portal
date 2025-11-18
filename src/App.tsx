@@ -87,6 +87,10 @@ export interface Site {
     civil: WorkStageInfo;
     electrical: WorkStageInfo;
   };
+  // Payments control: when true, further payment requests are blocked
+  paymentsLocked?: boolean;
+  paymentsLockedAt?: string;
+  paymentsLockedBy?: string; // userId who locked
 }
 
 export interface ProjectSummary {
@@ -436,8 +440,26 @@ const App: React.FC = () => {
     };
     
     await firebaseService.updatePaymentRequest(requestId, updatedRequest);
+
+    // If this request represents the final settlement and is marked Paid,
+    // lock further payment submissions for the associated site.
+    try {
+      if (status === 'Paid') {
+        const isFinalPayment = (req.paymentFor || '').toLowerCase().includes('final');
+        const site = req.siteId ? sites.find(s => s.id === req.siteId) : sites.find(s => s.siteName === req.siteName);
+        if (isFinalPayment && site && !site.paymentsLocked) {
+          await firebaseService.updateSite(site.id, {
+            paymentsLocked: true,
+            paymentsLockedAt: new Date().toISOString(),
+            paymentsLockedBy: currentUser.id
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Failed to lock payments for site', e);
+    }
     // State will auto-update via Firebase listener
-  }, [currentUser, paymentRequests]);
+  }, [currentUser, paymentRequests, sites]);
 
   const handleSubmitRequest = useCallback(async (formData: PaymentRequestData & {id?: string}, photos: File[], documents: File[]): Promise<boolean> => {
     if (!currentUser) {

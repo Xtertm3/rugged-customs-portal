@@ -45,6 +45,8 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
     const [photos, setPhotos] = useState<File[]>([]);
     const [documents, setDocuments] = useState<File[]>([]);
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const selectedSite = initialSiteId ? sites.find(s => s.id === initialSiteId) : sites.find(s => s.siteName === formData.siteName);
+    const paymentsLocked = !!selectedSite?.paymentsLocked;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -104,6 +106,10 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
             return;
         }
         if (!validateForm()) return;
+        if (paymentsLocked) {
+            setValidationErrors({ siteName: 'Payments are closed for this site. Further requests are not allowed.' });
+            return;
+        }
 
         const success = await onSubmit(formData, photos, documents);
         if (success && !isEditing) {
@@ -130,6 +136,12 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
               <h2 className="text-2xl font-bold text-gray-900 border-b border-gray-200 pb-4">
                    {isEditing ? `Editing Submission for: ${initialData?.siteName}` : `Submit Completion Docs for: ${formData.siteName}`}
                  </h2>
+
+                 {paymentsLocked && (
+                     <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-md text-sm">
+                         Payments are closed for this site. Final settlement has been marked as Paid by back-office.
+                     </div>
+                 )}
 
                  {sites.length === 0 && (
                      <div className="p-4 bg-yellow-900/30 text-yellow-300 border border-yellow-700 rounded-lg text-center">
@@ -200,7 +212,7 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
 
                 <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
                     <button type="button" onClick={handleBackClick} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Cancel</button>
-                    <button type="submit" disabled={isLoading || sites.length === 0} className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-800/50 disabled:cursor-not-allowed">
+                    <button type="submit" disabled={isLoading || sites.length === 0 || paymentsLocked} className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-800/50 disabled:cursor-not-allowed">
                         {isLoading ? <Spinner /> : submitButtonText}
                     </button>
                 </div>

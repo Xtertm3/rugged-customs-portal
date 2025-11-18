@@ -180,11 +180,14 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-end items-center">
+                                    <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-between items-center">
+                                        {site.paymentsLocked && (
+                                            <span className="text-xs font-semibold text-red-500">Payments Closed</span>
+                                        )}
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
-                                            disabled={summary.siteStatus === 'Closed'}
-                                            className="text-sm px-3 py-1 bg-orange-600/80 text-white font-semibold rounded-md hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                            disabled={!!site.paymentsLocked}
+                                            className="ml-auto text-sm px-3 py-1 bg-orange-600/80 text-white font-semibold rounded-md hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             Submit Completion
                                         </button>
