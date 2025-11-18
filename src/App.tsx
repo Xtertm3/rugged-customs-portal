@@ -244,6 +244,8 @@ const App: React.FC = () => {
         });
 
         const unsubscribeRequests = firebaseService.subscribeToPaymentRequests((requests) => {
+          const normalize = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+          
           const migratedRequests = requests.map((req: any): PaymentRequest => {
             let newReq = {...req};
             if (!newReq.statusHistory || newReq.statusHistory.length === 0) {
@@ -257,13 +259,16 @@ const App: React.FC = () => {
             newReq.photos = newReq.photos || [];
             newReq.documents = newReq.documents || [];
             
-            // Migration: Add siteId to existing payment requests that don't have it
+            // Migration: Add siteId to existing payment requests that don't have it using fuzzy match
             if (!newReq.siteId && newReq.siteName) {
-              const matchingSite = sites.find(s => s.siteName === newReq.siteName);
+              const matchingSite = sites.find(s => normalize(s.siteName) === normalize(newReq.siteName));
               if (matchingSite) {
                 newReq.siteId = matchingSite.id;
+                console.log(`Migrating payment ${newReq.id}: matched "${newReq.siteName}" to site "${matchingSite.siteName}" (ID: ${matchingSite.id})`);
                 // Update in Firestore asynchronously (don't await to avoid blocking UI)
                 firebaseService.updatePaymentRequest(newReq.id, newReq).catch(console.error);
+              } else {
+                console.warn(`Could not match payment siteName "${newReq.siteName}" to any site. Available sites:`, sites.map(s => s.siteName));
               }
             }
             
