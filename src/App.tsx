@@ -790,50 +790,50 @@ const App: React.FC = () => {
 };
 
   const projectSummaries = useMemo((): ProjectSummary[] => {
-    // Debug: Log all payment requests to see what's in the database
-    console.log('All Payment Requests:', paymentRequests.map(r => ({
-      id: r.id,
-      siteId: r.siteId,
-      siteName: r.siteName,
-      status: r.status,
-      amount: r.amount
-    })));
+    // Extract key identifiers from site names for matching
+    const extractIdentifiers = (name: string) => {
+      const normalized = name.toLowerCase();
+      // Extract patterns like "in-1076081", "rrl-7820378", "bisarhalli", "honniganur"
+      const patterns = normalized.match(/[a-z]+|(?:in|rrl|rl)-?\d+/g) || [];
+      return new Set(patterns);
+    };
     
-    console.log('All Sites:', sites.map(s => ({
-      id: s.id,
-      siteName: s.siteName
-    })));
+    // Check if two site names have significant overlap in identifiers
+    const sitesMatch = (siteName1: string, siteName2: string) => {
+      const ids1 = extractIdentifiers(siteName1);
+      const ids2 = extractIdentifiers(siteName2);
+      
+      // Count how many identifiers match
+      let matchCount = 0;
+      ids1.forEach(id => {
+        if (ids2.has(id)) matchCount++;
+      });
+      
+      // If at least 2 identifiers match (e.g., location name + reference number), consider it a match
+      return matchCount >= 2;
+    };
+    
+    console.log('=== SITE MATCHING DEBUG ===');
+    console.log('Sites:', sites.map(s => s.siteName));
+    console.log('Payment Requests:', paymentRequests.map(r => ({ siteName: r.siteName, status: r.status, amount: r.amount })));
     
     return sites.map(site => {
-      // Robust matching: by siteId, else fuzzy siteName
-      const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+      console.log(`\n--- Processing Site: "${site.siteName}" ---`);
       
-      console.log(`\nProcessing site: "${site.siteName}"`);
-      console.log(`Normalized site name: "${normalize(site.siteName)}"`);
-      
+      // Match by siteId first, then by intelligent name matching
       const requestsForSite = paymentRequests.filter(req => {
         if (req.siteId && req.siteId === site.id) {
-          console.log(`  ✓ Matched by siteId: ${req.id}`);
+          console.log(`✓ Matched by siteId: "${req.siteName}"`);
           return true;
         }
-        if (req.siteName && site.siteName) {
-          const normalizedReqSite = normalize(req.siteName);
-          const normalizedSiteName = normalize(site.siteName);
-          console.log(`  Comparing: "${normalizedReqSite}" vs "${normalizedSiteName}"`);
-          if (normalizedReqSite === normalizedSiteName) {
-            console.log(`  ✓ Matched by fuzzy name: ${req.id}`);
-            return true;
-          }
+        if (req.siteName && sitesMatch(site.siteName, req.siteName)) {
+          console.log(`✓ Matched by identifiers: "${req.siteName}"`);
+          return true;
         }
         return false;
       });
       
-      console.log(`Matching requests for site "${site.siteName}":`, requestsForSite.length, requestsForSite.map(r => ({
-        id: r.id,
-        siteName: r.siteName,
-        status: r.status,
-        amount: r.amount
-      })));
+      console.log(`Total matched requests: ${requestsForSite.length}`);
       
       let siteStatus: 'Open' | 'Closed' | 'No Activity' = 'No Activity';
       if (requestsForSite.length > 0) {
@@ -844,17 +844,16 @@ const App: React.FC = () => {
         }
       }
 
-      // Calculate total paid amount for this site (sum of ALL paid requests)
-      const totalPaid = requestsForSite
-        .filter(r => r.status === 'Paid' && r.amount)
-        .reduce((sum, req) => {
-          // Remove all non-numeric characters except decimal point and minus
-          const cleanAmount = (req.amount || '').replace(/[^0-9.-]/g, '');
-          const amount = parseFloat(cleanAmount) || 0;
-          return sum + amount;
-        }, 0);
+      // Calculate total paid: sum of all PAID requests for this site
+      const paidRequests = requestsForSite.filter(r => r.status === 'Paid' && r.amount);
+      const totalPaid = paidRequests.reduce((sum, req) => {
+        const cleanAmount = (req.amount || '').replace(/[^0-9.-]/g, '');
+        const amount = parseFloat(cleanAmount) || 0;
+        console.log(`  Adding paid request: Rs ${amount} (${req.siteName})`);
+        return sum + amount;
+      }, 0);
       
-      console.log(`Site "${site.siteName}" - Total Paid: ₹${totalPaid}`);
+      console.log(`✓ Total Paid for "${site.siteName}": ₹${totalPaid}`);
 
       return { 
         id: site.id, 
