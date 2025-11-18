@@ -139,7 +139,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         {/* Show stage-specific paid amount based on user role */}
                                         {(() => {
                                             const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
-                                            const isBoth = currentUser?.role === 'Electrical + Civil';
+                                            const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
                                             
                                             if (isAdmin) {
                                                 // Admin sees full breakdown
@@ -169,7 +169,21 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                     </>
                                                 );
                                             } else {
-                                                // Civil or Electrical teams see only their payment (totalPaid was overridden in filter)
+                                                // Civil or Electrical teams see only their stage payment
+                                                if (currentUser?.role === 'Electricals') {
+                                                    return (
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                            Paid (Electrical): ₹{summary.electricalPaid.toLocaleString()}
+                                                        </span>
+                                                    );
+                                                } else if (currentUser?.role === 'Civil') {
+                                                    return (
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                            Paid (Civil): ₹{summary.civilPaid.toLocaleString()}
+                                                        </span>
+                                                    );
+                                                }
+                                                // Default fallback
                                                 return (
                                                     <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
                                                         Paid: ₹{summary.totalPaid.toLocaleString()}
