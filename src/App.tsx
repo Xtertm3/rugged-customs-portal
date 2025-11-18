@@ -920,22 +920,55 @@ const App: React.FC = () => {
 
       // Calculate total paid BY STAGE for clarity
       const paidRequests = requestsForSite.filter(r => r.status === 'Paid' && r.amount);
-      
+
+      const parseDateSafe = (value?: string): Date | null => {
+        if (!value) return null;
+        const d = new Date(value);
+        if (!isNaN(d.getTime())) return d;
+        // Try to parse DD/MM/YYYY, MM/DD/YYYY, etc. if present
+        // Fallback: return null to trigger conservative defaults
+        return null;
+      };
+
+      const electricalStart = parseDateSafe(site.stages?.electrical?.startDate);
+      const civilCompletedAt = parseDateSafe(site.stages?.civil?.completionDate);
+
       let civilPaid = 0;
       let electricalPaid = 0;
-      
+
       paidRequests.forEach(req => {
         const cleanAmount = (req.amount || '').replace(/[^0-9.-]/g, '');
         const amount = parseFloat(cleanAmount) || 0;
-        
-        // Determine stage: use workStage if available, else infer from site assignment
-        let stage = req.workStage;
-        if (!stage) {
-          // Legacy request: infer from site's current stage or team assignment
-          // Default to civil for old data
-          stage = site.currentStage === 'electrical' ? 'electrical' : 'civil';
+
+        // Determine stage with robust inference for legacy data
+        let stage: 'civil' | 'electrical' | undefined = req.workStage;
+
+        // 1) Legacy "stage" field support
+        if (!stage && req.stage) {
+          stage = req.stage === 'Electricals' ? 'electrical' : 'civil';
         }
-        
+
+        // 2) Date-based inference relative to stage transition dates
+        if (!stage) {
+          const ts = parseDateSafe(req.timestamp);
+          if (ts) {
+            // If we know when electrical started, anything strictly before that is civil
+            if (electricalStart && ts < electricalStart) {
+              stage = 'civil';
+            } else if (civilCompletedAt && ts <= civilCompletedAt) {
+              // If civil has a completion date, anything up to that is civil
+              stage = 'civil';
+            } else if (electricalStart && ts >= electricalStart) {
+              stage = 'electrical';
+            }
+          }
+        }
+
+        // 3) Final fallback: be conservative and default to civil for old/ambiguous entries
+        if (!stage) {
+          stage = 'civil';
+        }
+
         if (stage === 'civil') {
           civilPaid += amount;
           console.log(`  Adding CIVIL paid request: ₹${amount} (${req.siteName})`);
