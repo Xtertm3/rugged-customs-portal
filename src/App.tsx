@@ -53,6 +53,7 @@ export interface PaymentRequest extends PaymentRequestData {
   assignTo?: string;
   stage?: 'Civil' | 'Electricals';
   transporterId?: string;
+  siteId?: string; // Added to reliably match payments to sites
 }
 
 export interface SiteAttachment {
@@ -255,6 +256,17 @@ const App: React.FC = () => {
             }
             newReq.photos = newReq.photos || [];
             newReq.documents = newReq.documents || [];
+            
+            // Migration: Add siteId to existing payment requests that don't have it
+            if (!newReq.siteId && newReq.siteName) {
+              const matchingSite = sites.find(s => s.siteName === newReq.siteName);
+              if (matchingSite) {
+                newReq.siteId = matchingSite.id;
+                // Update in Firestore asynchronously (don't await to avoid blocking UI)
+                firebaseService.updatePaymentRequest(newReq.id, newReq).catch(console.error);
+              }
+            }
+            
             return newReq as PaymentRequest;
           });
           setPaymentRequests(migratedRequests);
@@ -445,6 +457,9 @@ const App: React.FC = () => {
               return true;
             }
         } else {
+            // Find the site to get its ID
+            const matchingSite = sites.find(s => s.siteName === formData.siteName);
+            
             const newRequest: PaymentRequest = { 
                 ...formData, 
                 id: new Date().toISOString(), 
@@ -453,7 +468,8 @@ const App: React.FC = () => {
                 summary, 
                 photos: photoAttachments, 
                 documents: documentAttachments,
-                statusHistory: [statusEntry]
+                statusHistory: [statusEntry],
+                siteId: matchingSite?.id // Add siteId for reliable matching
             };
             await firebaseService.savePaymentRequest(newRequest);
             if (isSubscribed && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -772,6 +788,7 @@ const App: React.FC = () => {
     // Debug: Log all payment requests to see what's in the database
     console.log('All Payment Requests:', paymentRequests.map(r => ({
       id: r.id,
+      siteId: r.siteId,
       siteName: r.siteName,
       status: r.status,
       amount: r.amount
@@ -783,7 +800,15 @@ const App: React.FC = () => {
     })));
     
     return sites.map(site => {
-      const requestsForSite = paymentRequests.filter(req => req.siteName === site.siteName);
+      // Robust matching: by siteId, else fuzzy siteName
+      const normalize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+      const requestsForSite = paymentRequests.filter(req => {
+        if (req.siteId && req.siteId === site.id) return true;
+        if (req.siteName && site.siteName) {
+          return normalize(req.siteName) === normalize(site.siteName);
+        }
+        return false;
+      });
       
       console.log(`Matching requests for site "${site.siteName}":`, requestsForSite.length, requestsForSite.map(r => ({
         id: r.id,
