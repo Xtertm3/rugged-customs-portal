@@ -40,20 +40,33 @@ export const Projects: React.FC<ProjectsProps> = ({
     onCompletionSubmitClick
 }) => {
     const displayedSummaries = useMemo(() => {
-        // Admin-like roles see all sites
+        // Admin-like roles see all sites with full data
         if (!currentUser || currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Accountant') {
             return projectSummaries;
         }
+        
         // Field roles see sites where they are part of any stage team OR legacy manager
+        // AND need to override totalPaid based on their role
         if (currentUser.role === 'Civil' || currentUser.role === 'Electricals' || currentUser.role === 'Electrical + Civil' || currentUser.role === 'Supervisor') {
-            return projectSummaries.filter(summary => {
-                const site = sites.find(s => s.id === summary.id);
-                if (!site) return false;
-                const isLegacyManager = site.siteManagerId === currentUser.id;
-                const inCivilTeam = Array.isArray(site.stages?.civil?.assignedTeamIds) && site.stages.civil.assignedTeamIds.includes(currentUser.id);
-                const inElectricalTeam = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser.id);
-                return isLegacyManager || inCivilTeam || inElectricalTeam;
-            });
+            return projectSummaries
+                .filter(summary => {
+                    const site = sites.find(s => s.id === summary.id);
+                    if (!site) return false;
+                    const isLegacyManager = site.siteManagerId === currentUser.id;
+                    const inCivilTeam = Array.isArray(site.stages?.civil?.assignedTeamIds) && site.stages.civil.assignedTeamIds.includes(currentUser.id);
+                    const inElectricalTeam = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser.id);
+                    return isLegacyManager || inCivilTeam || inElectricalTeam;
+                })
+                .map(summary => {
+                    // Override totalPaid based on user's role/stage
+                    if (currentUser.role === 'Civil') {
+                        return { ...summary, totalPaid: summary.civilPaid };
+                    } else if (currentUser.role === 'Electricals') {
+                        return { ...summary, totalPaid: summary.electricalPaid };
+                    }
+                    // Electrical + Civil and Supervisor see both
+                    return summary;
+                });
         }
         return [];
     }, [projectSummaries, currentUser, sites]);
@@ -126,8 +139,6 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         {/* Show stage-specific paid amount based on user role */}
                                         {(() => {
                                             const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
-                                            const isCivil = currentUser?.role === 'Civil';
-                                            const isElectrical = currentUser?.role === 'Electricals';
                                             const isBoth = currentUser?.role === 'Electrical + Civil';
                                             
                                             if (isAdmin) {
@@ -141,23 +152,9 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                             Electrical: ₹{summary.electricalPaid.toLocaleString()}
                                                         </span>
                                                         <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                            Total: ₹{summary.totalPaid.toLocaleString()}
+                                                            Total: ₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}
                                                         </span>
                                                     </>
-                                                );
-                                            } else if (isCivil) {
-                                                // Civil team sees only civil payment
-                                                return (
-                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                        Paid: ₹{summary.civilPaid.toLocaleString()}
-                                                    </span>
-                                                );
-                                            } else if (isElectrical) {
-                                                // Electrical team sees only electrical payment
-                                                return (
-                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                        Paid: ₹{summary.electricalPaid.toLocaleString()}
-                                                    </span>
                                                 );
                                             } else if (isBoth) {
                                                 // Electrical + Civil sees both
@@ -171,8 +168,14 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                         </span>
                                                     </>
                                                 );
+                                            } else {
+                                                // Civil or Electrical teams see only their payment (totalPaid was overridden in filter)
+                                                return (
+                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                        Paid: ₹{summary.totalPaid.toLocaleString()}
+                                                    </span>
+                                                );
                                             }
-                                            return null;
                                         })()}
                                         
                                         {site.paymentsLocked && (
