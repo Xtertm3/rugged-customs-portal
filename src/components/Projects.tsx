@@ -78,10 +78,8 @@ export const Projects: React.FC<ProjectsProps> = ({
                 </div>
              )}
 
-            <div className="bg-white backdrop-blur-sm border border-gray-200 rounded-2xl shadow-2xl p-6">
-                <h2 className="text-2xl font-semibold mb-4 text-gray-800 border-b border-gray-300 pb-3">
-                    Sites Overview
-                </h2>
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 border-b border-gray-100 pb-3">Sites Overview</h2>
                 {displayedSummaries.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                         <p className="text-lg">{canManageSites ? "No sites found." : "You have no sites assigned to you."}</p>
@@ -99,95 +97,63 @@ export const Projects: React.FC<ProjectsProps> = ({
                                 <div 
                                     key={summary.id} 
                                     onClick={() => onViewSiteDetails(summary.name)}
-                                    className={`bg-white p-5 rounded-lg border flex flex-col justify-between cursor-pointer transition-all duration-200 hover:border-orange-500/80 ${statusStyle.border}`}
+                                    className={`bg-white p-4 rounded-xl border flex flex-col gap-3 cursor-pointer transition-all duration-200 hover:border-orange-400/70 ${statusStyle.border}`}
                                 >
-                                    <div>
-                                        <div className="flex justify-between items-start gap-2 mb-2">
-                                            <h3 className="font-bold text-lg text-gray-900 transition-colors truncate">{summary.name}</h3>
-                                            {canManageSites && (
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); onEditSite(site); }}
-                                                        className="text-xs font-semibold text-gray-500 hover:text-white transition-colors"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button 
-                                                        onClick={(e) => { e.stopPropagation(); onDeleteSite(site.id); }}
-                                                        className="text-xs font-semibold text-red-500 hover:text-red-400 transition-colors"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex justify-between items-baseline mt-2">
-                                            <p className="text-sm text-gray-500">Manager:</p>
-                                            <p className="font-semibold text-gray-800 truncate" title={manager}>{manager}</p>
-                                        </div>
-                                        <div className="flex justify-between items-baseline mt-1">
-                                            <p className="text-sm text-gray-500">Submissions:</p>
-                                            <p className="font-semibold text-gray-800">{summary.requestCount}</p>
-                                        </div>
-                                        <div className="flex justify-between items-baseline mt-1">
-                                            <p className="text-sm text-gray-500">Total Paid:</p>
-                                            <p className="font-semibold text-green-400">₹{summary.totalPaid.toLocaleString()}</p>
-                                        </div>
-                                        <div className="flex justify-between items-baseline mt-1">
-                                            <p className="text-sm text-gray-500">Status:</p>
-                                            <p className={`text-sm font-bold ${statusStyle.text}`}>{summary.siteStatus}</p>
-                                        </div>
-                                        
-                                        {/* Work Stage Progress Indicator */}
-                                        {site.currentStage && site.stages && (
-                                            <div className="mt-3 p-2 bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg border border-gray-200">
-                                                <p className="text-xs font-semibold text-gray-600 mb-2">Work Stage Progress</p>
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`flex-1 text-center py-1 px-2 rounded text-xs font-bold ${
-                                                        site.stages.civil.status === 'completed' ? 'bg-green-500 text-white' :
-                                                        site.stages.civil.status === 'in-progress' ? 'bg-blue-500 text-white' :
-                                                        'bg-gray-300 text-gray-600'
-                                                    }`}>
-                                                        {site.stages.civil.status === 'completed' ? '✓ Civil' :
-                                                         site.stages.civil.status === 'in-progress' ? '⚙️ Civil' :
-                                                         'Civil'}
-                                                    </div>
-                                                    <span className="text-gray-400">→</span>
-                                                    <div className={`flex-1 text-center py-1 px-2 rounded text-xs font-bold ${
-                                                        site.stages.electrical.status === 'completed' ? 'bg-green-500 text-white' :
-                                                        site.stages.electrical.status === 'in-progress' ? 'bg-amber-500 text-white' :
-                                                        'bg-gray-300 text-gray-600'
-                                                    }`}>
-                                                        {site.stages.electrical.status === 'completed' ? '✓ Elec' :
-                                                         site.stages.electrical.status === 'in-progress' ? '⚡ Elec' :
-                                                         'Elec'}
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-gray-600 mt-1 text-center">
-                                                    {site.currentStage === 'civil' && 'Civil work in progress'}
-                                                    {site.currentStage === 'electrical' && 'Electrical work in progress'}
-                                                    {site.currentStage === 'completed' && 'All stages completed'}
-                                                </p>
-                                            </div>
-                                        )}
-                                        
-                                        {site.latitude && site.longitude && (
-                                            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                                                <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>
-                                                <p className="text-base font-bold text-blue-900 tracking-wide">
-                                                    {site.latitude}, {site.longitude}
-                                                </p>
+                                    <div className="flex items-start gap-2">
+                                        <h3 className="font-semibold text-gray-900 truncate flex-1" title={summary.name}>{summary.name}</h3>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${statusStyle.text} ${statusStyle.border.replace('border-','border-')}`}>{summary.siteStatus}</span>
+                                        {canManageSites && (
+                                            <div className="flex items-center gap-2 ml-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); onEditSite(site); }}
+                                                    className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                                                >Edit</button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); onDeleteSite(site.id); }}
+                                                    className="text-xs font-semibold text-red-500 hover:text-red-600"
+                                                >Delete</button>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mt-4 pt-3 border-t border-gray-200/50 flex justify-between items-center">
+
+                                    <div className="text-xs text-gray-500 truncate">{site.location}</div>
+
+                                    {/* Compact info chips */}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Manager: <span className="font-semibold">{manager}</span></span>
+                                        <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Submissions: <span className="font-semibold">{summary.requestCount}</span></span>
+                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700">Paid: ₹{summary.totalPaid.toLocaleString()}</span>
                                         {site.paymentsLocked && (
-                                            <span className="text-xs font-semibold text-red-500">Payments Closed</span>
+                                            <span className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-600">Payments Closed</span>
+                                        )}
+                                    </div>
+
+                                    {/* Simple stage badges */}
+                                    {site.currentStage && site.stages && (
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={`px-2 py-1 rounded-md ${
+                                                site.stages.civil.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                site.stages.civil.status === 'in-progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                            }`}>Civil: {site.stages.civil.status.replace('-', ' ')}</span>
+                                            <span className="text-gray-400">→</span>
+                                            <span className={`px-2 py-1 rounded-md ${
+                                                site.stages.electrical.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                site.stages.electrical.status === 'in-progress' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                                            }`}>Electrical: {site.stages.electrical.status.replace('-', ' ')}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Footer actions */}
+                                    <div className="pt-2 flex items-center gap-2">
+                                        {site.latitude && site.longitude && (
+                                            <span className="text-[11px] text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
+                                                {site.latitude}, {site.longitude}
+                                            </span>
                                         )}
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
                                             disabled={!!site.paymentsLocked}
-                                            className="ml-auto text-sm px-3 py-1 bg-orange-600/80 text-white font-semibold rounded-md hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="ml-auto text-xs px-3 py-1.5 bg-orange-600 text-white font-semibold rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                         >
                                             Submit Completion
                                         </button>
