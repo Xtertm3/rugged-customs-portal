@@ -122,22 +122,62 @@ export const Projects: React.FC<ProjectsProps> = ({
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Manager: <span className="font-semibold">{manager}</span></span>
                                         <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Submissions: <span className="font-semibold">{summary.requestCount}</span></span>
+                                        
+                                        {/* Show stage-specific paid amount based on user role */}
+                                        {(() => {
+                                            const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
+                                            const isCivil = currentUser?.role === 'Civil';
+                                            const isElectrical = currentUser?.role === 'Electricals';
+                                            const isBoth = currentUser?.role === 'Electrical + Civil';
+                                            
+                                            if (isAdmin) {
+                                                // Admin sees full breakdown
+                                                return (
+                                                    <>
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
+                                                            Civil: ₹{summary.civilPaid.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
+                                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                            Total: ₹{summary.totalPaid.toLocaleString()}
+                                                        </span>
+                                                    </>
+                                                );
+                                            } else if (isCivil) {
+                                                // Civil team sees only civil payment
+                                                return (
+                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                        Paid: ₹{summary.civilPaid.toLocaleString()}
+                                                    </span>
+                                                );
+                                            } else if (isElectrical) {
+                                                // Electrical team sees only electrical payment
+                                                return (
+                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
+                                                        Paid: ₹{summary.electricalPaid.toLocaleString()}
+                                                    </span>
+                                                );
+                                            } else if (isBoth) {
+                                                // Electrical + Civil sees both
+                                                return (
+                                                    <>
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
+                                                            Civil: ₹{summary.civilPaid.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
+                                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
+                                                        </span>
+                                                    </>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                        
                                         {site.paymentsLocked && (
                                             <span className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-600">Payments Closed</span>
                                         )}
-                                    </div>
-                                    
-                                    {/* Stage-wise payments breakdown */}
-                                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
-                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
-                                            Civil: ₹{summary.civilPaid.toLocaleString()}
-                                        </span>
-                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
-                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
-                                        </span>
-                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                            Total: ₹{summary.totalPaid.toLocaleString()}
-                                        </span>
                                     </div>
 
                                     {/* Simple stage badges */}
