@@ -18,8 +18,41 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<'All'|'Payments'|'Materials'>('All');
 
-  // Utility for fuzzy site name matching
-  const normalize = (str: string) => (str || '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+  // Extract key identifiers from site names for matching - more precise
+  const extractIdentifiers = (name: string) => {
+    const normalized = name.toLowerCase().replace(/\s+/g, '');
+    
+    // Extract specific patterns
+    const locationMatch = normalized.match(/[a-z]{4,}/g) || []; // Location names (4+ letters)
+    const refNumbers = normalized.match(/(?:rrl|rl)-?\d+/gi) || []; // Reference numbers
+    const inNumbers = normalized.match(/in-?\d+/gi) || []; // IN numbers
+    
+    return {
+      location: locationMatch.map(l => l.toLowerCase()),
+      refNumbers: refNumbers.map(r => r.toLowerCase().replace(/[^a-z0-9]/g, '')),
+      inNumbers: inNumbers.map(i => i.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    };
+  };
+  
+  // Check if two site names match - must have matching location AND at least one matching number
+  const sitesMatch = (siteName1: string, siteName2: string) => {
+    if (!siteName1 || !siteName2) return false;
+    
+    const ids1 = extractIdentifiers(siteName1);
+    const ids2 = extractIdentifiers(siteName2);
+    
+    // Check if location matches (at least one common location name)
+    const locationMatch = ids1.location.some(l1 => ids2.location.some(l2 => l1 === l2));
+    
+    // Check if reference numbers match
+    const refMatch = ids1.refNumbers.some(r1 => ids2.refNumbers.some(r2 => r1 === r2));
+    
+    // Check if IN numbers match
+    const inMatch = ids1.inNumbers.some(i1 => ids2.inNumbers.some(i2 => i1 === i2));
+    
+    // Must have location match AND at least one number match for a valid match
+    return locationMatch && (refMatch || inMatch);
+  };
 
   const paymentEntries = useMemo(() => {
     return paymentRequests.flatMap(req => (req.statusHistory || []).map(h => {
@@ -80,14 +113,16 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     if (viewMode === 'bySite' && selectedSite !== 'all') {
       arr = arr.filter(e => {
         if (e.type === 'Payment') {
-          // @ts-ignore
+          // @ts-ignore - Try siteId match first, then intelligent name matching
           if ((e as any).siteId) {
             const siteObj = (sites || []).find(s => s.id === (e as any).siteId);
-            return siteObj && siteObj.siteName === selectedSite;
+            if (siteObj && siteObj.siteName === selectedSite) return true;
           }
-          return normalize(e.siteName) === normalize(selectedSite);
+          // Use intelligent matching for site names
+          return sitesMatch(e.siteName || '', selectedSite);
         }
-        return normalize(e.siteName) === normalize(selectedSite);
+        // For materials, use intelligent matching
+        return sitesMatch(e.siteName || '', selectedSite);
       });
     }
     
@@ -105,12 +140,16 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     allEntries.forEach(e => {
       let siteKey = e.siteName || 'Unknown Site';
       if (e.type === 'Payment') {
-        // Find the actual site object by fuzzy match or siteId
+        // Find the actual site object by intelligent match or siteId
         let matchedSite = (sites || []).find(s => {
           // @ts-ignore
           if ((e as any).siteId && s.id === (e as any).siteId) return true;
-          return normalize(s.siteName) === normalize(e.siteName);
+          return sitesMatch(s.siteName, e.siteName || '');
         });
+        siteKey = matchedSite ? matchedSite.siteName : siteKey;
+      } else {
+        // For materials, also try to match with actual sites
+        let matchedSite = (sites || []).find(s => sitesMatch(s.siteName, e.siteName || ''));
         siteKey = matchedSite ? matchedSite.siteName : siteKey;
       }
       if (!map[siteKey]) map[siteKey] = [];
@@ -139,9 +178,10 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       paidPayments = paidPayments.filter(req => {
         if (req.siteId) {
           const siteObj = (sites || []).find(s => s.id === req.siteId);
-          return siteObj && siteObj.siteName === selectedSite;
+          if (siteObj && siteObj.siteName === selectedSite) return true;
         }
-        return normalize(req.siteName) === normalize(selectedSite);
+        // Use intelligent matching
+        return sitesMatch(req.siteName || '', selectedSite);
       });
     }
     
@@ -248,9 +288,10 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       filteredPayments = filteredPayments.filter(req => {
         if (req.siteId) {
           const siteObj = (sites || []).find(s => s.id === req.siteId);
-          return siteObj && siteObj.siteName === selectedSite;
+          if (siteObj && siteObj.siteName === selectedSite) return true;
         }
-        return normalize(req.siteName) === normalize(selectedSite);
+        // Use intelligent matching
+        return sitesMatch(req.siteName || '', selectedSite);
       });
     }
     
