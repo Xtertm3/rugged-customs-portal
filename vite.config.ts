@@ -6,5 +6,9 @@ export default defineConfig({
   plugins: [react()],
   define: {
     'import.meta.env.VITE_API_KEY': JSON.stringify(process.env.VITE_API_KEY)
+  },
+  // For Capacitor mobile build
+  server: {
+    port: 3000
   }
 })
