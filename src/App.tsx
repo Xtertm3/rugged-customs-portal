@@ -27,6 +27,7 @@ import { TransactionReport } from './components/TransactionReport';
 import { InventoryDetailReport } from './components/InventoryDetailReport';
 import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 import { DocumentLibrary } from './components/DocumentLibrary';
+import { MobileNav } from './components/MobileNav';
 
 
 export interface StatusChange {
@@ -1501,8 +1502,6 @@ const App: React.FC = () => {
               onLogout={handleLogout}
            />;
   }
-  
-  const getPageTitle = () => `Logged in as: ${currentUser.name} (${currentUser.role})`;
 
   const MainViews: { [key: string]: React.ReactNode } = {
   dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
@@ -1520,58 +1519,66 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text-primary font-sans">
-      <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-    <header className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-8 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <img
-          src="/Ruggedcustoms Logo.png"
-          alt="Rugged Customs"
-          className="w-12 h-12 object-contain"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-        />
-        <div>
-          <h1 className="text-3xl font-extrabold text-text-primary">
-            Rugged Customs
-          </h1>
-          <p className="text-text-secondary mt-1">{getPageTitle()}</p>
+    <div className="min-h-screen text-text-primary font-sans mobile-content-padding">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <header className="glass rounded-2xl px-4 py-3 sm:px-6 sm:py-4 mb-6 shadow-lg border border-gray-200/50 animate-fade-in sticky top-4 z-30">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg flex-shrink-0">
+            <span className="text-white text-xl sm:text-2xl font-bold">R</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-2xl font-extrabold text-text-primary truncate">
+              Rugged Customs
+            </h1>
+            <p className="text-xs sm:text-sm text-text-secondary truncate">{currentUser.name} • {currentUser.role}</p>
+          </div>
         </div>
-      </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                <NotificationBell isSubscribed={isSubscribed} permission={notificationPermission} onClick={handleNotificationToggle} />
-               <button onClick={() => setIsChangePasswordModalOpen(true)} className="text-sm px-3 py-2 bg-surface border border-border text-text-secondary rounded-lg hover:bg-slate-100 hover:text-text-primary transition-colors">Change Password</button>
-               <button onClick={handleLogout} className="text-sm px-3 py-2 bg-surface border border-border text-text-secondary rounded-lg hover:bg-slate-100 hover:text-text-primary transition-colors">Logout</button>
+               <button onClick={() => setIsChangePasswordModalOpen(true)} className="hidden sm:flex text-xs sm:text-sm px-2 sm:px-3 py-2 bg-white/80 border border-gray-300 text-text-secondary rounded-lg hover:bg-white hover:text-text-primary hover:border-orange-300 transition-all shadow-sm">
+                 Change Password
+               </button>
+               <button onClick={handleLogout} className="text-xs sm:text-sm px-2 sm:px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md font-medium">
+                 Logout
+               </button>
             </div>
+      </div>
         </header>
         
         {!['form', 'siteForm', 'siteDetail', 'teamMemberDetail', 'transporterDetail'].includes(currentView) && (
-            <nav className="mb-8 p-2 bg-gray-50 border border-gray-200 rounded-xl flex justify-center items-center flex-wrap gap-3 animate-slide-up shadow-sm">
-                <NavButton view="dashboard" label="Dashboard" />
-                <NavButton view="projects" label="Sites" />
-                <NavButton view="inventory" label="Inventory" />
-                {(permissions.canManageTeam || permissions.canDownloadInventoryReport) && <NavButton view="team" label="Team" />}
-                {permissions.canManageTransporters && <NavButton view="transporter" label="Transporter" />}
+            <nav className="hidden md:flex mb-6 p-3 glass rounded-2xl border border-gray-200/50 justify-center items-center flex-wrap gap-2 animate-slide-up shadow-lg">
+                <NavButton view="dashboard" label="📊 Dashboard" />
+                <NavButton view="projects" label="🏗️ Sites" />
+                <NavButton view="inventory" label="📦 Inventory" />
+                {(permissions.canManageTeam || permissions.canDownloadInventoryReport) && <NavButton view="team" label="👥 Team" />}
+                {permissions.canManageTransporters && <NavButton view="transporter" label="🚚 Transport" />}
                 {/* Transactions quick access for eligible roles (Admins/Managers/Accountant etc.) */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil','Supervisor'].includes(currentUser.role) && (
-                  <button onClick={() => setIsTransactionReportOpen(true)} className="px-4 py-2 bg-primary text-white rounded-lg font-semibold shadow-md hover:bg-primary-dark transition-all">Transactions</button>
+                  <button onClick={() => setIsTransactionReportOpen(true)} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all ripple">📄 Transactions</button>
                 )}
                 {/* Inventory Report for Admin/Manager/Accountant/Supervisor */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil'].includes(currentUser.role) && (
-                  <button onClick={() => setIsInventoryDetailReportOpen(true)} className="px-4 py-2 bg-primary text-white rounded-lg font-semibold shadow-md hover:bg-primary-dark transition-all">Inventory Report</button>
+                  <button onClick={() => setIsInventoryDetailReportOpen(true)} className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all ripple">📋 Inventory Report</button>
                 )}
                 {/* Document Library for Admin/Manager/Backoffice/Accountant */}
                 {currentUser && ['Admin', 'Manager', 'Backoffice', 'Accountant'].includes(currentUser.role) && (
-                  <NavButton view="documentLibrary" label="Documents" />
+                  <NavButton view="documentLibrary" label="📚 Documents" />
                 )}
             </nav>
         )}
         
-        {error && <div className="p-4 bg-red-500/10 text-red-600 border border-red-500/20 rounded-xl text-sm mb-6 animate-fade-in">{error}</div>}
+        {error && <div className="p-4 bg-red-50 text-red-600 border-2 border-red-200 rounded-2xl text-sm mb-6 animate-fade-in shadow-lg font-medium">{error}</div>}
         
-        <main className="animate-slide-up" style={{ animationDelay: '100ms' }}>
+        <main className="animate-slide-up pb-4" style={{ animationDelay: '100ms' }}>
             {MainViews[currentView]}
         </main>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      {!['form', 'siteForm', 'siteDetail', 'teamMemberDetail', 'transporterDetail', 'requestDetail', 'documentLibrary'].includes(currentView) && (
+        <MobileNav currentView={currentView} onNavigate={(view) => setViewHistory([view])} role={currentUser.role} />
+      )}
       
        {isChangePasswordModalOpen && !isForcedPasswordChange && (
             <ChangePasswordModal
