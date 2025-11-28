@@ -64,6 +64,13 @@ export interface SiteAttachment {
   dataUrl: string;
 }
 
+export interface VendorTeamMember {
+  id: string;
+  name: string;
+  position: string;
+  email?: string;
+}
+
 export interface Vendor {
   id: string;
   name: string;
@@ -71,6 +78,7 @@ export interface Vendor {
   phone?: string;
   email?: string;
   address?: string;
+  team?: VendorTeamMember[];
   createdAt: string;
   createdBy: string;
 }

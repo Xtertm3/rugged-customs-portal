@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Vendor } from '../App';
+import { Vendor, VendorTeamMember } from '../App';
 
 interface VendorsProps {
   vendors: Vendor[];
@@ -8,6 +8,15 @@ interface VendorsProps {
   onDeleteVendor: (id: string) => Promise<void>;
   currentUser: any;
 }
+
+const PREDEFINED_POSITIONS = [
+  'Project Manager',
+  'SEM (Site Execution Manager)',
+  'Site Engineer',
+  'Supervisor',
+  'Quality Manager',
+  'Safety Officer'
+];
 
 export const Vendors: React.FC<VendorsProps> = ({
   vendors,
@@ -23,9 +32,17 @@ export const Vendors: React.FC<VendorsProps> = ({
     contactPerson: '',
     phone: '',
     email: '',
-    address: ''
+    address: '',
+    team: [] as VendorTeamMember[]
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [teamMemberForm, setTeamMemberForm] = useState({
+    name: '',
+    position: '',
+    customPosition: '',
+    email: ''
+  });
+  const [editingTeamMemberId, setEditingTeamMemberId] = useState<string | null>(null);
 
   const resetForm = () => {
     setFormData({
@@ -33,8 +50,16 @@ export const Vendors: React.FC<VendorsProps> = ({
       contactPerson: '',
       phone: '',
       email: '',
-      address: ''
+      address: '',
+      team: []
     });
+    setTeamMemberForm({
+      name: '',
+      position: '',
+      customPosition: '',
+      email: ''
+    });
+    setEditingTeamMemberId(null);
     setEditingVendor(null);
   };
 
@@ -71,9 +96,76 @@ export const Vendors: React.FC<VendorsProps> = ({
       contactPerson: vendor.contactPerson || '',
       phone: vendor.phone || '',
       email: vendor.email || '',
-      address: vendor.address || ''
+      address: vendor.address || '',
+      team: vendor.team || []
     });
     setIsAddModalOpen(true);
+  };
+
+  const handleAddTeamMember = () => {
+    if (!teamMemberForm.name.trim()) {
+      alert('Team member name is required');
+      return;
+    }
+
+    const position = teamMemberForm.position === 'Custom' 
+      ? teamMemberForm.customPosition.trim()
+      : teamMemberForm.position;
+
+    if (!position) {
+      alert('Position is required');
+      return;
+    }
+
+    if (editingTeamMemberId) {
+      // Update existing team member
+      setFormData({
+        ...formData,
+        team: formData.team.map(member =>
+          member.id === editingTeamMemberId
+            ? { ...member, name: teamMemberForm.name.trim(), position, email: teamMemberForm.email.trim() }
+            : member
+        )
+      });
+      setEditingTeamMemberId(null);
+    } else {
+      // Add new team member
+      const newMember: VendorTeamMember = {
+        id: Date.now().toString(),
+        name: teamMemberForm.name.trim(),
+        position,
+        email: teamMemberForm.email.trim() || undefined
+      };
+      setFormData({
+        ...formData,
+        team: [...formData.team, newMember]
+      });
+    }
+
+    setTeamMemberForm({
+      name: '',
+      position: '',
+      customPosition: '',
+      email: ''
+    });
+  };
+
+  const handleEditTeamMember = (member: VendorTeamMember) => {
+    setEditingTeamMemberId(member.id);
+    const isCustomPosition = !PREDEFINED_POSITIONS.includes(member.position);
+    setTeamMemberForm({
+      name: member.name,
+      position: isCustomPosition ? 'Custom' : member.position,
+      customPosition: isCustomPosition ? member.position : '',
+      email: member.email || ''
+    });
+  };
+
+  const handleDeleteTeamMember = (memberId: string) => {
+    setFormData({
+      ...formData,
+      team: formData.team.filter(m => m.id !== memberId)
+    });
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -176,6 +268,25 @@ export const Vendors: React.FC<VendorsProps> = ({
               )}
             </div>
 
+            {/* Team Members */}
+            {vendor.team && vendor.team.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs font-semibold text-gray-700 mb-2">👥 Team ({vendor.team.length})</p>
+                <div className="space-y-1">
+                  {vendor.team.slice(0, 3).map(member => (
+                    <div key={member.id} className="text-xs text-gray-600">
+                      <span className="font-medium">{member.name}</span>
+                      <span className="text-gray-400"> • </span>
+                      <span>{member.position}</span>
+                    </div>
+                  ))}
+                  {vendor.team.length > 3 && (
+                    <p className="text-xs text-gray-400 italic">+{vendor.team.length - 3} more...</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">
               Added {new Date(vendor.createdAt).toLocaleDateString()}
             </div>
@@ -269,6 +380,119 @@ export const Vendors: React.FC<VendorsProps> = ({
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all outline-none resize-none"
                   placeholder="Full address"
                 />
+              </div>
+
+              {/* Team Management Section */}
+              <div className="pt-6 border-t border-gray-200 space-y-4">
+                <h4 className="text-lg font-semibold text-gray-800">👥 Team Members</h4>
+                
+                {/* Team Member Form */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={teamMemberForm.name}
+                        onChange={(e) => setTeamMemberForm({ ...teamMemberForm, name: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm"
+                        placeholder="Enter name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Position <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={teamMemberForm.position}
+                        onChange={(e) => setTeamMemberForm({ ...teamMemberForm, position: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm"
+                      >
+                        <option value="">Select position</option>
+                        {PREDEFINED_POSITIONS.map(pos => (
+                          <option key={pos} value={pos}>{pos}</option>
+                        ))}
+                        <option value="Custom">➕ Custom Position</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {teamMemberForm.position === 'Custom' && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Custom Position <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={teamMemberForm.customPosition}
+                        onChange={(e) => setTeamMemberForm({ ...teamMemberForm, customPosition: e.target.value })}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm"
+                        placeholder="Enter custom position"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Email (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      value={teamMemberForm.email}
+                      onChange={(e) => setTeamMemberForm({ ...teamMemberForm, email: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm"
+                      placeholder="Enter email"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddTeamMember}
+                    className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 transition-colors"
+                  >
+                    {editingTeamMemberId ? '✏️ Update Team Member' : '➕ Add Team Member'}
+                  </button>
+                </div>
+
+                {/* Team Members List */}
+                {formData.team.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">Added Team Members ({formData.team.length})</p>
+                    {formData.team.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">{member.name}</p>
+                          <p className="text-xs text-gray-600">{member.position}</p>
+                          {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
+                        </div>
+                        <div className="flex gap-2 ml-3">
+                          <button
+                            type="button"
+                            onClick={() => handleEditTeamMember(member)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTeamMember(member.id)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
