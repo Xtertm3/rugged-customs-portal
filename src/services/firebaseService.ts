@@ -53,7 +53,8 @@ const COLLECTIONS = {
   INVENTORY: 'inventory',
   MATERIAL_USAGE_LOGS: 'materialUsageLogs',
   TRANSPORTERS: 'transporters',
-  JOB_CARDS: 'jobCards'
+  JOB_CARDS: 'jobCards',
+  VENDORS: 'vendors'
 };
 
 // ============ TEAM MEMBERS ============
@@ -237,6 +238,33 @@ export const clearAllData = async () => {
   await batch.commit();
 };
 
+// ============ VENDORS ============
+export const saveVendor = async (vendor: any) => {
+  const cleaned = pruneUndefined(vendor);
+  await setDoc(doc(db, COLLECTIONS.VENDORS, vendor.id), cleaned);
+};
+
+export const getAllVendors = async (): Promise<any[]> => {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.VENDORS));
+  return snapshot.docs.map(doc => doc.data());
+};
+
+export const deleteVendor = async (id: string) => {
+  await deleteDoc(doc(db, COLLECTIONS.VENDORS, id));
+};
+
+export const updateVendor = async (id: string, updates: any) => {
+  const cleaned = pruneUndefined(updates);
+  await updateDoc(doc(db, COLLECTIONS.VENDORS, id), cleaned);
+};
+
+export const subscribeToVendors = (callback: (vendors: any[]) => void) => {
+  return onSnapshot(collection(db, COLLECTIONS.VENDORS), (snapshot) => {
+    const vendors = snapshot.docs.map(doc => doc.data());
+    callback(vendors);
+  });
+};
+
 // Initialize default admin user if not exists
 export const initializeDefaultAdmin = async () => {
   const adminId = 'admin-1';
@@ -304,6 +332,13 @@ export default {
   deleteJobCard,
   updateJobCard,
   subscribeToJobCards,
+  
+  // Vendors
+  saveVendor,
+  getAllVendors,
+  deleteVendor,
+  updateVendor,
+  subscribeToVendors,
   
   // Utils
   clearAllData,

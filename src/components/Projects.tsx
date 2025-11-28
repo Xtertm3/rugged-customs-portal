@@ -129,7 +129,12 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         )}
                                     </div>
 
-                                    <div className="text-xs text-gray-500 truncate">{site.location}</div>
+                                    {site.vendorName && (
+                                        <div className="text-xs text-gray-600 font-medium">
+                                            🏢 {site.vendorName}
+                                        </div>
+                                    )}
+                                    <div className="text-xs text-gray-500 truncate">📍 {site.location}</div>
 
                                     {/* Compact info chips */}
                                     <div className="flex flex-wrap items-center gap-2">

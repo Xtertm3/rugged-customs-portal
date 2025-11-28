@@ -220,7 +220,12 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                         </span>
                     )}
                  </div>
-                <p className="text-md text-gray-500">{site.location}</p>
+                {site.vendorName && (
+                  <p className="text-md text-gray-700 font-medium mb-2">
+                    🏢 Vendor: <span className="text-orange-600">{site.vendorName}</span>
+                  </p>
+                )}
+                <p className="text-md text-gray-500">📍 {site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
                 
                 {/* Work Stage Initialization for Old Sites */}

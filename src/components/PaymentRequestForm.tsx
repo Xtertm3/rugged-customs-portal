@@ -155,6 +155,14 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
                     {validationErrors.siteName && <p className="text-red-400 text-xs mt-1">{validationErrors.siteName}</p>}
                 </div>
 
+                 {selectedSite?.vendorName && (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-sm text-gray-700">
+                            <span className="font-semibold text-orange-600">🏢 Vendor:</span> {selectedSite.vendorName}
+                        </p>
+                    </div>
+                 )}
+
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="location" className={labelStyles}>Location</label>

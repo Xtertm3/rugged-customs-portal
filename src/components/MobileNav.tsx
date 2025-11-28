@@ -12,6 +12,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate, r
     { view: 'projects', label: 'Sites', icon: '🏗️', roles: ['Admin', 'Manager', 'Accountant', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'] },
     { view: 'inventory', label: 'Inventory', icon: '📦', roles: ['Admin', 'Manager', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'] },
     { view: 'team', label: 'Team', icon: '👥', roles: ['Admin', 'Manager'] },
+    { view: 'vendors', label: 'Vendors', icon: '🏢', roles: ['Admin', 'Manager', 'Accountant'] },
     { view: 'transporter', label: 'Transport', icon: '🚚', roles: ['Admin', 'Manager'] },
   ];
 

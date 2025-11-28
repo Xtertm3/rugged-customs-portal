@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Site, TeamMember } from '../App';
+import { Site, TeamMember, Vendor } from '../App';
 import { MaterialItem } from '../services/geminiService';
 import { FileInput } from './FileInput';
 
@@ -8,7 +8,10 @@ interface SiteFormProps {
     onSubmit: (siteData: Site | Omit<Site, 'id'>) => Promise<void> | void;
     initialData?: Site | null;
     teamMembers: TeamMember[];
+    vendors: Vendor[];
+    onAddVendor: (vendor: Omit<Vendor, 'id'>) => Promise<void>;
     canAddAttachments: boolean;
+    currentUser: any;
 }
 
 const predefinedMaterials = [
@@ -38,6 +41,8 @@ const initialFormData: Omit<Site, 'id'> = {
     workType: undefined,
     initialMaterials: [],
     siteManagerId: '',
+    vendorId: '',
+    vendorName: '',
     photos: [],
     documents: [],
     currentStage: 'civil', // Start with civil stage
@@ -57,12 +62,14 @@ const initialFormData: Omit<Site, 'id'> = {
     }
 };
 
-export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialData, teamMembers, canAddAttachments }) => {
+export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialData, teamMembers, vendors, onAddVendor, canAddAttachments, currentUser }) => {
     const [formData, setFormData] = useState(initialFormData);
     const [photos, setPhotos] = useState<File[]>([]);
     const [documents, setDocuments] = useState<File[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [markCivilCompleted, setMarkCivilCompleted] = useState(false);
+    const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
+    const [newVendorName, setNewVendorName] = useState('');
 
     const isEditing = !!initialData;
 
@@ -83,6 +90,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 workType: initialData.workType,
                 initialMaterials: initialData.initialMaterials || [],
                 siteManagerId: initialData.siteManagerId || '',
+                vendorId: initialData.vendorId || '',
+                vendorName: initialData.vendorName || '',
                 photos: initialData.photos || [],
                 documents: initialData.documents || [],
                 // Handle backward compatibility for sites created before stage tracking
@@ -172,6 +181,41 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         });
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const handleAddVendorQuick = async () => {
+        if (!newVendorName.trim()) {
+            alert('Please enter vendor name');
+            return;
+        }
+
+        try {
+            const vendorData = {
+                name: newVendorName.trim(),
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.id
+            };
+            
+            await onAddVendor(vendorData);
+            
+            // Find the newly added vendor (it will be in the vendors list after the promise resolves)
+            // Since we don't have the ID here, we'll need to wait a moment for the subscription to update
+            setTimeout(() => {
+                const newVendor = vendors.find(v => v.name === newVendorName.trim());
+                if (newVendor) {
+                    setFormData({
+                        ...formData,
+                        vendorId: newVendor.id,
+                        vendorName: newVendor.name
+                    });
+                }
+                setNewVendorName('');
+                setIsAddVendorModalOpen(false);
+            }, 500);
+        } catch (error) {
+            console.error('Error adding vendor:', error);
+            alert('Failed to add vendor');
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -270,6 +314,40 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                         )}
                                     </div>
                                 </div>
+                {/* Vendor Selection */}
+                <div>
+                    <label htmlFor="vendorId" className={labelStyles}>Vendor/Client <span className="text-red-500">*</span></label>
+                    <div className="flex gap-2">
+                        <select 
+                            id="vendorId" 
+                            name="vendorId" 
+                            value={formData.vendorId} 
+                            onChange={(e) => {
+                                const selectedVendor = vendors.find(v => v.id === e.target.value);
+                                setFormData({
+                                    ...formData,
+                                    vendorId: e.target.value,
+                                    vendorName: selectedVendor?.name || ''
+                                });
+                            }} 
+                            className={inputStyles}
+                            required
+                        >
+                            <option value="">Select Vendor/Client</option>
+                            {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={() => setIsAddVendorModalOpen(true)}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all whitespace-nowrap"
+                            title="Add new vendor"
+                        >
+                            ➕ New
+                        </button>
+                    </div>
+                    {errors.vendorId && <p className="text-red-400 text-xs mt-1">{errors.vendorId}</p>}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label htmlFor="projectType" className={labelStyles}>Project Type</label>
@@ -494,6 +572,62 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     </button>
                 </div>
             </form>
+
+            {/* Quick Add Vendor Modal */}
+            {isAddVendorModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+                        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-t-2xl">
+                            <h3 className="text-xl font-bold">➕ Quick Add Vendor</h3>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Vendor Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newVendorName}
+                                    onChange={(e) => setNewVendorName(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                                    placeholder="Enter vendor/client name"
+                                    autoFocus
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddVendorQuick();
+                                        }
+                                    }}
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    You can add more details (contact, phone, etc.) from the Vendors page later.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewVendorName('');
+                                        setIsAddVendorModalOpen(false);
+                                    }}
+                                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleAddVendorQuick}
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all ripple"
+                                >
+                                    Add Vendor
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

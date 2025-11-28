@@ -28,6 +28,7 @@ import { InventoryDetailReport } from './components/InventoryDetailReport';
 import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 import { DocumentLibrary } from './components/DocumentLibrary';
 import { MobileNav } from './components/MobileNav';
+import { Vendors } from './components/Vendors';
 
 
 export interface StatusChange {
@@ -63,6 +64,17 @@ export interface SiteAttachment {
   dataUrl: string;
 }
 
+export interface Vendor {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
 export interface WorkStageInfo {
   status: 'not-started' | 'in-progress' | 'completed';
   assignedTeamIds: string[]; // Team member IDs assigned to this stage
@@ -80,6 +92,8 @@ export interface Site {
   workType?: 'Civil' | 'Electrical'; // Legacy field, kept for backward compatibility
   initialMaterials: MaterialItem[];
   siteManagerId?: string;
+  vendorId?: string; // Reference to Vendor
+  vendorName?: string; // Cached vendor name for display
   photos?: SiteAttachment[];
   documents?: SiteAttachment[];
   // New work stage tracking
@@ -192,6 +206,7 @@ const App: React.FC = () => {
   const [sites, setSites] = useState<Site[]>([]);
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [transporters, setTransporters] = useState<Transporter[]>([]);
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [materialUsageLogs, setMaterialUsageLogs] = useState<MaterialUsageLog[]>([]);
@@ -301,6 +316,10 @@ const App: React.FC = () => {
           setPaymentRequests(migratedRequests);
         });
 
+        const unsubscribeVendors = firebaseService.subscribeToVendors((vendors) => {
+          setVendors(vendors);
+        });
+
         const unsubscribeTransporters = firebaseService.subscribeToTransporters((transporters) => {
           setTransporters(transporters);
         });
@@ -340,6 +359,7 @@ const App: React.FC = () => {
           unsubscribeTeam();
           unsubscribeSites();
           unsubscribeRequests();
+          unsubscribeVendors();
           unsubscribeTransporters();
           unsubscribeJobCards();
           unsubscribeMaterialLogs();
@@ -681,6 +701,29 @@ const App: React.FC = () => {
     }
     setIsEditTeamMemberModalOpen(false);
     setEditingTeamMember(null);
+  };
+
+  // ============ VENDOR HANDLERS ============
+  const handleAddVendor = async (vendorData: Omit<Vendor, 'id'>) => {
+    const newVendor: Vendor = { 
+      ...vendorData, 
+      id: Date.now().toString() 
+    };
+    await firebaseService.saveVendor(newVendor);
+  };
+
+  const handleUpdateVendor = async (vendorId: string, updates: Partial<Vendor>) => {
+    await firebaseService.updateVendor(vendorId, updates);
+  };
+
+  const handleDeleteVendor = async (vendorId: string) => {
+    // Check if any sites are using this vendor
+    const sitesUsingVendor = sites.filter(site => site.vendorId === vendorId);
+    if (sitesUsingVendor.length > 0) {
+      alert(`Cannot delete vendor. It is being used by ${sitesUsingVendor.length} site(s).`);
+      return;
+    }
+    await firebaseService.deleteVendor(vendorId);
   };
 
   const handleAddTransporter = async (contactPerson: string, contactNumber: string, password?: string) => {
@@ -1508,6 +1551,7 @@ const App: React.FC = () => {
     projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,
+    vendors: <Vendors vendors={vendors} onAddVendor={handleAddVendor} onEditVendor={handleUpdateVendor} onDeleteVendor={handleDeleteVendor} currentUser={currentUser} />,
     transporter: <TransporterPage transporters={transporters} onAddTransporter={handleAddTransporter} onDeleteTransporter={handleDeleteTransporter} onNewJobCard={() => setIsNewJobCardModalOpen(true)} onViewDetails={handleViewTransporterDetails} onEditTransporter={handleEditTransporter} />,
   siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} canEditMaterials={permissions.canEditMaterials} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
   teamMemberDetail: selectedTeamMember ? <TeamMemberDetail member={selectedTeamMember} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} /> : null,
@@ -1515,7 +1559,7 @@ const App: React.FC = () => {
     requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} currentUser={currentUser} /> : null,
     documentLibrary: <DocumentLibrary sites={sites} paymentRequests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} />,
     form: <PaymentRequestForm sites={sites} onSubmit={handleSubmitRequest} onBack={navigateBack} isLoading={isLoading} error={error} initialData={editingPaymentRequest} initialSiteId={initialSiteIdForCompletion} />,
-  siteForm: <SiteForm onBack={navigateBack} onSubmit={async (siteData) => { if (editingSite) { await handleUpdateSite(siteData as Site); } else { await handleAddSite(siteData as Omit<Site, 'id'>); } }} initialData={editingSite} teamMembers={teamMembers} canAddAttachments={permissions.canManageSites} />,
+  siteForm: <SiteForm onBack={navigateBack} onSubmit={async (siteData) => { if (editingSite) { await handleUpdateSite(siteData as Site); } else { await handleAddSite(siteData as Omit<Site, 'id'>); } }} initialData={editingSite} teamMembers={teamMembers} vendors={vendors} onAddVendor={handleAddVendor} canAddAttachments={permissions.canManageSites} currentUser={currentUser} />,
   };
 
   return (
@@ -1552,6 +1596,7 @@ const App: React.FC = () => {
                 <NavButton view="projects" label="🏗️ Sites" />
                 <NavButton view="inventory" label="📦 Inventory" />
                 {(permissions.canManageTeam || permissions.canDownloadInventoryReport) && <NavButton view="team" label="👥 Team" />}
+                {permissions.canManageSites && <NavButton view="vendors" label="🏢 Vendors" />}
                 {permissions.canManageTransporters && <NavButton view="transporter" label="🚚 Transport" />}
                 {/* Transactions quick access for eligible roles (Admins/Managers/Accountant etc.) */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil','Supervisor'].includes(currentUser.role) && (
