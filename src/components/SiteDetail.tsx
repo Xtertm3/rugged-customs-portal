@@ -82,6 +82,34 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
 
   const managerName = useMemo(() => teamMembers.find(m => m.id === site.siteManagerId)?.name, [teamMembers, site.siteManagerId]);
 
+  // Aggregates for Transactions Table
+  const totals = useMemo(() => {
+    const paidTotal = siteRequests
+      .filter(r => r.status === 'Paid')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    const approvedTotal = siteRequests
+      .filter(r => r.status === 'Approved')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    const pendingTotal = siteRequests
+      .filter(r => r.status === 'Pending')
+      .reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+
+    const approvalsSent = siteRequests.filter(r => r.status === 'Approved').length;
+    const paymentsDone = siteRequests.filter(r => r.status === 'Paid').length;
+    const billingRecord = (billings || []).find(b => b.siteId === site.id);
+
+    return {
+      paidTotal,
+      approvedTotal,
+      pendingTotal,
+      approvalsSent,
+      paymentsDone,
+      billingStatus: site.billingStatus || billingRecord?.status || undefined,
+      billingValue: site.billingValue ?? billingRecord?.actualBillingTotal ?? undefined,
+      vendorName: site.vendorName || 'N/A'
+    };
+  }, [siteRequests, billings, site.id, site.billingStatus, site.billingValue, site.vendorName]);
+
   const handleSaveMaterialUsed = async (materialName: string) => {
     const newUsedValue = parseFloat(editedUsedValue);
     if (isNaN(newUsedValue) || newUsedValue < 0) {
@@ -476,6 +504,91 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
               )}
             </div>
             
+            {/* Site Transactions */}
+            <div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">Site Transactions</h3>
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                {/* Summary Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 bg-gray-50 border-b">
+                  <div className="rounded-md p-3 bg-green-50 border border-green-200">
+                    <div className="text-[11px] text-green-600 font-semibold">Total Paid</div>
+                    <div className="text-lg font-bold text-green-700">₹{totals.paidTotal.toLocaleString()}</div>
+                  </div>
+                  <div className="rounded-md p-3 bg-yellow-50 border border-yellow-200">
+                    <div className="text-[11px] text-yellow-700 font-semibold">Approved (Not Paid)</div>
+                    <div className="text-lg font-bold text-yellow-800">₹{totals.approvedTotal.toLocaleString()}</div>
+                  </div>
+                  <div className="rounded-md p-3 bg-amber-50 border border-amber-200">
+                    <div className="text-[11px] text-amber-700 font-semibold">Pending</div>
+                    <div className="text-lg font-bold text-amber-800">₹{totals.pendingTotal.toLocaleString()}</div>
+                  </div>
+                  <div className="rounded-md p-3 bg-blue-50 border border-blue-200">
+                    <div className="text-[11px] text-blue-700 font-semibold">Billing Status</div>
+                    <div className="text-xs font-bold text-blue-800">{totals.billingStatus || 'Not Set'}</div>
+                    {totals.billingValue !== undefined && (
+                      <div className="text-sm font-semibold text-blue-900">₹{Number(totals.billingValue).toLocaleString()}</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detail Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-100 text-gray-700">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Type</th>
+                        <th className="px-4 py-2 text-left">Description</th>
+                        <th className="px-4 py-2 text-left">Vendor</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                        <th className="px-4 py-2 text-left">Status</th>
+                        <th className="px-4 py-2 text-left">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {/* Billing row (if present) */}
+                      {(() => {
+                        const billingRecord = (billings || []).find(b => b.siteId === site.id);
+                        if (!billingRecord && !site.billingStatus) return null;
+                        const status = site.billingStatus || billingRecord?.status || 'Not Set';
+                        const amount = site.billingValue ?? billingRecord?.actualBillingTotal ?? 0;
+                        const date = billingRecord?.updatedAt ? new Date(billingRecord.updatedAt).toLocaleString() : '-';
+                        return (
+                          <tr>
+                            <td className="px-4 py-2 font-medium text-blue-800">Billing</td>
+                            <td className="px-4 py-2 text-gray-700">Status: {status}</td>
+                            <td className="px-4 py-2 text-gray-700">{totals.vendorName}</td>
+                            <td className="px-4 py-2 text-right text-blue-700">₹{Number(amount).toLocaleString()}</td>
+                            <td className="px-4 py-2">
+                              <span className="inline-block px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 font-semibold">{status}</span>
+                            </td>
+                            <td className="px-4 py-2 text-gray-600">{date}</td>
+                          </tr>
+                        );
+                      })()}
+
+                      {/* Approval/Billing Requests as payments */}
+                      {siteRequests.map(req => (
+                        <tr key={req.id}>
+                          <td className="px-4 py-2 font-medium text-gray-800">Payment</td>
+                          <td className="px-4 py-2 text-gray-700">{req.paymentFor}</td>
+                          <td className="px-4 py-2 text-gray-700">{totals.vendorName}</td>
+                          <td className={`px-4 py-2 text-right font-semibold ${req.status === 'Paid' ? 'text-green-700' : req.status === 'Approved' ? 'text-yellow-800' : 'text-amber-800'}`}>₹{Number(req.amount).toLocaleString()}</td>
+                          <td className="px-4 py-2">
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                              req.status === 'Paid' ? 'bg-green-100 text-green-700' :
+                              req.status === 'Approved' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-amber-100 text-amber-800'
+                            }`}>{req.status}</span>
+                          </td>
+                          <td className="px-4 py-2 text-gray-600">{req.timestamp}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
             {(site.photos?.length || 0) > 0 || (site.documents?.length || 0) > 0 ? (
                 <div>
                      <h3 className="text-xl font-semibold mb-3 text-gray-800">Site Attachments</h3>
