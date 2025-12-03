@@ -187,8 +187,8 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                 const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
                                                 const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
                                                 
-                                                // For Admin/Manager/Backoffice: Show Billing Status + Value
-                                                if (isBillingUser && site.billingStatus && site.billingValue) {
+                                                // For Admin/Manager/Backoffice: Always show Billing Status + Value
+                                                if (isBillingUser) {
                                                     return (
                                                         <>
                                                             <div className={`rounded-md p-1.5 border ${
@@ -211,7 +211,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                                     site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
                                                                     site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
                                                                     site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
-                                                                }`}>{site.billingStatus}</div>
+                                                                }`}>{site.billingStatus || 'Not Set'}</div>
                                                             </div>
                                                             <div className={`rounded-md p-1.5 border ${
                                                                 site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
@@ -233,7 +233,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                                     site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
                                                                     site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
                                                                     site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
-                                                                }`}>₹{site.billingValue.toLocaleString()}</div>
+                                                                }`}>₹{site.billingValue ? site.billingValue.toLocaleString() : '0'}</div>
                                                             </div>
                                                         </>
                                                     );
