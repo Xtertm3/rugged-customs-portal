@@ -181,13 +181,13 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         </div>
 
                                         {/* Compact Stats */}
-                                        <div className="grid grid-cols-2 gap-2">
+                                        <div className="grid grid-cols-3 gap-2">
                                             {(() => {
                                                 const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
                                                 const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
                                                 const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
                                                 
-                                                // For Admin/Manager/Backoffice: Always show Billing Status + Value
+                                                // For Admin/Manager/Backoffice: Show Billing Status + Value + Total Paid
                                                 if (isBillingUser) {
                                                     return (
                                                         <>
@@ -234,6 +234,10 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                                     site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
                                                                     site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
                                                                 }`}>₹{site.billingValue ? site.billingValue.toLocaleString() : '0'}</div>
+                                                            </div>
+                                                            <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
+                                                                <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
+                                                                <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
                                                             </div>
                                                         </>
                                                     );
