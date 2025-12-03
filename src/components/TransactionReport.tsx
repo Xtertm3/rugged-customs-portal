@@ -63,8 +63,9 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
     };
 
     const inferWorkStage = (req: PaymentRequest, eventTimestamp?: string): 'civil' | 'electrical' | 'unknown' => {
-      // 1) Prefer explicit new field
-      if (req.workStage === 'civil' || req.workStage === 'electrical') return req.workStage;
+      // 1) Prefer explicit new field (4-stage system)
+      if (req.workStage === 'c1' || req.workStage === 'c2' || req.workStage === 'c1_c2_combined') return 'civil';
+      if (req.workStage === 'electrical') return 'electrical';
       // 2) Fallback to legacy field
       if (req.stage === 'Electricals') return 'electrical';
       if (req.stage === 'Civil') return 'civil';
@@ -73,10 +74,10 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
       if (site) {
         const ts = parseDateSafe(eventTimestamp || req.timestamp);
         const electricalStart = parseDateSafe(site.stages?.electrical?.startDate || undefined);
-        const civilCompletedAt = parseDateSafe(site.stages?.civil?.completionDate || undefined);
+        const c1C2CompletedAt = parseDateSafe(site.stages?.c1_c2_combined?.completionDate || undefined);
         if (ts) {
           if (electricalStart && ts < electricalStart) return 'civil';
-          if (civilCompletedAt && ts <= civilCompletedAt) return 'civil';
+          if (c1C2CompletedAt && ts <= c1C2CompletedAt) return 'civil';
           if (electricalStart && ts >= electricalStart) return 'electrical';
         }
       }

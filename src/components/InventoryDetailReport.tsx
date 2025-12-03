@@ -150,8 +150,8 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             notes: log.notes || '',
           }));
 
-        // Determine work stage based on site's current stage
-        const workStage = site.currentStage === 'civil' ? 'civil' as const : 
+        // Determine work stage based on site's current stage (4-stage system mapped to civil/electrical for report)
+        const workStage = (site.currentStage === 'c1' || site.currentStage === 'c2' || site.currentStage === 'c1_c2_combined') ? 'civil' as const : 
                          site.currentStage === 'electrical' ? 'electrical' as const : 
                          undefined;
 
