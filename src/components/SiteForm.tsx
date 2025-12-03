@@ -45,9 +45,21 @@ const initialFormData: Omit<Site, 'id'> = {
     vendorName: '',
     photos: [],
     documents: [],
-    currentStage: 'civil', // Start with civil stage
+    currentStage: 'c1', // Start with C1 stage (Civil Phase 1)
     stages: {
-        civil: {
+        c1: {
+            status: 'not-started',
+            assignedTeamIds: [],
+            startDate: undefined,
+            completionDate: undefined
+        },
+        c2: {
+            status: 'not-started',
+            assignedTeamIds: [],
+            startDate: undefined,
+            completionDate: undefined
+        },
+        c1_c2_combined: {
             status: 'not-started',
             assignedTeamIds: [],
             startDate: undefined,
@@ -67,7 +79,6 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
     const [photos, setPhotos] = useState<File[]>([]);
     const [documents, setDocuments] = useState<File[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [markCivilCompleted, setMarkCivilCompleted] = useState(false);
     const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
     const [newVendorName, setNewVendorName] = useState('');
 
@@ -94,12 +105,24 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 vendorName: initialData.vendorName || '',
                 photos: initialData.photos || [],
                 documents: initialData.documents || [],
-                // Handle backward compatibility for sites created before stage tracking
-                currentStage: initialData.currentStage || 'civil',
+                // Handle backward compatibility for sites created before 4-stage tracking
+                currentStage: initialData.currentStage || 'c1',
                 stages: initialData.stages || {
-                    civil: {
+                    c1: {
                         status: 'not-started',
                         assignedTeamIds: initialData.siteManagerId ? [initialData.siteManagerId] : [],
+                        startDate: undefined,
+                        completionDate: undefined
+                    },
+                    c2: {
+                        status: 'not-started',
+                        assignedTeamIds: [],
+                        startDate: undefined,
+                        completionDate: undefined
+                    },
+                    c1_c2_combined: {
+                        status: 'not-started',
+                        assignedTeamIds: [],
                         startDate: undefined,
                         completionDate: undefined
                     },
@@ -111,8 +134,6 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     }
                 }
             });
-            // If civil is already completed in existing data, reflect that in the UI toggle
-            setMarkCivilCompleted((initialData.stages?.civil?.status === 'completed') || false);
         } else {
             const defaultManagerId = assignableTeamMembers.length > 0 ? assignableTeamMembers[0].id : '';
             setFormData({ 
@@ -120,13 +141,12 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 siteManagerId: defaultManagerId,
                 stages: {
                     ...initialFormData.stages,
-                    civil: {
-                        ...initialFormData.stages.civil,
+                    c1: {
+                        ...initialFormData.stages.c1,
                         assignedTeamIds: defaultManagerId ? [defaultManagerId] : []
                     }
                 }
             });
-            setMarkCivilCompleted(false);
         }
     }, [initialData, assignableTeamMembers]);
 
@@ -167,7 +187,10 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         if (!formData.siteName.trim()) newErrors.siteName = "Site Name is required.";
         if (!formData.location.trim()) newErrors.location = "Location is required.";
         // Relax legacy requirement: require EITHER a legacy manager OR at least one stage team assignment
-        const hasAnyTeamAssigned = (formData.stages?.civil?.assignedTeamIds?.length || 0) > 0 || (formData.stages?.electrical?.assignedTeamIds?.length || 0) > 0;
+        const hasAnyTeamAssigned = (formData.stages?.c1?.assignedTeamIds?.length || 0) > 0 || 
+                                   (formData.stages?.c2?.assignedTeamIds?.length || 0) > 0 ||
+                                   (formData.stages?.c1_c2_combined?.assignedTeamIds?.length || 0) > 0 ||
+                                   (formData.stages?.electrical?.assignedTeamIds?.length || 0) > 0;
         if (!formData.siteManagerId && !hasAnyTeamAssigned) {
             newErrors.siteManagerId = "Assign a legacy manager or at least one stage team.";
         }
@@ -228,41 +251,18 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 ...formData,
                 photos: [...(formData.photos || []), ...photoAttachments],
                 documents: [...(formData.documents || []), ...documentAttachments],
-                // Initialize civil stage as 'in-progress' if team members are assigned
+                // Initialize C1 stage as 'in-progress' if team members are assigned
                 stages: {
                     ...formData.stages,
-                    civil: {
-                        ...formData.stages.civil,
-                        status: formData.stages.civil.assignedTeamIds.length > 0 ? 'in-progress' : 'not-started',
-                        startDate: formData.stages.civil.assignedTeamIds.length > 0 && !formData.stages.civil.startDate 
+                    c1: {
+                        ...formData.stages.c1,
+                        status: formData.stages.c1.assignedTeamIds.length > 0 ? 'in-progress' : 'not-started',
+                        startDate: formData.stages.c1.assignedTeamIds.length > 0 && !formData.stages.c1.startDate 
                             ? new Date().toISOString() 
-                            : formData.stages.civil.startDate
+                            : formData.stages.c1.startDate
                     }
                 }
             };
-
-            // If user chooses to mark civil as completed now, override stage transitions accordingly
-            if (markCivilCompleted) {
-                const now = new Date().toISOString();
-                submissionData = {
-                    ...submissionData,
-                    currentStage: 'electrical',
-                    stages: {
-                        ...submissionData.stages,
-                        civil: {
-                            ...submissionData.stages.civil,
-                            status: 'completed',
-                            startDate: submissionData.stages.civil.startDate || now,
-                            completionDate: submissionData.stages.civil.completionDate || now
-                        },
-                        electrical: {
-                            ...submissionData.stages.electrical,
-                            status: (submissionData.stages.electrical.assignedTeamIds.length > 0) ? 'in-progress' : (submissionData.stages.electrical.status || 'not-started'),
-                            startDate: submissionData.stages.electrical.assignedTeamIds.length > 0 && !submissionData.stages.electrical.startDate ? now : submissionData.stages.electrical.startDate
-                        }
-                    }
-                };
-            }
 
             if (isEditing && initialData) {
                 await onSubmit({ ...submissionData, id: initialData.id });
@@ -383,23 +383,23 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 <div className="pt-6 border-t border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Work Stage Team Assignment</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Civil Stage Team */}
+                        {/* C1 Stage Team */}
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <label className={labelStyles + " text-blue-800"}>
-                                Civil Stage Team
+                                C1 Stage Team (Civil Phase 1)
                                 <span className="ml-2 text-xs font-normal text-blue-600">(Stage 1)</span>
                             </label>
                             <select 
                                 multiple
                                 size={5}
-                                value={formData.stages.civil.assignedTeamIds}
+                                value={formData.stages.c1.assignedTeamIds}
                                 onChange={(e) => {
                                     const selected = Array.from(e.target.selectedOptions, option => option.value);
                                     setFormData(prev => ({
                                         ...prev,
                                         stages: {
                                             ...prev.stages,
-                                            civil: { ...prev.stages.civil, assignedTeamIds: selected }
+                                            c1: { ...prev.stages.c1, assignedTeamIds: selected }
                                         }
                                     }));
                                 }}
@@ -412,9 +412,9 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                                     ))}
                             </select>
                             <p className="text-xs text-blue-600 mt-2">Hold Ctrl/Cmd to select multiple team members</p>
-                            {formData.stages.civil.assignedTeamIds.length > 0 && (
+                            {formData.stages.c1.assignedTeamIds.length > 0 && (
                                 <div className="mt-2 text-xs text-blue-700">
-                                    Selected: {formData.stages.civil.assignedTeamIds.length} member(s)
+                                    Selected: {formData.stages.c1.assignedTeamIds.length} member(s)
                                 </div>
                             )}
                         </div>
@@ -525,24 +525,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     </div>
                 )}
 
-                {/* Civil completion control */}
-                {formData.currentStage !== 'electrical' && (formData.stages?.civil?.status !== 'completed') && (
-                    <div className="pt-6 border-t border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Stage Transition</h3>
-                        <label className="inline-flex items-start gap-3">
-                            <input
-                                type="checkbox"
-                                className="mt-1"
-                                checked={markCivilCompleted}
-                                onChange={(e) => setMarkCivilCompleted(e.target.checked)}
-                            />
-                            <span className="text-sm text-gray-700">
-                                Mark Civil as <span className="font-semibold">Completed</span> and move to <span className="font-semibold">Electrical</span> now.
-                                <span className="block text-xs text-gray-500">Electrical will start immediately if a team is assigned.</span>
-                            </span>
-                        </label>
-                    </div>
-                )}
+                {/* Stage transitions are now managed from the Site Detail page */}
                 
                  {isEditing && (formData.photos?.length || 0) + (formData.documents?.length || 0) > 0 && (
                             <div className="pt-6 border-t border-gray-200">

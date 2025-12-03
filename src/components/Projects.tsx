@@ -55,18 +55,21 @@ export const Projects: React.FC<ProjectsProps> = ({
                     const site = sites.find(s => s.id === summary.id);
                     if (!site) return false;
                     const isLegacyManager = site.siteManagerId === currentUser.id;
-                    const inCivilTeam = Array.isArray(site.stages?.civil?.assignedTeamIds) && site.stages.civil.assignedTeamIds.includes(currentUser.id);
+                    const inC1Team = Array.isArray(site.stages?.c1?.assignedTeamIds) && site.stages.c1.assignedTeamIds.includes(currentUser.id);
+                    const inC2Team = Array.isArray(site.stages?.c2?.assignedTeamIds) && site.stages.c2.assignedTeamIds.includes(currentUser.id);
+                    const inC1C2CombinedTeam = Array.isArray(site.stages?.c1_c2_combined?.assignedTeamIds) && site.stages.c1_c2_combined.assignedTeamIds.includes(currentUser.id);
                     const inElectricalTeam = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser.id);
-                    return isLegacyManager || inCivilTeam || inElectricalTeam;
+                    return isLegacyManager || inC1Team || inC2Team || inC1C2CombinedTeam || inElectricalTeam;
                 })
                 .map(summary => {
                     // Override totalPaid based on user's role/stage
                     if (currentUser.role === 'Civil') {
-                        return { ...summary, totalPaid: summary.civilPaid };
+                        // Civil users see combined C1+C2+C1C2Combined payments
+                        return { ...summary, totalPaid: summary.c1Paid + summary.c2Paid + summary.c1_c2_combinedPaid };
                     } else if (currentUser.role === 'Electricals') {
                         return { ...summary, totalPaid: summary.electricalPaid };
                     }
-                    // Electrical + Civil and Supervisor see both
+                    // Electrical + Civil and Supervisor see all
                     return summary;
                 });
         }
@@ -271,22 +274,36 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             })()}
                                         </div>
 
-                                        {/* Compact Stage + Coordinates Combined */}
-                                        <div className="flex items-center gap-1.5">
+                                        {/* Compact Stage Indicators - 4 Stages */}
+                                        <div className="flex items-center gap-1">
                                             {site.currentStage && site.stages && (
                                                 <>
-                                                    <div className={`flex-1 text-center py-1 rounded text-[9px] font-bold ${
-                                                        site.stages.civil.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
-                                                        site.stages.civil.status === 'in-progress' ? 'bg-blue-100 text-blue-700 border border-blue-400' : 'bg-gray-100 text-gray-500'
+                                                    <div className={`flex-1 text-center py-1 rounded text-[8px] font-bold ${
+                                                        site.stages.c1?.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.c1?.status === 'in-progress' ? 'bg-blue-100 text-blue-700 border border-blue-400' : 'bg-gray-100 text-gray-500'
                                                     }`}>
-                                                        Civil {site.stages.civil.status === 'completed' ? '✓' : site.stages.civil.status === 'in-progress' ? '⚙️' : '○'}
+                                                        C1 {site.stages.c1?.status === 'completed' ? '✓' : site.stages.c1?.status === 'in-progress' ? '⚙️' : '○'}
                                                     </div>
-                                                    <span className="text-gray-400 text-xs">→</span>
-                                                    <div className={`flex-1 text-center py-1 rounded text-[9px] font-bold ${
-                                                        site.stages.electrical.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
-                                                        site.stages.electrical.status === 'in-progress' ? 'bg-amber-100 text-amber-700 border border-amber-400' : 'bg-gray-100 text-gray-500'
+                                                    <span className="text-gray-400 text-[10px]">→</span>
+                                                    <div className={`flex-1 text-center py-1 rounded text-[8px] font-bold ${
+                                                        site.stages.c2?.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.c2?.status === 'in-progress' ? 'bg-blue-100 text-blue-700 border border-blue-400' : 'bg-gray-100 text-gray-500'
                                                     }`}>
-                                                        Elect. {site.stages.electrical.status === 'completed' ? '✓' : site.stages.electrical.status === 'in-progress' ? '⚡' : '○'}
+                                                        C2 {site.stages.c2?.status === 'completed' ? '✓' : site.stages.c2?.status === 'in-progress' ? '⚙️' : '○'}
+                                                    </div>
+                                                    <span className="text-gray-400 text-[10px]">→</span>
+                                                    <div className={`flex-1 text-center py-1 rounded text-[8px] font-bold ${
+                                                        site.stages.c1_c2_combined?.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.c1_c2_combined?.status === 'in-progress' ? 'bg-purple-100 text-purple-700 border border-purple-400' : 'bg-gray-100 text-gray-500'
+                                                    }`}>
+                                                        C1+C2 {site.stages.c1_c2_combined?.status === 'completed' ? '✓' : site.stages.c1_c2_combined?.status === 'in-progress' ? '⚙️' : '○'}
+                                                    </div>
+                                                    <span className="text-gray-400 text-[10px]">→</span>
+                                                    <div className={`flex-1 text-center py-1 rounded text-[8px] font-bold ${
+                                                        site.stages.electrical?.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.electrical?.status === 'in-progress' ? 'bg-amber-100 text-amber-700 border border-amber-400' : 'bg-gray-100 text-gray-500'
+                                                    }`}>
+                                                        ELEC {site.stages.electrical?.status === 'completed' ? '✓' : site.stages.electrical?.status === 'in-progress' ? '⚡' : '○'}
                                                     </div>
                                                 </>
                                             )}

@@ -56,7 +56,7 @@ export interface PaymentRequest extends PaymentRequestData {
   materials?: MaterialItem[];
   assignTo?: string;
   stage?: 'Civil' | 'Electricals'; // Legacy field
-  workStage?: 'civil' | 'electrical'; // New stage tracking field
+  workStage?: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'; // New 4-stage tracking
   transporterId?: string;
   siteId?: string; // Added to reliably match payments to sites
 }
@@ -106,10 +106,12 @@ export interface Site {
   vendorName?: string; // Cached vendor name for display
   photos?: SiteAttachment[];
   documents?: SiteAttachment[];
-  // New work stage tracking
-  currentStage: 'civil' | 'electrical' | 'completed';
+  // New 4-stage work tracking: C1 → C2 → C1+C2 Combined → Electrical
+  currentStage: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical' | 'completed';
   stages: {
-    civil: WorkStageInfo;
+    c1: WorkStageInfo;
+    c2: WorkStageInfo;
+    c1_c2_combined: WorkStageInfo;
     electrical: WorkStageInfo;
   };
   // Payments control: when true, further payment requests are blocked
@@ -128,9 +130,13 @@ export interface ProjectSummary {
   siteStatus: 'Open' | 'Closed' | 'No Activity';
   siteManagerId?: string;
   totalPaid: number;
-  // Stage-wise breakdown for clarity
-  civilPaid: number;
+  // Stage-wise breakdown: C1, C2, C1+C2 Combined, Electrical
+  c1Paid: number;
+  c2Paid: number;
+  c1_c2_combinedPaid: number;
   electricalPaid: number;
+  // Legacy for backward compatibility
+  civilPaid: number;
 }
 
 export interface TeamMember {
@@ -138,10 +144,18 @@ export interface TeamMember {
   name: string;
   role: string;
   mobile: string;
+  email?: string;
   photo: string | null;
   password?: string;
   passwordChanged?: boolean;
   assignedMaterials?: MaterialItem[];
+  // Sub-vendor specific fields
+  isSubVendor?: boolean;
+  subVendorDetails?: {
+    companyName?: string;
+    gstNumber?: string;
+    address?: string;
+  };
 }
 
 export interface Transporter {
@@ -160,7 +174,7 @@ export interface JobCard {
   description: string;
   status: 'Assigned' | 'In Transit' | 'Completed';
   timestamp: string;
-  workStage?: 'civil' | 'electrical'; // Track which work stage this job card belongs to
+  workStage?: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'; // Track which work stage this job card belongs to
   siteId?: string; // Link to site for stage validation
 }
 
@@ -619,23 +633,36 @@ const App: React.FC = () => {
         } else {
             // Find the site to get its ID
             const matchingSite = sites.find(s => s.siteName === formData.siteName);
-            // Infer work stage for this request so previous (civil) team can still submit after stage moves
-            const inferWorkStage = (): 'civil' | 'electrical' | undefined => {
+            // Infer work stage for this request (4-stage system)
+            const inferWorkStage = (): 'c1' | 'c2' | 'c1_c2_combined' | 'electrical' | undefined => {
               if (!matchingSite) {
                 // Fallback to role-based inference (no site context)
-                if (currentUser.role === 'Civil') return 'civil';
+                if (currentUser.role === 'Civil') return 'c1';
                 if (currentUser.role === 'Electricals') return 'electrical';
-                if (currentUser.role === 'Electrical + Civil') return 'civil';
+                if (currentUser.role === 'Electrical + Civil') return 'c1';
                 return undefined;
               }
-              const inCivil = Array.isArray(matchingSite.stages?.civil?.assignedTeamIds) && matchingSite.stages.civil.assignedTeamIds.includes(currentUser.id);
+              // Check team assignments first (most accurate)
+              const inC1 = Array.isArray(matchingSite.stages?.c1?.assignedTeamIds) && matchingSite.stages.c1.assignedTeamIds.includes(currentUser.id);
+              const inC2 = Array.isArray(matchingSite.stages?.c2?.assignedTeamIds) && matchingSite.stages.c2.assignedTeamIds.includes(currentUser.id);
+              const inC1C2Combined = Array.isArray(matchingSite.stages?.c1_c2_combined?.assignedTeamIds) && matchingSite.stages.c1_c2_combined.assignedTeamIds.includes(currentUser.id);
               const inElectrical = Array.isArray(matchingSite.stages?.electrical?.assignedTeamIds) && matchingSite.stages.electrical.assignedTeamIds.includes(currentUser.id);
-              if (inCivil) return 'civil';
+              
+              if (inC1) return 'c1';
+              if (inC2) return 'c2';
+              if (inC1C2Combined) return 'c1_c2_combined';
               if (inElectrical) return 'electrical';
-              // If not explicitly assigned, fall back to role
-              if (currentUser.role === 'Civil') return 'civil';
+              
+              // Fall back to current stage and user role
               if (currentUser.role === 'Electricals') return 'electrical';
-              if (currentUser.role === 'Electrical + Civil') return matchingSite.currentStage === 'electrical' ? 'electrical' : 'civil';
+              if (currentUser.role === 'Civil' || currentUser.role === 'Electrical + Civil') {
+                // For civil users, default to current stage if it's a civil stage
+                if (matchingSite.currentStage === 'c1' || matchingSite.currentStage === 'c2' || matchingSite.currentStage === 'c1_c2_combined') {
+                  return matchingSite.currentStage;
+                }
+                return 'c1'; // Default to C1 if not clear
+              }
+              
               return undefined;
             };
             const workStage = inferWorkStage();
@@ -757,8 +784,24 @@ const App: React.FC = () => {
     });
   }, [currentUser, sites, paymentRequests]);
 
-  const handleAddTeamMember = async (name: string, role: string, mobile: string, photo: string | null, password?: string) => {
-    const newMember: TeamMember = { id: Date.now().toString(), name, role, mobile, photo, password: password || mobile, passwordChanged: false };
+  const handleAddTeamMember = async (name: string, role: string, mobile: string, photo: string | null, password?: string, email?: string, companyName?: string, gstNumber?: string, address?: string) => {
+    const isSubVendor = role === 'Sub-Vendor';
+    const newMember: TeamMember = { 
+      id: Date.now().toString(), 
+      name, 
+      role, 
+      mobile, 
+      photo, 
+      password: password || mobile, 
+      passwordChanged: false,
+      email: isSubVendor ? email : undefined,
+      isSubVendor: isSubVendor,
+      subVendorDetails: isSubVendor ? {
+        companyName: companyName || '',
+        gstNumber: gstNumber || '',
+        address: address || ''
+      } : undefined
+    };
     await firebaseService.saveTeamMember(newMember);
     // State auto-updates via Firebase listener
   };
@@ -1204,69 +1247,79 @@ const App: React.FC = () => {
         }
       }
 
-      // Calculate total paid BY STAGE for clarity
+      // Calculate total paid BY STAGE for clarity (4-stage: C1, C2, C1+C2, Electrical)
       const paidRequests = requestsForSite.filter(r => r.status === 'Paid' && r.amount);
 
       const parseDateSafe = (value?: string): Date | null => {
         if (!value) return null;
         const d = new Date(value);
         if (!isNaN(d.getTime())) return d;
-        // Try to parse DD/MM/YYYY, MM/DD/YYYY, etc. if present
-        // Fallback: return null to trigger conservative defaults
         return null;
       };
 
+      const c1Start = parseDateSafe(site.stages?.c1?.startDate);
+      const c2Start = parseDateSafe(site.stages?.c2?.startDate);
+      const c1_c2_combinedStart = parseDateSafe(site.stages?.c1_c2_combined?.startDate);
       const electricalStart = parseDateSafe(site.stages?.electrical?.startDate);
-      const civilCompletedAt = parseDateSafe(site.stages?.civil?.completionDate);
 
-      let civilPaid = 0;
+      let c1Paid = 0;
+      let c2Paid = 0;
+      let c1_c2_combinedPaid = 0;
       let electricalPaid = 0;
+      let civilPaid = 0; // Legacy total
 
       paidRequests.forEach(req => {
         const cleanAmount = (req.amount || '').replace(/[^0-9.-]/g, '');
         const amount = parseFloat(cleanAmount) || 0;
 
-        // Determine stage with robust inference for legacy data
-        let stage: 'civil' | 'electrical' | undefined = req.workStage;
+        // Determine stage with robust inference
+        let stage: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical' | undefined = req.workStage;
 
-        // 1) Legacy "stage" field support
+        // Legacy "stage" field support
         if (!stage && req.stage) {
-          stage = req.stage === 'Electricals' ? 'electrical' : 'civil';
+          stage = req.stage === 'Electricals' ? 'electrical' : 'c1'; // Default old civil to c1
         }
 
-        // 2) Date-based inference relative to stage transition dates
+        // Date-based inference relative to stage transition dates
         if (!stage) {
           const ts = parseDateSafe(req.timestamp);
-          if (ts) {
-            // If we know when electrical started, anything strictly before that is civil
-            if (electricalStart && ts < electricalStart) {
-              stage = 'civil';
-            } else if (civilCompletedAt && ts <= civilCompletedAt) {
-              // If civil has a completion date, anything up to that is civil
-              stage = 'civil';
-            } else if (electricalStart && ts >= electricalStart) {
-              stage = 'electrical';
-            }
+          if (ts && electricalStart && ts >= electricalStart) {
+            stage = 'electrical';
+          } else if (ts && c1_c2_combinedStart && ts >= c1_c2_combinedStart) {
+            stage = 'c1_c2_combined';
+          } else if (ts && c2Start && ts >= c2Start) {
+            stage = 'c2';
+          } else if (ts && c1Start && ts >= c1Start) {
+            stage = 'c1';
           }
         }
 
-        // 3) Final fallback: be conservative and default to civil for old/ambiguous entries
+        // Final fallback: default to c1 for ambiguous entries
         if (!stage) {
-          stage = 'civil';
+          stage = 'c1';
         }
 
-        if (stage === 'civil') {
+        if (stage === 'c1') {
+          c1Paid += amount;
           civilPaid += amount;
-          console.log(`  Adding CIVIL paid request: ₹${amount} (${req.siteName})`);
+          console.log(`  Adding C1 paid request: ₹${amount} (${req.siteName})`);
+        } else if (stage === 'c2') {
+          c2Paid += amount;
+          civilPaid += amount;
+          console.log(`  Adding C2 paid request: ₹${amount} (${req.siteName})`);
+        } else if (stage === 'c1_c2_combined') {
+          c1_c2_combinedPaid += amount;
+          civilPaid += amount;
+          console.log(`  Adding C1+C2 Combined paid request: ₹${amount} (${req.siteName})`);
         } else if (stage === 'electrical') {
           electricalPaid += amount;
           console.log(`  Adding ELECTRICAL paid request: ₹${amount} (${req.siteName})`);
         }
       });
       
-      const totalPaid = civilPaid + electricalPaid;
+      const totalPaid = c1Paid + c2Paid + c1_c2_combinedPaid + electricalPaid;
       
-      console.log(`✓ Total Paid for "${site.siteName}": Civil=₹${civilPaid}, Electrical=₹${electricalPaid}, Total=₹${totalPaid}`);
+      console.log(`✓ Total Paid for "${site.siteName}": C1=₹${c1Paid}, C2=₹${c2Paid}, C1+C2=₹${c1_c2_combinedPaid}, Electrical=₹${electricalPaid}, Total=₹${totalPaid}`);
 
       return { 
         id: site.id, 
@@ -1275,8 +1328,11 @@ const App: React.FC = () => {
         siteStatus, 
         siteManagerId: site.siteManagerId,
         totalPaid,
-        civilPaid,
-        electricalPaid
+        c1Paid,
+        c2Paid,
+        c1_c2_combinedPaid,
+        electricalPaid,
+        civilPaid // Legacy total
       };
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [sites, paymentRequests]);
