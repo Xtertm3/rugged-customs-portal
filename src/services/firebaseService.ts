@@ -54,7 +54,9 @@ const COLLECTIONS = {
   MATERIAL_USAGE_LOGS: 'materialUsageLogs',
   TRANSPORTERS: 'transporters',
   JOB_CARDS: 'jobCards',
-  VENDORS: 'vendors'
+  VENDORS: 'vendors',
+  BILLING_OVERVIEW: 'billing_overview',
+  VENDOR_BILLING_REQUESTS: 'vendor_billing_requests'
 };
 
 // ============ TEAM MEMBERS ============
@@ -265,6 +267,60 @@ export const subscribeToVendors = (callback: (vendors: any[]) => void) => {
   });
 };
 
+// ============ BILLING OVERVIEW ============
+export const saveBillingOverview = async (billing: any) => {
+  const cleaned = pruneUndefined(billing);
+  await setDoc(doc(db, COLLECTIONS.BILLING_OVERVIEW, billing.id), cleaned);
+};
+
+export const getAllBillingOverviews = async (): Promise<any[]> => {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.BILLING_OVERVIEW));
+  return snapshot.docs.map(doc => doc.data());
+};
+
+export const deleteBillingOverview = async (id: string) => {
+  await deleteDoc(doc(db, COLLECTIONS.BILLING_OVERVIEW, id));
+};
+
+export const updateBillingOverview = async (id: string, updates: any) => {
+  const cleaned = pruneUndefined(updates);
+  await updateDoc(doc(db, COLLECTIONS.BILLING_OVERVIEW, id), cleaned);
+};
+
+export const subscribeToBillingOverviews = (callback: (billings: any[]) => void) => {
+  return onSnapshot(collection(db, COLLECTIONS.BILLING_OVERVIEW), (snapshot) => {
+    const billings = snapshot.docs.map(doc => doc.data());
+    callback(billings);
+  });
+};
+
+// ============ VENDOR BILLING REQUESTS (Line Items) ============
+export const saveVendorBillingRequest = async (request: any) => {
+  const cleanedRequest = pruneUndefined(request);
+  await setDoc(doc(db, COLLECTIONS.VENDOR_BILLING_REQUESTS, request.id), cleanedRequest);
+};
+
+export const getAllVendorBillingRequests = async (): Promise<any[]> => {
+  const snapshot = await getDocs(collection(db, COLLECTIONS.VENDOR_BILLING_REQUESTS));
+  return snapshot.docs.map(doc => doc.data());
+};
+
+export const deleteVendorBillingRequest = async (id: string) => {
+  await deleteDoc(doc(db, COLLECTIONS.VENDOR_BILLING_REQUESTS, id));
+};
+
+export const updateVendorBillingRequest = async (id: string, updates: any) => {
+  const cleanedUpdates = pruneUndefined(updates);
+  await updateDoc(doc(db, COLLECTIONS.VENDOR_BILLING_REQUESTS, id), cleanedUpdates);
+};
+
+export const subscribeToVendorBillingRequests = (callback: (requests: any[]) => void) => {
+  return onSnapshot(collection(db, COLLECTIONS.VENDOR_BILLING_REQUESTS), (snapshot) => {
+    const requests = snapshot.docs.map(doc => doc.data());
+    callback(requests);
+  });
+};
+
 // Initialize default admin user if not exists
 export const initializeDefaultAdmin = async () => {
   const adminId = 'admin-1';
@@ -339,6 +395,20 @@ export default {
   deleteVendor,
   updateVendor,
   subscribeToVendors,
+  
+  // Billing Overview
+  saveBillingOverview,
+  getAllBillingOverviews,
+  deleteBillingOverview,
+  updateBillingOverview,
+  subscribeToBillingOverviews,
+  
+  // Vendor Billing Requests (Line Items)
+  saveVendorBillingRequest,
+  getAllVendorBillingRequests,
+  deleteVendorBillingRequest,
+  updateVendorBillingRequest,
+  subscribeToVendorBillingRequests,
   
   // Utils
   clearAllData,

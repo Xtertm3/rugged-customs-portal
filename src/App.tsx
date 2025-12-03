@@ -29,7 +29,9 @@ import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 import { DocumentLibrary } from './components/DocumentLibrary';
 import { MobileNav } from './components/MobileNav';
 import { Vendors } from './components/Vendors';
-
+import { BillingOverviewReport } from './components/BillingOverviewReport';
+import { LineItemsModal } from './components/LineItemsModal';
+import { VendorBillingOverviewReport } from './components/VendorBillingOverviewReport';
 
 export interface StatusChange {
   status: 'Pending' | 'Approved' | 'Paid';
@@ -114,6 +116,9 @@ export interface Site {
   paymentsLocked?: boolean;
   paymentsLockedAt?: string;
   paymentsLockedBy?: string; // userId who locked
+  // Billing status tracking
+  billingStatus?: 'WIP' | 'YTB' | 'ADD PR DONE' | 'WCC DONE' | 'BILLING DONE';
+  billingValue?: number;
 }
 
 export interface ProjectSummary {
@@ -157,6 +162,72 @@ export interface JobCard {
   timestamp: string;
   workStage?: 'civil' | 'electrical'; // Track which work stage this job card belongs to
   siteId?: string; // Link to site for stage validation
+}
+
+export type BillingStatus = 
+  | 'Quotation Sent'
+  | 'Yet To Bill'
+  | 'Approval Pending'
+  | 'Add PR Process'
+  | 'Add PR Done'
+  | 'Waiting For Amendment'
+  | 'WCC Done'
+  | 'Billing Completed';
+
+export interface BillingOverview {
+  id: string;
+  siteId: string;
+  siteName: string;
+  clientName: string;
+  vendorName?: string;
+  quotationAmount: number;
+  yetToBillAmount: number;
+  actualBillingBasic: number;
+  actualBillingGST: number;
+  actualBillingTotal: number;
+  expense: number;
+  profit: number;
+  status: BillingStatus;
+  pendingWithType?: 'client' | 'vendor';
+  pendingWithId?: string;
+  pendingWithName?: string;
+  statusHistory: Array<{
+    status: BillingStatus;
+    timestamp: string;
+    updatedBy: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+}
+
+// Vendor Billing (Line Items) - NEW
+export type VendorBillingStatus = 'PR Process' | 'PR Done' | 'Waiting For Amendment' | 'WCC Done' | 'Billing Done';
+
+export interface VendorBillingLineItem {
+  id: string;
+  itemCode: string;
+  category: 'Tree Cutting' | 'Dewatering' | 'HardRock Excavation' | 'Head Loading' | 'Crane Charges' | 'Custom';
+  description: string;
+  quantity: number;
+  rate: number;
+  total: number;
+}
+
+export interface VendorBillingRequest {
+  id: string;
+  siteId: string;
+  siteName: string;
+  siteIdCode: string; // IN-1251585
+  rlId: string; // R/RL-7849273
+  lineItems: VendorBillingLineItem[];
+  status: VendorBillingStatus;
+  totalAmount: number;
+  requestedBy: string;
+  requestedByName: string;
+  requestedAt: string;
+  lastUpdated: string;
+  emailSent: boolean;
 }
 
 export interface InventoryItem {
@@ -218,6 +289,8 @@ const App: React.FC = () => {
   const [transporters, setTransporters] = useState<Transporter[]>([]);
   const [jobCards, setJobCards] = useState<JobCard[]>([]);
   const [materialUsageLogs, setMaterialUsageLogs] = useState<MaterialUsageLog[]>([]);
+  const [billingOverviews, setBillingOverviews] = useState<BillingOverview[]>([]);
+  const [vendorBillingRequests, setVendorBillingRequests] = useState<VendorBillingRequest[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isDbLoading, setIsDbLoading] = useState(true);
@@ -229,6 +302,8 @@ const App: React.FC = () => {
   const [isEditTransporterModalOpen, setIsEditTransporterModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isForcedPasswordChange, setIsForcedPasswordChange] = useState(false);
+  const [isLineItemsModalOpen, setIsLineItemsModalOpen] = useState(false);
+  const [selectedSiteForApproval, setSelectedSiteForApproval] = useState<Site | null>(null);
   
   const [selectedSiteName, setSelectedSiteName] = useState<string | null>(null);
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
@@ -328,6 +403,14 @@ const App: React.FC = () => {
           setVendors(vendors);
         });
 
+        const unsubscribeBilling = firebaseService.subscribeToBillingOverviews((billings) => {
+          setBillingOverviews(billings);
+        });
+
+        const unsubscribeVendorBilling = firebaseService.subscribeToVendorBillingRequests((requests) => {
+          setVendorBillingRequests(requests);
+        });
+
         const unsubscribeTransporters = firebaseService.subscribeToTransporters((transporters) => {
           setTransporters(transporters);
         });
@@ -368,6 +451,8 @@ const App: React.FC = () => {
           unsubscribeSites();
           unsubscribeRequests();
           unsubscribeVendors();
+          unsubscribeBilling();
+          unsubscribeVendorBilling();
           unsubscribeTransporters();
           unsubscribeJobCards();
           unsubscribeMaterialLogs();
@@ -734,6 +819,148 @@ const App: React.FC = () => {
     await firebaseService.deleteVendor(vendorId);
   };
 
+  // Billing handlers
+  const handleAddBilling = async (billingData: Omit<BillingOverview, 'id'>) => {
+    const newBilling: BillingOverview = {
+      ...billingData,
+      id: Date.now().toString()
+    };
+    await firebaseService.saveBillingOverview(newBilling);
+  };
+
+  const handleRequestApproval = async (siteId: string) => {
+    const site = sites.find(s => s.id === siteId);
+    if (!site || !currentUser) return;
+
+    // Check if billing already exists for this site
+    const existingBilling = billingOverviews.find(b => b.siteId === siteId);
+    if (existingBilling) {
+      alert('Billing request already exists for this site.');
+      return;
+    }
+
+    const billingData: Omit<BillingOverview, 'id'> = {
+      siteId: site.id,
+      siteName: site.siteName,
+      clientName: site.vendorName || 'N/A',
+      vendorName: site.vendorName,
+      quotationAmount: 0,
+      yetToBillAmount: 0,
+      actualBillingBasic: 0,
+      actualBillingGST: 0,
+      actualBillingTotal: 0,
+      expense: 0,
+      profit: 0,
+      status: 'Quotation Sent',
+      pendingWithType: 'client',
+      pendingWithName: site.vendorName || '',
+      statusHistory: [
+        {
+          status: 'Quotation Sent',
+          timestamp: new Date().toISOString(),
+          updatedBy: currentUser.id
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: currentUser.id
+    };
+
+    await handleAddBilling(billingData);
+    alert('Billing approval request created! You can now update quotation amounts and track the billing process.');
+  };
+
+  const handleViewBilling = (_billingId: string) => {
+    // Navigate to billing overview page where user can see all billings including this one
+    navigateTo('billingOverview');
+  };
+
+  const handleUpdateBilling = async (id: string, updates: Partial<BillingOverview>) => {
+    const existingBilling = billingOverviews.find(b => b.id === id);
+    if (!existingBilling) return;
+
+    // If status is changing, add to status history
+    if (updates.status && updates.status !== existingBilling.status) {
+      const newStatusEntry = {
+        status: updates.status,
+        timestamp: new Date().toISOString(),
+        updatedBy: currentUser?.id || ''
+      };
+      updates.statusHistory = [
+        ...(existingBilling.statusHistory || []),
+        newStatusEntry
+      ];
+    }
+
+    // Auto-calculate GST and total if actualBillingBasic is updated
+    if (updates.actualBillingBasic !== undefined) {
+      updates.actualBillingGST = updates.actualBillingBasic * 0.18;
+      updates.actualBillingTotal = updates.actualBillingBasic + updates.actualBillingGST;
+    }
+
+    // Auto-calculate profit
+    const actualBillingTotal = updates.actualBillingTotal ?? existingBilling.actualBillingTotal;
+    const expense = updates.expense ?? existingBilling.expense;
+    updates.profit = actualBillingTotal - expense;
+
+    updates.updatedAt = new Date().toISOString();
+    await firebaseService.updateBillingOverview(id, updates);
+  };
+
+  const handleDeleteBilling = async (id: string) => {
+    await firebaseService.deleteBillingOverview(id);
+  };
+
+  // Update vendor billing status
+  const handleUpdateVendorBillingStatus = async (id: string, status: VendorBillingStatus) => {
+    await firebaseService.updateVendorBillingRequest(id, {
+      status,
+      lastUpdated: new Date().toISOString(),
+    });
+  };
+
+  // Vendor Billing (Line Items) handlers
+  const handleRequestApprovalClick = (site: Site) => {
+    setSelectedSiteForApproval(site);
+    setIsLineItemsModalOpen(true);
+  };
+
+  const generateRLId = () => {
+    const randomNum = Math.floor(1000000 + Math.random() * 9000000);
+    return `R/RL-${randomNum}`;
+  };
+
+  const handleSubmitVendorBillingRequest = async (lineItems: VendorBillingLineItem[], sendEmail: boolean) => {
+    if (!selectedSiteForApproval || !currentUser) return;
+
+    const request: VendorBillingRequest = {
+      id: Date.now().toString(),
+      siteId: selectedSiteForApproval.id,
+      siteName: selectedSiteForApproval.siteName,
+      siteIdCode: selectedSiteForApproval.id,
+      rlId: generateRLId(),
+      lineItems,
+      status: 'PR Process',
+      totalAmount: lineItems.reduce((sum, item) => sum + item.total, 0),
+      requestedBy: currentUser.id,
+      requestedByName: currentUser.name,
+      requestedAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      emailSent: sendEmail
+    };
+
+    await firebaseService.saveVendorBillingRequest(request);
+
+    if (sendEmail) {
+      const { openOutlookEmail } = await import('./utils/emailGenerator');
+      openOutlookEmail(request);
+    }
+
+    setIsLineItemsModalOpen(false);
+    setSelectedSiteForApproval(null);
+    alert('Vendor billing request created successfully!');
+  };
+
   const handleAddTransporter = async (contactPerson: string, contactNumber: string, password?: string) => {
     const newTransporter: Transporter = { id: Date.now().toString(), contactPerson, contactNumber, password: password || contactNumber, passwordChanged: false };
     await firebaseService.saveTransporter(newTransporter);
@@ -796,6 +1023,13 @@ const App: React.FC = () => {
     await firebaseService.updateSite(updatedSite.id, updatedSite);
     setEditingSite(null);
     navigateBack();
+  };
+
+  const handleUpdateBillingStatus = async (siteId: string, billingStatus: 'WIP' | 'YTB' | 'ADD PR DONE' | 'WCC DONE' | 'BILLING DONE', billingValue: number) => {
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return;
+    
+    await firebaseService.updateSite(siteId, { ...site, billingStatus, billingValue });
   };
 
   const handleDeleteSite = async (siteId: string) => {
@@ -1555,13 +1789,15 @@ const App: React.FC = () => {
   }
 
   const MainViews: { [key: string]: React.ReactNode } = {
-  dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
-    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} />,
+  dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} billings={billingOverviews} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
+    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} />,
+    vendorBillingOverview: <VendorBillingOverviewReport requests={vendorBillingRequests} onUpdateStatus={handleUpdateVendorBillingStatus} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,
     vendors: <Vendors vendors={vendors} onAddVendor={handleAddVendor} onEditVendor={handleUpdateVendor} onDeleteVendor={handleDeleteVendor} currentUser={currentUser} />,
+    billingOverview: <BillingOverviewReport billings={billingOverviews} sites={sites} vendors={vendors} currentUser={currentUser} onAddBilling={handleAddBilling} onUpdateBilling={handleUpdateBilling} onDeleteBilling={handleDeleteBilling} onUpdateSiteBillingStatus={handleUpdateBillingStatus} projectSummaries={projectSummaries} />,
     transporter: <TransporterPage transporters={transporters} onAddTransporter={handleAddTransporter} onDeleteTransporter={handleDeleteTransporter} onNewJobCard={() => setIsNewJobCardModalOpen(true)} onViewDetails={handleViewTransporterDetails} onEditTransporter={handleEditTransporter} />,
-  siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} canEditMaterials={permissions.canEditMaterials} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} /> : null,
+  siteDetail: selectedSite ? <SiteDetail site={selectedSite} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} canEditMaterials={permissions.canEditMaterials} onEditSite={handleNavigateToEditSite} onDeleteRequest={handleDeleteRequest} onRequestApproval={handleRequestApproval} currentUser={currentUser} billings={billingOverviews} onViewBilling={handleViewBilling} /> : null,
   teamMemberDetail: selectedTeamMember ? <TeamMemberDetail member={selectedTeamMember} requests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} onUpdateRequestStatus={handleUpdateRequestStatus} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} /> : null,
     transporterDetail: selectedTransporter ? <TransporterDetail transporter={selectedTransporter} jobCards={jobCards} onBack={navigateBack} onUpdateStatus={handleUpdateJobCardStatus} onEditJobCard={handleEditJobCard} transporters={transporters} canEdit={permissions.canManageTransporters} onDownloadReport={handleDownloadTransporterJobReport} /> : null,
     requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} currentUser={currentUser} /> : null,
@@ -1605,6 +1841,7 @@ const App: React.FC = () => {
                 <NavButton view="inventory" label="📦 Inventory" />
                 {(permissions.canManageTeam || permissions.canDownloadInventoryReport) && <NavButton view="team" label="👥 Team" />}
                 {permissions.canManageSites && <NavButton view="vendors" label="🏢 Vendors" />}
+                {(currentUser?.role === 'Admin' || currentUser?.role === 'Manager') && <NavButton view="billingOverview" label="💰 Billing" />}
                 {permissions.canManageTransporters && <NavButton view="transporter" label="🚚 Transport" />}
                 {/* Transactions quick access for eligible roles (Admins/Managers/Accountant etc.) */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil','Supervisor'].includes(currentUser.role) && (
@@ -1714,6 +1951,28 @@ const App: React.FC = () => {
               teamMembers={teamMembers}
               materialUsageLogs={materialUsageLogs}
               sites={sites}
+            />
+          )}
+          {isLineItemsModalOpen && selectedSiteForApproval && (
+            <LineItemsModal
+              isOpen={isLineItemsModalOpen}
+              onClose={() => {
+                setIsLineItemsModalOpen(false);
+                setSelectedSiteForApproval(null);
+              }}
+              site={selectedSiteForApproval}
+              onSubmit={handleSubmitVendorBillingRequest}
+            />
+          )}
+          {isLineItemsModalOpen && selectedSiteForApproval && (
+            <LineItemsModal
+              isOpen={isLineItemsModalOpen}
+              onClose={() => {
+                setIsLineItemsModalOpen(false);
+                setSelectedSiteForApproval(null);
+              }}
+              site={selectedSiteForApproval}
+              onSubmit={handleSubmitVendorBillingRequest}
             />
           )}
     </div>

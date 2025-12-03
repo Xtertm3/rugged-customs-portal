@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { PaymentRequest, JobCard, Transporter, TeamMember, Site } from '../App';
+import { PaymentRequest, JobCard, Transporter, TeamMember, Site, BillingOverview } from '../App';
 import { PaymentHistory } from './PaymentHistory';
+import { BillingOverviewCard } from './BillingOverviewCard';
 
 interface DashboardProps {
   requests: PaymentRequest[];
@@ -11,6 +12,7 @@ interface DashboardProps {
   currentUser?: TeamMember | null;
   onOpenTransactionsReport?: () => void;
   sites: Site[];
+  billings?: BillingOverview[];
   onUpdateRequestStatus: (requestId: string, newStatus: 'Pending' | 'Approved' | 'Paid') => void;
   onViewRequestDetails?: (requestId: string) => void;
   onEditRequest: (request: PaymentRequest) => void;
@@ -56,6 +58,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentUser,
   onOpenTransactionsReport,
   sites,
+  billings = [],
   onUpdateRequestStatus, 
   onViewRequestDetails,
   onEditRequest, 
@@ -394,6 +397,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </button>
             </div>
         </div>
+
+        {/* Billing Overview Card - Admin & Manager Only */}
+        {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager') && billings.length > 0 && (
+          <BillingOverviewCard billings={billings} />
+        )}
 
         <div className="bg-white backdrop-blur-sm border border-gray-200 rounded-2xl shadow-2xl p-6 transition-all duration-500">
             <h2 className="text-2xl font-semibold mb-4 text-gray-900 border-b border-gray-300 pb-3">

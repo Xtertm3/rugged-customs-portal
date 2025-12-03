@@ -13,6 +13,7 @@ interface ProjectsProps {
     onDeleteSite: (siteId: string) => void;
     currentUser: TeamMember | null;
     onCompletionSubmitClick: (siteId: string) => void;
+    onRequestApproval?: (site: Site) => void;
 }
 
 const getSiteStatusStyle = (status: 'Open' | 'Closed' | 'No Activity') => {
@@ -37,7 +38,8 @@ export const Projects: React.FC<ProjectsProps> = ({
     onEditSite,
     onDeleteSite,
     currentUser,
-    onCompletionSubmitClick
+    onCompletionSubmitClick,
+    onRequestApproval
 }) => {
     const displayedSummaries = useMemo(() => {
         // Admin-like roles see all sites with full data
@@ -106,131 +108,232 @@ export const Projects: React.FC<ProjectsProps> = ({
                             if (!site) return null;
                             const statusStyle = getSiteStatusStyle(summary.siteStatus);
 
+                            const raw = site.siteName || summary.name;
+                            const siteIdMatch = raw.match(/\bIN-?\d+\b/i);
+                            const rlIdMatch = raw.match(/\bR\/RL-?\d+\b/i);
+                            const baseName = raw
+                                .replace(siteIdMatch?.[0] || '', '')
+                                .replace(rlIdMatch?.[0] || '', '')
+                                .replace(/[-_]+/g, ' ')
+                                .replace(/\s{2,}/g, ' ')
+                                .trim();
+                            const rlIdDisplay = (rlIdMatch?.[0] || '').toUpperCase();
+                            const siteIdDisplay = (siteIdMatch?.[0] || site.id).toUpperCase();
+
                             return (
                                 <div 
                                     key={summary.id} 
                                     onClick={() => onViewSiteDetails(summary.name)}
-                                    className={`bg-white p-4 rounded-xl border flex flex-col gap-3 cursor-pointer transition-all duration-200 hover:border-orange-400/70 ${statusStyle.border}`}
+                                    className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 overflow-hidden ${statusStyle.border} hover:border-orange-400`}
                                 >
-                                    <div className="flex items-start gap-2">
-                                        <h3 className="font-semibold text-gray-900 truncate flex-1" title={summary.name}>{summary.name}</h3>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${statusStyle.text} ${statusStyle.border.replace('border-','border-')}`}>{summary.siteStatus}</span>
-                                        {canManageSites && (
-                                            <div className="flex items-center gap-2 ml-2">
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); onEditSite(site); }}
-                                                    className="text-xs font-semibold text-gray-500 hover:text-gray-800"
-                                                >Edit</button>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); onDeleteSite(site.id); }}
-                                                    className="text-xs font-semibold text-red-500 hover:text-red-600"
-                                                >Delete</button>
+                                    {/* Compact Header */}
+                                    <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-4 py-3 border-b">
+                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                            <h3 className="font-bold text-base text-gray-900 leading-tight truncate flex-1" title={baseName || summary.name}>
+                                                {baseName || summary.name}
+                                            </h3>
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusStyle.text} ${statusStyle.border.replace('border-','bg-')} bg-opacity-20 whitespace-nowrap`}>
+                                                {summary.siteStatus}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-300 text-gray-700 font-mono font-bold">
+                                                {siteIdDisplay}
+                                            </span>
+                                            {rlIdDisplay && (
+                                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-300 text-gray-700 font-mono font-bold">
+                                                    {rlIdDisplay}
+                                                </span>
+                                            )}
+                                            {canManageSites && (
+                                                <div className="ml-auto flex items-center gap-1.5">
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); onEditSite(site); }}
+                                                        className="text-[10px] font-semibold text-blue-600 hover:text-blue-700"
+                                                    >Edit</button>
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); onDeleteSite(site.id); }}
+                                                        className="text-[10px] font-semibold text-red-600 hover:text-red-700"
+                                                    >Delete</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Compact Body */}
+                                    <div className="p-2.5 space-y-2">
+                                        {/* Info Row - Condensed */}
+                                        <div className="flex items-center gap-3 text-[11px] text-gray-600">
+                                            {site.vendorName && (
+                                                <span className="flex items-center gap-1 truncate">
+                                                    <span className="text-blue-600">🏢</span>
+                                                    <span className="font-medium">{site.vendorName}</span>
+                                                </span>
+                                            )}
+                                            <span className="flex items-center gap-1 truncate">
+                                                <span className="text-red-500">📍</span>
+                                                <span>{site.location}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-[11px] text-gray-700">
+                                            <span>👤</span>
+                                            <span className="truncate"><span className="font-bold text-gray-900">{manager}</span></span>
+                                        </div>
+
+                                        {/* Compact Stats */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {(() => {
+                                                const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
+                                                const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
+                                                const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
+                                                
+                                                // For Admin/Manager/Backoffice: Show Billing Status + Value
+                                                if (isBillingUser && site.billingStatus && site.billingValue) {
+                                                    return (
+                                                        <>
+                                                            <div className={`rounded-md p-1.5 border ${
+                                                                site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
+                                                                site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
+                                                                site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                            }`}>
+                                                                <div className={`text-[9px] font-semibold ${
+                                                                    site.billingStatus === 'WIP' ? 'text-yellow-600' :
+                                                                    site.billingStatus === 'YTB' ? 'text-gray-600' :
+                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
+                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
+                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
+                                                                }`}>Billing Status</div>
+                                                                <div className={`text-xs font-bold ${
+                                                                    site.billingStatus === 'WIP' ? 'text-yellow-700' :
+                                                                    site.billingStatus === 'YTB' ? 'text-gray-700' :
+                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
+                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
+                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
+                                                                }`}>{site.billingStatus}</div>
+                                                            </div>
+                                                            <div className={`rounded-md p-1.5 border ${
+                                                                site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
+                                                                site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
+                                                                site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                            }`}>
+                                                                <div className={`text-[9px] font-semibold ${
+                                                                    site.billingStatus === 'WIP' ? 'text-yellow-600' :
+                                                                    site.billingStatus === 'YTB' ? 'text-gray-600' :
+                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
+                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
+                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
+                                                                }`}>Value</div>
+                                                                <div className={`text-lg font-bold ${
+                                                                    site.billingStatus === 'WIP' ? 'text-yellow-700' :
+                                                                    site.billingStatus === 'YTB' ? 'text-gray-700' :
+                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
+                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
+                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
+                                                                }`}>₹{site.billingValue.toLocaleString()}</div>
+                                                            </div>
+                                                        </>
+                                                    );
+                                                }
+                                                
+                                                // Default stats for other users or when billing status not set
+                                                return (
+                                                    <>
+                                                        <div className="bg-blue-50 rounded-md p-1.5 border border-blue-200">
+                                                            <div className="text-[9px] text-blue-600 font-semibold">Submissions</div>
+                                                            <div className="text-lg font-bold text-blue-700">{summary.requestCount}</div>
+                                                        </div>
+                                                        {isAdmin ? (
+                                                            <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
+                                                                <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
+                                                                <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
+                                                            </div>
+                                                        ) : isBoth || currentUser?.role === 'Electricals' ? (
+                                                            <div className="bg-amber-50 rounded-md p-1.5 border border-amber-200">
+                                                                <div className="text-[9px] text-amber-600 font-semibold">Electrical</div>
+                                                                <div className="text-lg font-bold text-amber-700">₹{summary.electricalPaid.toLocaleString()}</div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="bg-blue-50 rounded-md p-1.5 border border-blue-200">
+                                                                <div className="text-[9px] text-blue-600 font-semibold">Civil</div>
+                                                                <div className="text-lg font-bold text-blue-700">₹{summary.civilPaid.toLocaleString()}</div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        {/* Compact Stage + Coordinates Combined */}
+                                        <div className="flex items-center gap-1.5">
+                                            {site.currentStage && site.stages && (
+                                                <>
+                                                    <div className={`flex-1 text-center py-1 rounded text-[9px] font-bold ${
+                                                        site.stages.civil.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.civil.status === 'in-progress' ? 'bg-blue-100 text-blue-700 border border-blue-400' : 'bg-gray-100 text-gray-500'
+                                                    }`}>
+                                                        Civil {site.stages.civil.status === 'completed' ? '✓' : site.stages.civil.status === 'in-progress' ? '⚙️' : '○'}
+                                                    </div>
+                                                    <span className="text-gray-400 text-xs">→</span>
+                                                    <div className={`flex-1 text-center py-1 rounded text-[9px] font-bold ${
+                                                        site.stages.electrical.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-400' :
+                                                        site.stages.electrical.status === 'in-progress' ? 'bg-amber-100 text-amber-700 border border-amber-400' : 'bg-gray-100 text-gray-500'
+                                                    }`}>
+                                                        Elect. {site.stages.electrical.status === 'completed' ? '✓' : site.stages.electrical.status === 'in-progress' ? '⚡' : '○'}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Compact Coordinates */}
+                                        {site.latitude && site.longitude && (
+                                            <a
+                                                href={`https://www.google.com/maps?q=${site.latitude},${site.longitude}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="flex items-center justify-center gap-1 py-1 px-2 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors text-[10px] font-medium text-blue-700"
+                                            >
+                                                <span>📍</span>
+                                                <span className="truncate">{site.latitude}, {site.longitude}</span>
+                                            </a>
+                                        )}
+
+                                        {/* Compact Vendor Billing */}
+                                        {/* Billing Status Badge */}
+                                        {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && site.billingStatus && (
+                                            <div className={`text-center py-1.5 px-2 rounded-md text-[10px] font-bold border ${
+                                                site.billingStatus === 'WIP' ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
+                                                site.billingStatus === 'YTB' ? 'bg-gray-50 text-gray-700 border-gray-300' :
+                                                site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 text-blue-700 border-blue-300' :
+                                                site.billingStatus === 'WCC DONE' ? 'bg-purple-50 text-purple-700 border-purple-300' :
+                                                site.billingStatus === 'BILLING DONE' ? 'bg-green-50 text-green-700 border-green-300' : 'bg-gray-50 text-gray-700 border-gray-300'
+                                            }`}>
+                                                📝 Billing: {site.billingStatus}
                                             </div>
                                         )}
                                     </div>
 
-                                    {site.vendorName && (
-                                        <div className="text-xs text-gray-600 font-medium">
-                                            🏢 {site.vendorName}
-                                        </div>
-                                    )}
-                                    <div className="text-xs text-gray-500 truncate">📍 {site.location}</div>
-
-                                    {/* Compact info chips */}
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Manager: <span className="font-semibold">{manager}</span></span>
-                                        <span className="text-xs px-2 py-1 rounded-md bg-gray-100 text-gray-700">Submissions: <span className="font-semibold">{summary.requestCount}</span></span>
-                                        
-                                        {/* Show stage-specific paid amount based on user role */}
-                                        {(() => {
-                                            const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
-                                            const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
-                                            
-                                            if (isAdmin) {
-                                                // Admin sees full breakdown
-                                                return (
-                                                    <>
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
-                                                            Civil: ₹{summary.civilPaid.toLocaleString()}
-                                                        </span>
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
-                                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
-                                                        </span>
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                            Total: ₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}
-                                                        </span>
-                                                    </>
-                                                );
-                                            } else if (isBoth) {
-                                                // Electrical + Civil sees both
-                                                return (
-                                                    <>
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-700">
-                                                            Civil: ₹{summary.civilPaid.toLocaleString()}
-                                                        </span>
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700">
-                                                            Electrical: ₹{summary.electricalPaid.toLocaleString()}
-                                                        </span>
-                                                    </>
-                                                );
-                                            } else {
-                                                // Civil or Electrical teams see only their stage payment
-                                                if (currentUser?.role === 'Electricals') {
-                                                    return (
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                            Paid (Electrical): ₹{summary.electricalPaid.toLocaleString()}
-                                                        </span>
-                                                    );
-                                                } else if (currentUser?.role === 'Civil') {
-                                                    return (
-                                                        <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                            Paid (Civil): ₹{summary.civilPaid.toLocaleString()}
-                                                        </span>
-                                                    );
-                                                }
-                                                // Default fallback
-                                                return (
-                                                    <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 font-semibold">
-                                                        Paid: ₹{summary.totalPaid.toLocaleString()}
-                                                    </span>
-                                                );
-                                            }
-                                        })()}
-                                        
-                                        {site.paymentsLocked && (
-                                            <span className="text-xs px-2 py-1 rounded-md bg-red-50 text-red-600">Payments Closed</span>
-                                        )}
-                                    </div>
-
-                                    {/* Simple stage badges */}
-                                    {site.currentStage && site.stages && (
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className={`px-2 py-1 rounded-md ${
-                                                site.stages.civil.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                site.stages.civil.status === 'in-progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-                                            }`}>Civil: {site.stages.civil.status.replace('-', ' ')}</span>
-                                            <span className="text-gray-400">→</span>
-                                            <span className={`px-2 py-1 rounded-md ${
-                                                site.stages.electrical.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                site.stages.electrical.status === 'in-progress' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
-                                            }`}>Electrical: {site.stages.electrical.status.replace('-', ' ')}</span>
-                                        </div>
-                                    )}
-
-                                    {/* Footer actions */}
-                                    <div className="pt-2 flex items-center gap-2">
-                                        {site.latitude && site.longitude && (
-                                            <span className="text-[11px] text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                                                {site.latitude}, {site.longitude}
-                                            </span>
-                                        )}
+                                    {/* Compact Footer */}
+                                    <div className="px-2.5 pb-2.5 flex gap-1.5">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
                                             disabled={!!site.paymentsLocked}
-                                            className="ml-auto text-xs px-3 py-1.5 bg-orange-600 text-white font-semibold rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                            className="flex-1 py-1.5 bg-orange-600 text-white font-bold rounded-md hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]"
                                         >
                                             Submit Completion
                                         </button>
+                                        {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && onRequestApproval && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onRequestApproval(site); }}
+                                                className="flex-1 py-1.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-md hover:from-green-700 hover:to-green-800 transition-all text-[11px]"
+                                            >
+                                                📋 Request Approval
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             )

@@ -20,9 +20,13 @@ interface SiteDetailProps {
   canEdit: boolean;
   canEditMaterials?: boolean;
   onEditSite: (site: Site) => void;
+  onRequestApproval?: (siteId: string) => void;
+  currentUser?: any;
+  billings?: any[];
+  onViewBilling?: (billingId: string) => void;
 }
 
-export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMembers, onBack, onUpdateRequestStatus, onEditRequest, onDeleteRequest, canApprove, canEdit, canEditMaterials, onEditSite }) => {
+export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMembers, onBack, onUpdateRequestStatus, onEditRequest, onDeleteRequest, canApprove, canEdit, canEditMaterials, onEditSite, onRequestApproval, currentUser, billings = [], onViewBilling }) => {
   const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
   const [workType, setWorkType] = useState<'Civil' | 'Electrical' | ''>(site.workType || '');
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
@@ -212,13 +216,60 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
         <div className="bg-white/50 p-6 rounded-2xl space-y-6">
             <div className="border-b border-gray-300 pb-4 flex justify-between items-start">
               <div className="flex-1">
-                 <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-gray-900">{site.siteName}</h2>
+                 <div className="flex items-center gap-4 flex-wrap">
+                    {(() => {
+                      const raw = site.siteName || '';
+                      const siteIdMatch = raw.match(/\bIN-?\d+\b/i);
+                      const rlIdMatch = raw.match(/\bR\/RL-?\d+\b/i);
+                      const baseName = raw
+                        .replace(siteIdMatch?.[0] || '', '')
+                        .replace(rlIdMatch?.[0] || '', '')
+                        .replace(/[-_]+/g, ' ')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                      const rlIdDisplay = rlIdMatch?.[0]?.toUpperCase();
+                      const siteIdDisplay = (siteIdMatch?.[0] || site.id).toUpperCase();
+                      return (
+                        <>
+                          <h2 className="text-3xl font-bold text-gray-900">{baseName || site.siteName}</h2>
+                          <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300" title="Site ID">{siteIdDisplay}</span>
+                          {rlIdDisplay && (
+                            <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300" title="RL ID">{rlIdDisplay}</span>
+                          )}
+                        </>
+                      );
+                    })()}
                     {siteStatus === 'Closed' && (
                         <span className="text-sm font-semibold bg-green-900/50 text-green-300 px-3 py-1 rounded-full">
                             Closed
                         </span>
                     )}
+                    {/* Billing Status Badge */}
+                    {(() => {
+                      const siteBilling = billings.find(b => b.siteId === site.id);
+                      if (siteBilling) {
+                        const statusColors: Record<string, string> = {
+                          'Quotation Sent': 'bg-blue-100 text-blue-700',
+                          'Yet To Bill': 'bg-yellow-100 text-yellow-700',
+                          'Approval Pending': 'bg-orange-100 text-orange-700',
+                          'Add PR Process': 'bg-purple-100 text-purple-700',
+                          'Add PR Done': 'bg-indigo-100 text-indigo-700',
+                          'Waiting For Amendment': 'bg-amber-100 text-amber-700',
+                          'WCC Done': 'bg-teal-100 text-teal-700',
+                          'Billing Completed': 'bg-green-100 text-green-700'
+                        };
+                        return (
+                          <span 
+                            className={`text-xs font-semibold px-3 py-1 rounded-full cursor-pointer ${statusColors[siteBilling.status] || 'bg-gray-100 text-gray-700'}`}
+                            onClick={() => onViewBilling && onViewBilling(siteBilling.id)}
+                            title="Click to view billing details"
+                          >
+                            💰 {siteBilling.status}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                  </div>
                 {site.vendorName && (
                   <p className="text-md text-gray-700 font-medium mb-2">
@@ -227,6 +278,17 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 )}
                 <p className="text-md text-gray-500">📍 {site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
+                
+                {/* Request Approval Button */}
+                {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && !billings.find(b => b.siteId === site.id) && (
+                  <button
+                    onClick={() => onRequestApproval && onRequestApproval(site.id)}
+                    className="mt-3 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-green-600 hover:to-green-700 transition-all flex items-center gap-2"
+                  >
+                    <span className="text-lg">✅</span>
+                    Request Approval for Billing
+                  </button>
+                )}
                 
                 {/* Work Stage Initialization for Old Sites */}
                 {canEdit && (!site.currentStage || !site.stages) && (
@@ -374,12 +436,18 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                   </div>
                 )}
                  {site.latitude && site.longitude && (
-                   <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 inline-block">
-                     <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Navigation)</p>
+                   <a
+                     href={`https://www.google.com/maps?q=${site.latitude},${site.longitude}`}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 inline-block hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all cursor-pointer"
+                     title="Open in Google Maps"
+                   >
+                     <p className="text-xs font-semibold text-blue-700 mb-1">📍 Lat & Long (Click to Navigate)</p>
                      <p className="text-lg font-bold text-blue-900 tracking-wide">
                        {site.latitude}, {site.longitude}
                      </p>
-                   </div>
+                   </a>
                  )}
                  
                  {/* Work Type Dropdown */}
