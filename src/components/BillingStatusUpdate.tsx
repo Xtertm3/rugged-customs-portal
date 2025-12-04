@@ -71,11 +71,14 @@ export const BillingStatusUpdate: React.FC<BillingStatusUpdateProps> = ({ sites,
     
     // Load billing value based on status
     if (site.billingStatus === 'WIP') {
-      // For WIP, get totalPaid from projectSummary
+      // For WIP, sum totalPaid (team payments) + billingValue (materials)
       const summary = projectSummaries.find(p => p.id === site.id);
-      setBillingValue(summary?.totalPaid?.toString() || '0');
+      const totalPaid = summary?.totalPaid || 0;
+      const materialsBilling = site.billingValue || 0;
+      const combinedTotal = totalPaid + materialsBilling;
+      setBillingValue(combinedTotal.toString());
     } else {
-      // For other statuses, load existing billingValue or empty
+      // For other statuses, load existing billingValue
       setBillingValue(site.billingValue?.toString() || '');
     }
     
@@ -89,11 +92,14 @@ export const BillingStatusUpdate: React.FC<BillingStatusUpdateProps> = ({ sites,
     if (!selectedSite) return;
     
     if (selectedStatus === 'WIP') {
-      // For WIP, auto-fill with totalPaid
+      // For WIP, sum totalPaid (team payments) + billingValue (materials)
       const summary = projectSummaries.find(p => p.id === selectedSite.id);
-      setBillingValue(summary?.totalPaid?.toString() || '0');
+      const totalPaid = summary?.totalPaid || 0;
+      const materialsBilling = selectedSite.billingValue || 0;
+      const combinedTotal = totalPaid + materialsBilling;
+      setBillingValue(combinedTotal.toString());
     } else if (selectedStatus !== selectedSite.billingStatus) {
-      // When changing to non-WIP status, clear or keep existing value
+      // When changing to non-WIP status, keep existing value
       setBillingValue(selectedSite.billingValue?.toString() || '');
     }
   }, [selectedStatus, selectedSite, projectSummaries]);
@@ -227,7 +233,7 @@ export const BillingStatusUpdate: React.FC<BillingStatusUpdateProps> = ({ sites,
             }`}
           />
           {selectedStatus === 'WIP' && selectedSite && (
-            <div className="text-[10px] text-gray-500 mt-0.5">Auto-filled from Total Paid</div>
+            <div className="text-[10px] text-gray-500 mt-0.5">Auto-filled: Total Paid + Materials</div>
           )}
         </div>
 
