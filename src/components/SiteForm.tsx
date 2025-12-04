@@ -243,10 +243,16 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (validate()) {
-            console.log('=== SITE FORM SUBMIT DEBUG ===');
-            console.log('Photos to upload:', photos.length);
-            console.log('Documents to upload:', documents.length);
+        console.log('=== FORM SUBMITTED ===');
+        const isValid = validate();
+        console.log('Validation passed:', isValid);
+        if (!isValid) {
+            console.log('Validation errors:', errors);
+            return;
+        }
+        console.log('=== SITE FORM SUBMIT DEBUG ===');
+        console.log('Photos to upload:', photos.length);
+        console.log('Documents to upload:', documents.length);
             
             const photoAttachments = await Promise.all(photos.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
             const documentAttachments = await Promise.all(documents.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
