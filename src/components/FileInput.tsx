@@ -31,11 +31,13 @@ export const FileInput: React.FC<FileInputProps> = ({
   const handleFileSelect = (selectedFiles: FileList | null) => {
     if (selectedFiles) {
       const newFiles = Array.from(selectedFiles);
+      console.log(`[FileInput ${id}] Selected files:`, newFiles.map(f => f.name));
       const uniqueNewFiles = newFiles.filter(newFile => 
         !files.some(existingFile => 
           existingFile.name === newFile.name && existingFile.size === newFile.size
         )
       );
+      console.log(`[FileInput ${id}] Unique new files:`, uniqueNewFiles.map(f => f.name));
       onFilesChange([...files, ...uniqueNewFiles]);
     }
   };
