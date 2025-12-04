@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ProjectSummary, Site, TeamMember } from '../App';
+import * as firebaseService from '../services/firebaseService';
 
 interface ProjectsProps {
     sites: Site[];
@@ -77,9 +78,28 @@ export const Projects: React.FC<ProjectsProps> = ({
     }, [projectSummaries, currentUser, sites]);
 
     const [selectedStages, setSelectedStages] = useState<Record<string, 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'>>({});
+    const [updatingStage, setUpdatingStage] = useState<string | null>(null);
 
     const handleStageSelect = (siteId: string, stage: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical') => {
         setSelectedStages(prev => ({ ...prev, [siteId]: stage }));
+    };
+
+    const handleStageUpdate = async (siteId: string, stage: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical') => {
+        try {
+            setUpdatingStage(siteId);
+            await firebaseService.updateSite(siteId, { currentStage: stage });
+            // Clear selection after successful update
+            setSelectedStages(prev => {
+                const newState = { ...prev };
+                delete newState[siteId];
+                return newState;
+            });
+        } catch (error) {
+            console.error('Error updating stage:', error);
+            alert('Failed to update stage. Please try again.');
+        } finally {
+            setUpdatingStage(null);
+        }
     };
 
     return (
@@ -247,41 +267,53 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             }
                                             // For all other roles: show only stage selector and total paid in a 2-column layout
                                             const currentSelectedStage = selectedStages[site.id] || site.currentStage;
+                                            const hasStageChanged = selectedStages[site.id] && selectedStages[site.id] !== site.currentStage;
                                             return (
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg border border-blue-200 p-3">
-                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Select Stage</div>
-                                                        <div className="flex gap-1 flex-wrap justify-center">
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1'); }}
-                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
-                                                            >
-                                                                {currentSelectedStage === 'c1' ? '✓ ' : ''}C1
-                                                            </button>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c2'); }}
-                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
-                                                            >
-                                                                {currentSelectedStage === 'c2' ? '✓ ' : ''}C2
-                                                            </button>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1_c2_combined'); }}
-                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-purple-50'}`}
-                                                            >
-                                                                {currentSelectedStage === 'c1_c2_combined' ? '✓ ' : ''}C1+C2
-                                                            </button>
-                                                            <button 
-                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'electrical'); }}
-                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-amber-50'}`}
-                                                            >
-                                                                {currentSelectedStage === 'electrical' ? '⚡ ' : ''}Elec
-                                                            </button>
+                                                <div className="space-y-2">
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg border border-blue-200 p-3">
+                                                            <div className="text-[10px] font-semibold text-blue-600 mb-2">Select Stage</div>
+                                                            <div className="flex gap-1 flex-wrap justify-center">
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1'); }}
+                                                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
+                                                                >
+                                                                    {currentSelectedStage === 'c1' ? '✓ ' : ''}C1
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c2'); }}
+                                                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
+                                                                >
+                                                                    {currentSelectedStage === 'c2' ? '✓ ' : ''}C2
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1_c2_combined'); }}
+                                                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-purple-50'}`}
+                                                                >
+                                                                    {currentSelectedStage === 'c1_c2_combined' ? '✓ ' : ''}C1+C2
+                                                                </button>
+                                                                <button 
+                                                                    onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'electrical'); }}
+                                                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-amber-50'}`}
+                                                                >
+                                                                    {currentSelectedStage === 'electrical' ? '⚡ ' : ''}Elec
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 p-3">
+                                                            <div className="text-[10px] font-semibold text-green-600 mb-1">Total Paid</div>
+                                                            <div className="text-xl font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
                                                         </div>
                                                     </div>
-                                                    <div className="flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 p-3">
-                                                        <div className="text-[10px] font-semibold text-green-600 mb-1">Total Paid</div>
-                                                        <div className="text-xl font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
-                                                    </div>
+                                                    {hasStageChanged && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleStageUpdate(site.id, selectedStages[site.id]); }}
+                                                            disabled={updatingStage === site.id}
+                                                            className="w-full py-2 px-4 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            {updatingStage === site.id ? 'Updating...' : '✓ Update Stage'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             );
                                         })()}
