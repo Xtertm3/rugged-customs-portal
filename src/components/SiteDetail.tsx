@@ -581,13 +581,15 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                     <div className="text-[11px] text-amber-700 font-semibold">Pending</div>
                     <div className="text-lg font-bold text-amber-800">₹{totals.pendingTotal.toLocaleString()}</div>
                   </div>
-                  <div className="rounded-md p-3 bg-blue-50 border border-blue-200">
-                    <div className="text-[11px] text-blue-700 font-semibold">Billing Status</div>
-                    <div className="text-xs font-bold text-blue-800">{totals.billingStatus || 'Not Set'}</div>
-                    {totals.billingValue !== undefined && (
-                      <div className="text-sm font-semibold text-blue-900">₹{Number(totals.billingValue).toLocaleString()}</div>
-                    )}
-                  </div>
+                  {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && (
+                    <div className="rounded-md p-3 bg-blue-50 border border-blue-200">
+                      <div className="text-[11px] text-blue-700 font-semibold">Billing Status</div>
+                      <div className="text-xs font-bold text-blue-800">{totals.billingStatus || 'Not Set'}</div>
+                      {totals.billingValue !== undefined && (
+                        <div className="text-sm font-semibold text-blue-900">₹{Number(totals.billingValue).toLocaleString()}</div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Detail Table */}
@@ -604,8 +606,8 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {/* Billing row (if present) */}
-                      {(() => {
+                      {/* Billing row (if present) - Only for Admin, Manager, Backoffice */}
+                      {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && (() => {
                         const billingRecord = (billings || []).find(b => b.siteId === site.id);
                         if (!billingRecord && !site.billingStatus) return null;
                         const status = site.billingStatus || billingRecord?.status || 'Not Set';
