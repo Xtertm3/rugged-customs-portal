@@ -254,38 +254,17 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         
         try {
             console.log('=== SITE FORM SUBMIT DEBUG ===');
-            console.log('Photos to upload:', photos.length);
-            console.log('Documents to upload:', documents.length);
+            console.log('Photos selected:', photos.length);
+            console.log('Documents selected:', documents.length);
             
-            // Convert files to data URLs only if they exist
-            let photoAttachments: { name: string; dataUrl: string }[] = [];
-            let documentAttachments: { name: string; dataUrl: string }[] = [];
-            
-            if (photos.length > 0) {
-                console.log('Converting photos to dataUrl...');
-                photoAttachments = await Promise.all(photos.map(async (file) => {
-                    const dataUrl = await fileToDataUrl(file);
-                    console.log(`Photo converted: ${file.name}, size: ${dataUrl.length}`);
-                    return { name: file.name, dataUrl };
-                }));
-            }
-            
-            if (documents.length > 0) {
-                console.log('Converting documents to dataUrl...');
-                documentAttachments = await Promise.all(documents.map(async (file) => {
-                    const dataUrl = await fileToDataUrl(file);
-                    console.log(`Document converted: ${file.name}, size: ${dataUrl.length}`);
-                    return { name: file.name, dataUrl };
-                }));
-            }
-
-            console.log('Photo attachments created:', photoAttachments.length);
-            console.log('Document attachments created:', documentAttachments.length);
+            // NOTE: Files are NOT stored in Firestore due to size constraints
+            // Files are kept in frontend state for future integration with cloud storage (Google Drive, OneDrive, etc)
+            console.log('Preparing submission data (files excluded to prevent payload size issues)');
 
             let submissionData: Omit<Site, 'id'> = {
                 ...formData,
-                photos: [...(formData.photos || []), ...photoAttachments],
-                documents: [...(formData.documents || []), ...documentAttachments],
+                photos: [], // Do not include file data in Firebase
+                documents: [], // Do not include file data in Firebase
                 // Initialize C1 stage as 'in-progress' if team members are assigned
                 stages: {
                     ...formData.stages,
@@ -306,6 +285,10 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 await onSubmit(submissionData);
             }
             console.log('Site submission completed successfully');
+            
+            if (photos.length > 0 || documents.length > 0) {
+                alert(`Site created successfully! Note: ${photos.length} photos and ${documents.length} documents were selected but not stored. File upload integration will be available in a future update.`);
+            }
         } catch (error) {
             console.error('Error submitting site:', error);
             alert('Error creating site: ' + (error instanceof Error ? error.message : 'Unknown error'));
