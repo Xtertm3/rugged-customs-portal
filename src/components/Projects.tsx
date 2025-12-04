@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ProjectSummary, Site, TeamMember } from '../App';
 
 interface ProjectsProps {
@@ -76,6 +76,11 @@ export const Projects: React.FC<ProjectsProps> = ({
         return [];
     }, [projectSummaries, currentUser, sites]);
 
+    const [selectedStages, setSelectedStages] = useState<Record<string, 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'>>({});
+
+    const handleStageSelect = (siteId: string, stage: 'c1' | 'c2' | 'c1_c2_combined' | 'electrical') => {
+        setSelectedStages(prev => ({ ...prev, [siteId]: stage }));
+    };
 
     return (
         <div className="w-full animate-fade-in">
@@ -241,15 +246,36 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                 );
                                             }
                                             // For all other roles: show only stage selector and total paid in a 2-column layout
+                                            const currentSelectedStage = selectedStages[site.id] || site.currentStage;
                                             return (
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg border border-blue-200 p-3">
-                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Current Stage</div>
+                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Select Stage</div>
                                                         <div className="flex gap-1 flex-wrap justify-center">
-                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c1' ? '✓ ' : ''}C1</span>
-                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c2' ? '✓ ' : ''}C2</span>
-                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c1_c2_combined' ? '✓ ' : ''}C1+C2</span>
-                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'electrical' ? '⚡ ' : ''}Elec</span>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1'); }}
+                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
+                                                            >
+                                                                {currentSelectedStage === 'c1' ? '✓ ' : ''}C1
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c2'); }}
+                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-blue-50'}`}
+                                                            >
+                                                                {currentSelectedStage === 'c2' ? '✓ ' : ''}C2
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'c1_c2_combined'); }}
+                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-purple-50'}`}
+                                                            >
+                                                                {currentSelectedStage === 'c1_c2_combined' ? '✓ ' : ''}C1+C2
+                                                            </button>
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); handleStageSelect(site.id, 'electrical'); }}
+                                                                className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${currentSelectedStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:bg-amber-50'}`}
+                                                            >
+                                                                {currentSelectedStage === 'electrical' ? '⚡ ' : ''}Elec
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 p-3">
