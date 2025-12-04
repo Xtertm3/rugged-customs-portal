@@ -1511,6 +1511,14 @@ const App: React.FC = () => {
     // Calculate the total amount for this material (qty * price)
     const totalAmount = units * price;
     
+    console.log('=== ADD MATERIAL DEBUG ===');
+    console.log('Site:', site.siteName);
+    console.log('Material:', name);
+    console.log('Units:', units);
+    console.log('Price:', price);
+    console.log('Total Amount (units × price):', totalAmount);
+    console.log('Current billingValue:', site.billingValue);
+    
     // Add the new material
     const newMat = { id: Date.now().toString(), name, units: String(units), used: '0' };
     const updatedInitialMaterials = [...(site.initialMaterials || []), newMat];
@@ -1519,13 +1527,17 @@ const App: React.FC = () => {
     const currentBillingValue = site.billingValue || 0;
     const updatedBillingValue = currentBillingValue + totalAmount;
     
+    console.log('Updated billingValue:', updatedBillingValue);
+    
     const updatedSite = { 
       ...site, 
       initialMaterials: updatedInitialMaterials,
       billingValue: updatedBillingValue
     };
     
+    console.log('Saving to Firebase...');
     await firebaseService.updateSite(site.id, updatedSite);
+    console.log('✓ Material added successfully');
     return true;
   };
 
