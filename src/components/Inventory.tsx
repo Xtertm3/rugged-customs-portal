@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { InventoryItem, TeamMember, Site } from '../App';
+import { AddMaterialModal } from './AddMaterialModal';
 
 interface InventoryProps {
     inventoryData: InventoryItem[];
@@ -43,6 +44,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
     const [memberFilter, setMemberFilter] = useState('');
     const [siteFilter, setSiteFilter] = useState('');
     const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+    const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
 
     const filteredData = useMemo(() => {
         return inventoryData.filter(item => {
@@ -78,18 +80,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
 
     const isPrivileged = currentUser && ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
 
-    const handleAddClick = async () => {
-        if (!onAddItem || !sites) return;
-        const siteOptions = sites.map(s => `${s.id}:::${s.siteName}`).join('\n');
-        const siteChoice = prompt(`Enter site id from the list:\n${siteOptions}`);
-        if (!siteChoice) return;
-        const materialName = prompt('Enter material name');
-        if (!materialName) return;
-        const unitsStr = prompt('Enter initial units (number)');
-        if (!unitsStr) return;
-        const units = Number(unitsStr);
-        if (isNaN(units)) { alert('Invalid units'); return; }
-        await onAddItem(siteChoice, materialName, units);
+    const handleAddClick = () => {
+        setIsAddMaterialModalOpen(true);
+    };
+
+    const handleAddMaterial = async (siteId: string, materialName: string, units: number) => {
+        if (onAddItem) {
+            await onAddItem(siteId, materialName, units);
+        }
     };
 
     return (
@@ -109,6 +107,13 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
                         )}
                     </div>
                 </div>
+
+                <AddMaterialModal
+                    isOpen={isAddMaterialModalOpen}
+                    onClose={() => setIsAddMaterialModalOpen(false)}
+                    onSubmit={handleAddMaterial}
+                    sites={sites || []}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <input
