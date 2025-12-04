@@ -63,7 +63,8 @@ export interface PaymentRequest extends PaymentRequestData {
 
 export interface SiteAttachment {
   name: string;
-  dataUrl: string;
+  dataUrl?: string; // For old format compatibility
+  url?: string; // For Firebase Storage URLs
 }
 
 export interface VendorTeamMember {
