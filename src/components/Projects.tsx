@@ -242,24 +242,24 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                         </>
                                                     );
                                                 }
-                                                // For all other roles: show only stage selector and total paid
+                                                // For all other roles: show only stage selector and total paid, with improved layout
                                                 return (
-                                                    <>
-                                                        <div className="bg-blue-50 rounded-md p-1.5 border border-blue-200">
-                                                            <div className="text-[9px] text-blue-600 font-semibold">Stage</div>
-                                                            <div className="pt-1">
+                                                    <div className="flex flex-col gap-2 items-center justify-center w-full">
+                                                        <div className="flex flex-row gap-4 items-stretch justify-center w-full">
+                                                            <div className="flex flex-col items-center justify-center bg-white rounded-xl shadow border border-blue-200 px-4 py-3 min-w-[120px]">
+                                                                <div className="text-xs font-semibold text-blue-600 mb-1">Stage</div>
                                                                 <StageSelector
                                                                     value={site.currentStage as any}
                                                                     onChange={() => {}}
                                                                     disabled={true}
                                                                 />
                                                             </div>
+                                                            <div className="flex flex-col items-center justify-center bg-green-50 rounded-xl shadow border border-green-200 px-4 py-3 min-w-[120px]">
+                                                                <div className="text-xs font-semibold text-green-600 mb-1">Total Paid</div>
+                                                                <div className="text-2xl font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
+                                                            </div>
                                                         </div>
-                                                        <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
-                                                            <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
-                                                            <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
-                                                        </div>
-                                                    </>
+                                                    </div>
                                                 );
                                             })()}
                                         </div>
