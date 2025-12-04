@@ -186,11 +186,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         {/* Compact Stats */}
                                         <div className="grid grid-cols-3 gap-2">
                                             {(() => {
-                                                const isAdmin = !currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
                                                 const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
-                                                const isBoth = currentUser?.role === 'Electrical + Civil' || currentUser?.role === 'Supervisor';
-                                                
-                                                // For Admin/Manager/Backoffice: Show Billing Status + Value + Total Paid
                                                 if (isBillingUser) {
                                                     return (
                                                         <>
@@ -245,30 +241,23 @@ export const Projects: React.FC<ProjectsProps> = ({
                                                         </>
                                                     );
                                                 }
-                                                
-                                                // Default stats for other users or when billing status not set
+                                                // For all other roles: show only stage selector and total paid
                                                 return (
                                                     <>
                                                         <div className="bg-blue-50 rounded-md p-1.5 border border-blue-200">
-                                                            <div className="text-[9px] text-blue-600 font-semibold">Submissions</div>
-                                                            <div className="text-lg font-bold text-blue-700">{summary.requestCount}</div>
+                                                            <div className="text-[9px] text-blue-600 font-semibold">Stage</div>
+                                                            <div className="pt-1">
+                                                                <StageSelector
+                                                                    value={site.currentStage as any}
+                                                                    onChange={() => {}}
+                                                                    disabled={true}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        {isAdmin ? (
-                                                            <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
-                                                                <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
-                                                                <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
-                                                            </div>
-                                                        ) : isBoth || currentUser?.role === 'Electricals' ? (
-                                                            <div className="bg-amber-50 rounded-md p-1.5 border border-amber-200">
-                                                                <div className="text-[9px] text-amber-600 font-semibold">Electrical</div>
-                                                                <div className="text-lg font-bold text-amber-700">₹{summary.electricalPaid.toLocaleString()}</div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="bg-blue-50 rounded-md p-1.5 border border-blue-200">
-                                                                <div className="text-[9px] text-blue-600 font-semibold">Civil</div>
-                                                                <div className="text-lg font-bold text-blue-700">₹{summary.civilPaid.toLocaleString()}</div>
-                                                            </div>
-                                                        )}
+                                                        <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
+                                                            <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
+                                                            <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
+                                                        </div>
                                                     </>
                                                 );
                                             })()}
