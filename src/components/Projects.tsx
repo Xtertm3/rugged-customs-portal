@@ -244,12 +244,12 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             return (
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg border border-blue-200 p-3">
-                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Stage</div>
-                                                        <div className="flex gap-1">
-                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C1</button>
-                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C2</button>
-                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C1+C2</button>
-                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>Elec</button>
+                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Current Stage</div>
+                                                        <div className="flex gap-1 flex-wrap justify-center">
+                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c1' ? '✓ ' : ''}C1</span>
+                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c2' ? '✓ ' : ''}C2</span>
+                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'c1_c2_combined' ? '✓ ' : ''}C1+C2</span>
+                                                            <span className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-400'}`}>{site.currentStage === 'electrical' ? '⚡ ' : ''}Elec</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 p-3">
