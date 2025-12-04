@@ -136,17 +136,24 @@ export const Projects: React.FC<ProjectsProps> = ({
                             if (!site) return null;
                             const statusStyle = getSiteStatusStyle(summary.siteStatus);
 
-                            const raw = site.siteName || summary.name;
-                            const siteIdMatch = raw.match(/\bIN-?\d+\b/i);
-                            const rlIdMatch = raw.match(/\bR\/RL-?\d+\b/i);
-                            const baseName = raw
+                            // Use dedicated fields if available, otherwise parse from siteName
+                            const siteName = site.siteName || summary.name;
+                            const siteIdValue = site.siteId || '';
+                            const rlIdValue = site.rlId || '';
+                            
+                            // Fallback: parse from siteName if dedicated fields are empty
+                            const siteIdMatch = !siteIdValue ? siteName.match(/\bIN-?\d+\b/i) : null;
+                            const rlIdMatch = !rlIdValue ? siteName.match(/\bR\/RL-?\d+\b/i) : null;
+                            
+                            const rlIdDisplay = (rlIdValue || rlIdMatch?.[0] || '').toUpperCase();
+                            const siteIdDisplay = (siteIdValue || siteIdMatch?.[0] || '').toUpperCase();
+                            
+                            const baseName = siteName
                                 .replace(siteIdMatch?.[0] || '', '')
                                 .replace(rlIdMatch?.[0] || '', '')
                                 .replace(/[-_]+/g, ' ')
                                 .replace(/\s{2,}/g, ' ')
-                                .trim();
-                            const rlIdDisplay = (rlIdMatch?.[0] || '').toUpperCase();
-                            const siteIdDisplay = (siteIdMatch?.[0] || site.id).toUpperCase();
+                                .trim() || siteName;
 
                             return (
                                 <div 

@@ -96,6 +96,8 @@ export interface WorkStageInfo {
 export interface Site {
   id: string;
   siteName: string;
+  siteId?: string; // Site ID field (separate from internal id)
+  rlId?: string; // RL ID field
   location: string;
   latitude?: string;
   longitude?: string;

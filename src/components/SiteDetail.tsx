@@ -255,23 +255,33 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
               <div className="flex-1">
                  <div className="flex items-center gap-4 flex-wrap">
                     {(() => {
-                      const raw = site.siteName || '';
-                      const siteIdMatch = raw.match(/\bIN-?\d+\b/i);
-                      const rlIdMatch = raw.match(/\bR\/RL-?\d+\b/i);
-                      const baseName = raw
+                      // Use dedicated fields if available, otherwise parse from siteName
+                      const siteName = site.siteName || '';
+                      const siteIdValue = site.siteId || '';
+                      const rlIdValue = site.rlId || '';
+                      
+                      // Fallback: parse from siteName if dedicated fields are empty
+                      const siteIdMatch = !siteIdValue ? siteName.match(/\bIN-?\d+\b/i) : null;
+                      const rlIdMatch = !rlIdValue ? siteName.match(/\bR\/RL-?\d+\b/i) : null;
+                      
+                      const rlIdDisplay = (rlIdValue || rlIdMatch?.[0] || '').toUpperCase();
+                      const siteIdDisplay = (siteIdValue || siteIdMatch?.[0] || '').toUpperCase();
+                      
+                      const baseName = siteName
                         .replace(siteIdMatch?.[0] || '', '')
                         .replace(rlIdMatch?.[0] || '', '')
                         .replace(/[-_]+/g, ' ')
                         .replace(/\s{2,}/g, ' ')
-                        .trim();
-                      const rlIdDisplay = rlIdMatch?.[0]?.toUpperCase();
-                      const siteIdDisplay = (siteIdMatch?.[0] || site.id).toUpperCase();
+                        .trim() || siteName;
+                      
                       return (
                         <>
-                          <h2 className="text-3xl font-bold text-gray-900">{baseName || site.siteName}</h2>
-                          <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300" title="Site ID">{siteIdDisplay}</span>
+                          <h2 className="text-3xl font-bold text-gray-900">{baseName}</h2>
+                          {siteIdDisplay && (
+                            <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300 font-mono" title="Site ID">{siteIdDisplay}</span>
+                          )}
                           {rlIdDisplay && (
-                            <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300" title="RL ID">{rlIdDisplay}</span>
+                            <span className="text-sm px-2 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300 font-mono" title="RL ID">{rlIdDisplay}</span>
                           )}
                         </>
                       );

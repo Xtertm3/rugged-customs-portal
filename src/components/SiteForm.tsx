@@ -26,6 +26,8 @@ const predefinedMaterials = [
 
 const initialFormData: Omit<Site, 'id'> = {
     siteName: '',
+    siteId: '',
+    rlId: '',
     location: '',
     latitude: '',
     longitude: '',
@@ -86,6 +88,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         if (initialData) {
             setFormData({
                 siteName: initialData.siteName,
+                siteId: initialData.siteId || '',
+                rlId: initialData.rlId || '',
                 location: initialData.location,
                 latitude: initialData.latitude || '',
                 longitude: initialData.longitude || '',
@@ -337,16 +341,35 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                    {isEditing ? 'Edit Site' : 'Create New Site'}
                  </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                        <label htmlFor="siteName" className={labelStyles}>Site Name</label>
+                        <label htmlFor="siteName" className={labelStyles}>Site Name <span className="text-red-500">*</span></label>
                         <input id="siteName" name="siteName" type="text" value={formData.siteName} onChange={handleChange} className={inputStyles} />
                         {errors.siteName && <p className="text-red-400 text-xs mt-1">{errors.siteName}</p>}
                     </div>
                     <div>
-                        <label htmlFor="location" className={labelStyles}>Location</label>
+                        <label htmlFor="siteId" className={labelStyles}>Site ID</label>
+                        <input id="siteId" name="siteId" type="text" value={formData.siteId} onChange={handleChange} className={inputStyles} placeholder="Optional" />
+                    </div>
+                    <div>
+                        <label htmlFor="rlId" className={labelStyles}>RL ID</label>
+                        <input id="rlId" name="rlId" type="text" value={formData.rlId} onChange={handleChange} className={inputStyles} placeholder="Optional" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="location" className={labelStyles}>Location <span className="text-red-500">*</span></label>
                         <input id="location" name="location" type="text" value={formData.location} onChange={handleChange} className={inputStyles} />
                         {errors.location && <p className="text-red-400 text-xs mt-1">{errors.location}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="projectType" className={labelStyles}>Project Type</label>
+                        <select id="projectType" name="projectType" value={formData.projectType} onChange={handleChange} className={inputStyles}>
+                            <option value="Solar">Solar</option>
+                            <option value="Wind">Wind</option>
+                            <option value="Hydro">Hydro</option>
+                            <option value="Other">Other</option>
+                        </select>
                     </div>
                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
