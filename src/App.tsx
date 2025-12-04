@@ -1499,7 +1499,7 @@ const App: React.FC = () => {
     return true;
   };
 
-  const handleAddInventoryItem = async (siteId: string, name: string, units: number) => {
+  const handleAddInventoryItem = async (siteId: string, name: string, units: number, price: number = 0) => {
     if (!currentUser) return false;
     if (!['Admin', 'Manager', 'Accountant'].includes(currentUser.role)) {
       alert('You do not have permission to add inventory items.');
@@ -1507,8 +1507,24 @@ const App: React.FC = () => {
     }
     const site = sites.find(s => s.id === siteId);
     if (!site) return false;
+    
+    // Calculate the total amount for this material (qty * price)
+    const totalAmount = units * price;
+    
+    // Add the new material
     const newMat = { id: Date.now().toString(), name, units: String(units), used: '0' };
-    const updatedSite = { ...site, initialMaterials: [...(site.initialMaterials || []), newMat] };
+    const updatedInitialMaterials = [...(site.initialMaterials || []), newMat];
+    
+    // Update site billing: add total amount to existing billing value
+    const currentBillingValue = site.billingValue || 0;
+    const updatedBillingValue = currentBillingValue + totalAmount;
+    
+    const updatedSite = { 
+      ...site, 
+      initialMaterials: updatedInitialMaterials,
+      billingValue: updatedBillingValue
+    };
+    
     await firebaseService.updateSite(site.id, updatedSite);
     return true;
   };

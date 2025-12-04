@@ -8,7 +8,7 @@ interface InventoryProps {
     // callbacks to manipulate inventory (only available to privileged roles)
     onEditItem?: (siteName: string, materialName: string, newInitialUnits: number) => Promise<boolean>;
     onDeleteItem?: (siteName: string, materialName: string) => Promise<boolean>;
-    onAddItem?: (siteId: string, name: string, units: number) => Promise<boolean>;
+    onAddItem?: (siteId: string, name: string, units: number, price?: number) => Promise<boolean>;
     sites?: Site[];
     onOpenUsageModal?: () => void;
     onOpenBalanceModal?: () => void;
@@ -84,9 +84,9 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
         setIsAddMaterialModalOpen(true);
     };
 
-    const handleAddMaterial = async (siteId: string, materialName: string, units: number) => {
+    const handleAddMaterial = async (siteId: string, materialName: string, units: number, price?: number) => {
         if (onAddItem) {
-            await onAddItem(siteId, materialName, units);
+            await onAddItem(siteId, materialName, units, price);
         }
     };
 

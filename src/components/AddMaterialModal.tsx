@@ -4,7 +4,7 @@ import { Site } from '../App';
 interface AddMaterialModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (siteId: string, materialName: string, units: number) => Promise<void>;
+    onSubmit: (siteId: string, materialName: string, units: number, price: number) => Promise<void>;
     sites: Site[];
 }
 
@@ -97,9 +97,14 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
             return;
         }
 
+        if (!price || isNaN(Number(price)) || Number(price) < 0) {
+            setError('Please enter a valid price');
+            return;
+        }
+
         try {
             setIsLoading(true);
-            await onSubmit(selectedSiteId, selectedMaterialName, Number(initialUnits));
+            await onSubmit(selectedSiteId, selectedMaterialName, Number(initialUnits), Number(price));
             // Reset form
             setSelectedSiteId('');
             setSiteSearchQuery('');
@@ -254,7 +259,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits}
+                            disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits || !price}
                             className="flex-1 px-2 py-1.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
                         >
                             {isLoading ? 'Adding...' : 'Add'}
