@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { StageSelector } from './StageSelector';
 import { ProjectSummary, Site, TeamMember } from '../App';
 
 interface ProjectsProps {
