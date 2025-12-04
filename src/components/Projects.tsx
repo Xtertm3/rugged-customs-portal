@@ -185,84 +185,81 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         </div>
 
                                         {/* Compact Stats */}
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {(() => {
-                                                const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
-                                                if (isBillingUser) {
-                                                    return (
-                                                        <>
-                                                            <div className={`rounded-md p-1.5 border ${
-                                                                site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
-                                                                site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
-                                                                site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
-                                                                site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
-                                                                site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                                                            }`}>
-                                                                <div className={`text-[9px] font-semibold ${
-                                                                    site.billingStatus === 'WIP' ? 'text-yellow-600' :
-                                                                    site.billingStatus === 'YTB' ? 'text-gray-600' :
-                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
-                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
-                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
-                                                                }`}>Billing Status</div>
-                                                                <div className={`text-xs font-bold ${
-                                                                    site.billingStatus === 'WIP' ? 'text-yellow-700' :
-                                                                    site.billingStatus === 'YTB' ? 'text-gray-700' :
-                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
-                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
-                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
-                                                                }`}>{site.billingStatus || 'Not Set'}</div>
-                                                            </div>
-                                                            <div className={`rounded-md p-1.5 border ${
-                                                                site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
-                                                                site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
-                                                                site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
-                                                                site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
-                                                                site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                                                            }`}>
-                                                                <div className={`text-[9px] font-semibold ${
-                                                                    site.billingStatus === 'WIP' ? 'text-yellow-600' :
-                                                                    site.billingStatus === 'YTB' ? 'text-gray-600' :
-                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
-                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
-                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
-                                                                }`}>Value</div>
-                                                                <div className={`text-lg font-bold ${
-                                                                    site.billingStatus === 'WIP' ? 'text-yellow-700' :
-                                                                    site.billingStatus === 'YTB' ? 'text-gray-700' :
-                                                                    site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
-                                                                    site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
-                                                                    site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
-                                                                }`}>₹{site.billingValue ? site.billingValue.toLocaleString() : '0'}</div>
-                                                            </div>
-                                                            <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
-                                                                <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
-                                                                <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
-                                                            </div>
-                                                        </>
-                                                    );
-                                                }
-                                                // For all other roles: show only stage selector and total paid, with improved layout
+                                        {(() => {
+                                            const isBillingUser = currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role);
+                                            if (isBillingUser) {
                                                 return (
-                                                    <div className="flex flex-col gap-2 items-center justify-center w-full">
-                                                        <div className="flex flex-row gap-4 items-stretch justify-center w-full">
-                                                            <div className="flex flex-col items-center justify-center bg-white rounded-xl shadow border border-blue-200 px-4 py-3 min-w-[120px]">
-                                                                <div className="text-xs font-semibold text-blue-600 mb-1">Stage</div>
-                                                                <StageSelector
-                                                                    value={site.currentStage as any}
-                                                                    onChange={() => {}}
-                                                                    disabled={true}
-                                                                />
-                                                            </div>
-                                                            <div className="flex flex-col items-center justify-center bg-green-50 rounded-xl shadow border border-green-200 px-4 py-3 min-w-[120px]">
-                                                                <div className="text-xs font-semibold text-green-600 mb-1">Total Paid</div>
-                                                                <div className="text-2xl font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
-                                                            </div>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        <div className={`rounded-md p-1.5 border ${
+                                                            site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
+                                                            site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
+                                                            site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
+                                                            site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
+                                                            site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                        }`}>
+                                                            <div className={`text-[9px] font-semibold ${
+                                                                site.billingStatus === 'WIP' ? 'text-yellow-600' :
+                                                                site.billingStatus === 'YTB' ? 'text-gray-600' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
+                                                                site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
+                                                            }`}>Billing Status</div>
+                                                            <div className={`text-xs font-bold ${
+                                                                site.billingStatus === 'WIP' ? 'text-yellow-700' :
+                                                                site.billingStatus === 'YTB' ? 'text-gray-700' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
+                                                                site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
+                                                            }`}>{site.billingStatus || 'Not Set'}</div>
+                                                        </div>
+                                                        <div className={`rounded-md p-1.5 border ${
+                                                            site.billingStatus === 'WIP' ? 'bg-yellow-50 border-yellow-200' :
+                                                            site.billingStatus === 'YTB' ? 'bg-gray-50 border-gray-200' :
+                                                            site.billingStatus === 'ADD PR DONE' ? 'bg-blue-50 border-blue-200' :
+                                                            site.billingStatus === 'WCC DONE' ? 'bg-purple-50 border-purple-200' :
+                                                            site.billingStatus === 'BILLING DONE' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                        }`}>
+                                                            <div className={`text-[9px] font-semibold ${
+                                                                site.billingStatus === 'WIP' ? 'text-yellow-600' :
+                                                                site.billingStatus === 'YTB' ? 'text-gray-600' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'text-blue-600' :
+                                                                site.billingStatus === 'WCC DONE' ? 'text-purple-600' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'text-green-600' : 'text-gray-600'
+                                                            }`}>Value</div>
+                                                            <div className={`text-lg font-bold ${
+                                                                site.billingStatus === 'WIP' ? 'text-yellow-700' :
+                                                                site.billingStatus === 'YTB' ? 'text-gray-700' :
+                                                                site.billingStatus === 'ADD PR DONE' ? 'text-blue-700' :
+                                                                site.billingStatus === 'WCC DONE' ? 'text-purple-700' :
+                                                                site.billingStatus === 'BILLING DONE' ? 'text-green-700' : 'text-gray-700'
+                                                            }`}>₹{site.billingValue ? site.billingValue.toLocaleString() : '0'}</div>
+                                                        </div>
+                                                        <div className="bg-green-50 rounded-md p-1.5 border border-green-200">
+                                                            <div className="text-[9px] text-green-600 font-semibold">Total Paid</div>
+                                                            <div className="text-lg font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
                                                         </div>
                                                     </div>
                                                 );
-                                            })()}
-                                        </div>
+                                            }
+                                            // For all other roles: show only stage selector and total paid in a 2-column layout
+                                            return (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="flex flex-col items-center justify-center bg-blue-50 rounded-lg border border-blue-200 p-3">
+                                                        <div className="text-[10px] font-semibold text-blue-600 mb-2">Stage</div>
+                                                        <div className="flex gap-1">
+                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C1</button>
+                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c2' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C2</button>
+                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'c1_c2_combined' ? 'bg-purple-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>C1+C2</button>
+                                                            <button className={`px-2 py-1 rounded text-[10px] font-bold ${site.currentStage === 'electrical' ? 'bg-amber-600 text-white' : 'bg-white text-gray-500 border border-gray-300'}`}>Elec</button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center bg-green-50 rounded-lg border border-green-200 p-3">
+                                                        <div className="text-[10px] font-semibold text-green-600 mb-1">Total Paid</div>
+                                                        <div className="text-xl font-bold text-green-700">₹{(summary.civilPaid + summary.electricalPaid).toLocaleString()}</div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Compact Stage Indicators - 4 Stages */}
                                         <div className="flex items-center gap-1">
