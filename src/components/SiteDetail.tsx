@@ -102,6 +102,11 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
     const materialsBilling = site.billingValue || 0;
     const combinedBillingValue = paidTotal + materialsBilling;
 
+    console.log(`[SiteDetail] Site: ${site.siteName}`);
+    console.log(`[SiteDetail] Total Paid: ₹${paidTotal}`);
+    console.log(`[SiteDetail] Materials Billing (site.billingValue): ₹${materialsBilling}`);
+    console.log(`[SiteDetail] Combined Billing Value: ₹${combinedBillingValue}`);
+
     return {
       paidTotal,
       approvedTotal,
@@ -613,9 +618,10 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                       {/* Billing row (if present) - Only for Admin, Manager, Backoffice */}
                       {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && (() => {
                         const billingRecord = (billings || []).find(b => b.siteId === site.id);
-                        if (!billingRecord && !site.billingStatus) return null;
+                        if (!billingRecord && !site.billingStatus && !totals.billingValue) return null;
                         const status = site.billingStatus || billingRecord?.status || 'Not Set';
-                        const amount = site.billingValue ?? billingRecord?.actualBillingTotal ?? 0;
+                        // Use totals.billingValue which includes Total Paid + Materials
+                        const amount = totals.billingValue ?? 0;
                         const date = billingRecord?.updatedAt ? new Date(billingRecord.updatedAt).toLocaleString() : '-';
                         return (
                           <tr>
