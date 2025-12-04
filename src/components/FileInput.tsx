@@ -30,14 +30,23 @@ export const FileInput: React.FC<FileInputProps> = ({
 
   const handleFileSelect = (selectedFiles: FileList | null) => {
     if (selectedFiles) {
+      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
       const newFiles = Array.from(selectedFiles);
-      console.log(`[FileInput ${id}] Selected files:`, newFiles.map(f => f.name));
+      console.log(`[FileInput ${id}] Selected files:`, newFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)}MB)`));
+      
+      // Check file sizes
+      const oversizedFiles = newFiles.filter(f => f.size > MAX_FILE_SIZE);
+      if (oversizedFiles.length > 0) {
+        alert(`The following files exceed 10MB limit and cannot be uploaded:\n${oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)}MB)`).join('\n')}`);
+        return;
+      }
+      
       const uniqueNewFiles = newFiles.filter(newFile => 
         !files.some(existingFile => 
           existingFile.name === newFile.name && existingFile.size === newFile.size
         )
       );
-      console.log(`[FileInput ${id}] Unique new files:`, uniqueNewFiles.map(f => f.name));
+      console.log(`[FileInput ${id}] Unique new files:`, uniqueNewFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)}MB)`));
       onFilesChange([...files, ...uniqueNewFiles]);
     }
   };
@@ -97,6 +106,7 @@ export const FileInput: React.FC<FileInputProps> = ({
             <span className="font-semibold text-orange-400 cursor-pointer" onClick={() => fileInputRef.current?.click()}>Click to upload</span> or drag and drop
           </p>
           <p className="text-xs text-zinc-500 mt-1">{acceptedFileTypes.replace('image/*', 'Image files').replace(/\./g, ' ')}</p>
+          <p className="text-xs text-orange-300 mt-1 font-semibold">⚠️ Max 10MB per file</p>
            {showCameraButton && (
             <button
               type="button"

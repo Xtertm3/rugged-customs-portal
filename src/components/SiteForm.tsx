@@ -23,15 +23,6 @@ const predefinedMaterials = [
   "40 MM Flexible", "10 Pair Alaram Cable"
 ];
 
-const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-    });
-};
-
 const initialFormData: Omit<Site, 'id'> = {
     siteName: '',
     location: '',
