@@ -110,9 +110,17 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">Add Material to Inventory</h2>
+        <div className="fixed inset-0 bg-black/50 z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-auto mt-4 p-6">
+                <div className="flex items-start justify-between mb-4">
+                    <h2 className="text-xl font-bold text-gray-800">Add Material to Inventory</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-700 text-2xl"
+                    >
+                        ✕
+                    </button>
+                </div>
 
                 {error && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
@@ -120,10 +128,10 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                     </div>
                 )}
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     {/* Site Selection with Search */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Select Site (Start typing...)</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Site (Type to search)</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -135,10 +143,10 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                 }}
                                 onFocus={() => setShowSiteDropdown(true)}
                                 placeholder="Type site name..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                             />
                             {showSiteDropdown && (
-                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto z-10">
+                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto z-10">
                                     {filteredSites.length > 0 ? (
                                         filteredSites.map(site => (
                                             <button
@@ -158,74 +166,72 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                     </div>
 
                     {/* Material Selection with Search */}
-                    {selectedSiteId && (
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Material (Start typing...)</label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    value={materialSearchQuery}
-                                    onChange={(e) => {
-                                        setMaterialSearchQuery(e.target.value);
-                                        setShowMaterialDropdown(true);
-                                        setSelectedMaterialName('');
-                                    }}
-                                    onFocus={() => setShowMaterialDropdown(true)}
-                                    placeholder="Type material name..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                />
-                                {showMaterialDropdown && (
-                                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto z-10">
-                                        {filteredMaterials.length > 0 ? (
-                                            filteredMaterials.map(material => (
-                                                <button
-                                                    key={material}
-                                                    onClick={() => handleMaterialSelect(material)}
-                                                    className="w-full text-left px-3 py-2 hover:bg-orange-50 text-sm text-gray-700 border-b border-gray-100 last:border-b-0"
-                                                >
-                                                    {material}
-                                                </button>
-                                            ))
-                                        ) : (
-                                            <div className="px-3 py-2 text-sm text-gray-500">No materials found</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Material (Type to search)</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={materialSearchQuery}
+                                onChange={(e) => {
+                                    setMaterialSearchQuery(e.target.value);
+                                    setShowMaterialDropdown(true);
+                                    setSelectedMaterialName('');
+                                }}
+                                onFocus={() => setShowMaterialDropdown(true)}
+                                disabled={!selectedSiteId}
+                                placeholder={selectedSiteId ? "Type material..." : "Select site first"}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            />
+                            {showMaterialDropdown && selectedSiteId && (
+                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto z-10">
+                                    {filteredMaterials.length > 0 ? (
+                                        filteredMaterials.map(material => (
+                                            <button
+                                                key={material}
+                                                onClick={() => handleMaterialSelect(material)}
+                                                className="w-full text-left px-3 py-2 hover:bg-orange-50 text-sm text-gray-700 border-b border-gray-100 last:border-b-0"
+                                            >
+                                                {material}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="px-3 py-2 text-sm text-gray-500">No materials found</div>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     {/* Units Input */}
-                    {selectedMaterialName && (
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Initial Units / Quantity</label>
-                            <input
-                                type="number"
-                                value={initialUnits}
-                                onChange={(e) => setInitialUnits(e.target.value)}
-                                placeholder="Enter quantity"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                            />
-                        </div>
-                    )}
-                </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+                        <input
+                            type="number"
+                            value={initialUnits}
+                            onChange={(e) => setInitialUnits(e.target.value)}
+                            disabled={!selectedMaterialName}
+                            placeholder="Enter qty"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                    </div>
 
-                {/* Buttons */}
-                <div className="flex gap-3 mt-6">
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits}
-                        className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? 'Adding...' : 'Add Material'}
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits}
+                            className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+                        >
+                            {isLoading ? 'Adding...' : 'Add'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
