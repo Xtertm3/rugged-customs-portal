@@ -38,10 +38,18 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
     const [selectedMaterialName, setSelectedMaterialName] = useState('');
     const [materialSearchQuery, setMaterialSearchQuery] = useState('');
     const [initialUnits, setInitialUnits] = useState('');
+    const [price, setPrice] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [showSiteDropdown, setShowSiteDropdown] = useState(false);
     const [showMaterialDropdown, setShowMaterialDropdown] = useState(false);
+
+    // Calculate total amount
+    const totalAmount = useMemo(() => {
+        const qty = Number(initialUnits) || 0;
+        const priceValue = Number(price) || 0;
+        return qty * priceValue;
+    }, [initialUnits, price]);
 
     const filteredSites = useMemo(() => {
         if (!siteSearchQuery) return sites;
@@ -98,6 +106,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
             setSelectedMaterialName('');
             setMaterialSearchQuery('');
             setInitialUnits('');
+            setPrice('');
             onClose();
         } catch (err) {
             setError('Failed to add material. Please try again.');
@@ -128,10 +137,10 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    {/* Site Selection with Search */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Site (Type to search)</label>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+                    {/* Site Selection with Search - 2 cols */}
+                    <div className="lg:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Site</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -142,32 +151,32 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                     setSelectedSiteId('');
                                 }}
                                 onFocus={() => setShowSiteDropdown(true)}
-                                placeholder="Type site name..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                                placeholder="Type site..."
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs"
                             />
                             {showSiteDropdown && (
-                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto z-10">
+                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-32 overflow-y-auto z-10">
                                     {filteredSites.length > 0 ? (
                                         filteredSites.map(site => (
                                             <button
                                                 key={site.id}
                                                 onClick={() => handleSiteSelect(site.id, site.siteName)}
-                                                className="w-full text-left px-3 py-2 hover:bg-orange-50 text-sm text-gray-700 border-b border-gray-100 last:border-b-0"
+                                                className="w-full text-left px-2 py-1.5 hover:bg-orange-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
                                             >
                                                 {site.siteName}
                                             </button>
                                         ))
                                     ) : (
-                                        <div className="px-3 py-2 text-sm text-gray-500">No sites found</div>
+                                        <div className="px-2 py-1.5 text-xs text-gray-500">No sites</div>
                                     )}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Material Selection with Search */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Material (Type to search)</label>
+                    {/* Material Selection with Search - 2 cols */}
+                    <div className="lg:col-span-2">
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Material</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -179,55 +188,74 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                 }}
                                 onFocus={() => setShowMaterialDropdown(true)}
                                 disabled={!selectedSiteId}
-                                placeholder={selectedSiteId ? "Type material..." : "Select site first"}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                placeholder={selectedSiteId ? "Type..." : "Site first"}
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             {showMaterialDropdown && selectedSiteId && (
-                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto z-10">
+                                <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-32 overflow-y-auto z-10">
                                     {filteredMaterials.length > 0 ? (
                                         filteredMaterials.map(material => (
                                             <button
                                                 key={material}
                                                 onClick={() => handleMaterialSelect(material)}
-                                                className="w-full text-left px-3 py-2 hover:bg-orange-50 text-sm text-gray-700 border-b border-gray-100 last:border-b-0"
+                                                className="w-full text-left px-2 py-1.5 hover:bg-orange-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
                                             >
                                                 {material}
                                             </button>
                                         ))
                                     ) : (
-                                        <div className="px-3 py-2 text-sm text-gray-500">No materials found</div>
+                                        <div className="px-2 py-1.5 text-xs text-gray-500">No materials</div>
                                     )}
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Units Input */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity</label>
+                    {/* Quantity - 1.5 cols */}
+                    <div className="lg:col-span-1.5">
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Qty</label>
                         <input
                             type="number"
                             value={initialUnits}
                             onChange={(e) => setInitialUnits(e.target.value)}
                             disabled={!selectedMaterialName}
-                            placeholder="Enter qty"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder="0"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    {/* Price - 1.5 cols */}
+                    <div className="lg:col-span-1.5">
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">Price (₹)</label>
+                        <input
+                            type="number"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                            disabled={!selectedMaterialName}
+                            placeholder="0"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        />
+                    </div>
+
+                    {/* Total Amount Display - 2 cols */}
+                    <div className="lg:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-2">
+                        <div className="text-xs text-orange-600 font-semibold">Total</div>
+                        <div className="text-lg font-bold text-orange-700">₹{totalAmount.toLocaleString()}</div>
+                    </div>
+
+                    {/* Action Buttons - 1.5 cols */}
+                    <div className="lg:col-span-1.5 flex gap-1.5">
                         <button
                             onClick={onClose}
                             disabled={isLoading}
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50 text-sm"
+                            className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 disabled:opacity-50 text-xs"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSubmit}
                             disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits}
-                            className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+                            className="flex-1 px-2 py-1.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
                         >
                             {isLoading ? 'Adding...' : 'Add'}
                         </button>
