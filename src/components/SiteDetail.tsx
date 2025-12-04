@@ -98,6 +98,10 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
     const paymentsDone = siteRequests.filter(r => r.status === 'Paid').length;
     const billingRecord = (billings || []).find(b => b.siteId === site.id);
 
+    // Calculate combined billing value: Total Paid + Material Pricing
+    const materialsBilling = site.billingValue || 0;
+    const combinedBillingValue = paidTotal + materialsBilling;
+
     return {
       paidTotal,
       approvedTotal,
@@ -105,7 +109,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
       approvalsSent,
       paymentsDone,
       billingStatus: site.billingStatus || billingRecord?.status || undefined,
-      billingValue: site.billingValue ?? billingRecord?.actualBillingTotal ?? undefined,
+      billingValue: combinedBillingValue,
       vendorName: site.vendorName || 'N/A'
     };
   }, [siteRequests, billings, site.id, site.billingStatus, site.billingValue, site.vendorName]);
