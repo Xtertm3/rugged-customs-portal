@@ -248,40 +248,67 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         console.log('Validation passed:', isValid);
         if (!isValid) {
             console.log('Validation errors:', errors);
+            alert('Please fill all required fields');
             return;
         }
         
-        console.log('=== SITE FORM SUBMIT DEBUG ===');
-        console.log('Photos to upload:', photos.length);
-        console.log('Documents to upload:', documents.length);
-        
-        const photoAttachments = await Promise.all(photos.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
-        const documentAttachments = await Promise.all(documents.map(async (file) => ({ name: file.name, dataUrl: await fileToDataUrl(file) })));
-
-        console.log('Photo attachments created:', photoAttachments.length);
-        console.log('Document attachments created:', documentAttachments.length);
-
-        let submissionData: Omit<Site, 'id'> = {
-            ...formData,
-            photos: [...(formData.photos || []), ...photoAttachments],
-            documents: [...(formData.documents || []), ...documentAttachments],
-            // Initialize C1 stage as 'in-progress' if team members are assigned
-            stages: {
-                ...formData.stages,
-                c1: {
-                    ...formData.stages.c1,
-                    status: formData.stages.c1.assignedTeamIds.length > 0 ? 'in-progress' : 'not-started',
-                    startDate: formData.stages.c1.assignedTeamIds.length > 0 && !formData.stages.c1.startDate 
-                        ? new Date().toISOString() 
-                        : formData.stages.c1.startDate
-                }
+        try {
+            console.log('=== SITE FORM SUBMIT DEBUG ===');
+            console.log('Photos to upload:', photos.length);
+            console.log('Documents to upload:', documents.length);
+            
+            // Convert files to data URLs only if they exist
+            let photoAttachments: { name: string; dataUrl: string }[] = [];
+            let documentAttachments: { name: string; dataUrl: string }[] = [];
+            
+            if (photos.length > 0) {
+                console.log('Converting photos to dataUrl...');
+                photoAttachments = await Promise.all(photos.map(async (file) => {
+                    const dataUrl = await fileToDataUrl(file);
+                    console.log(`Photo converted: ${file.name}, size: ${dataUrl.length}`);
+                    return { name: file.name, dataUrl };
+                }));
             }
-        };
+            
+            if (documents.length > 0) {
+                console.log('Converting documents to dataUrl...');
+                documentAttachments = await Promise.all(documents.map(async (file) => {
+                    const dataUrl = await fileToDataUrl(file);
+                    console.log(`Document converted: ${file.name}, size: ${dataUrl.length}`);
+                    return { name: file.name, dataUrl };
+                }));
+            }
 
-        if (isEditing && initialData) {
-            await onSubmit({ ...submissionData, id: initialData.id });
-        } else {
-            await onSubmit(submissionData);
+            console.log('Photo attachments created:', photoAttachments.length);
+            console.log('Document attachments created:', documentAttachments.length);
+
+            let submissionData: Omit<Site, 'id'> = {
+                ...formData,
+                photos: [...(formData.photos || []), ...photoAttachments],
+                documents: [...(formData.documents || []), ...documentAttachments],
+                // Initialize C1 stage as 'in-progress' if team members are assigned
+                stages: {
+                    ...formData.stages,
+                    c1: {
+                        ...formData.stages.c1,
+                        status: formData.stages.c1.assignedTeamIds.length > 0 ? 'in-progress' : 'not-started',
+                        startDate: formData.stages.c1.assignedTeamIds.length > 0 && !formData.stages.c1.startDate 
+                            ? new Date().toISOString() 
+                            : formData.stages.c1.startDate
+                    }
+                }
+            };
+
+            console.log('Submission data prepared, calling onSubmit...');
+            if (isEditing && initialData) {
+                await onSubmit({ ...submissionData, id: initialData.id });
+            } else {
+                await onSubmit(submissionData);
+            }
+            console.log('Site submission completed successfully');
+        } catch (error) {
+            console.error('Error submitting site:', error);
+            alert('Error creating site: ' + (error instanceof Error ? error.message : 'Unknown error'));
         }
     };
 

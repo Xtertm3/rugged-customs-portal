@@ -1057,9 +1057,17 @@ const App: React.FC = () => {
   };
 
   const handleAddSite = async (siteData: Omit<Site, 'id'>) => {
-    const newSite: Site = { ...siteData, id: Date.now().toString() };
-    await firebaseService.saveSite(newSite);
-    navigateBack();
+    try {
+      console.log('handleAddSite called with data:', siteData);
+      const newSite: Site = { ...siteData, id: Date.now().toString() };
+      console.log('Saving site to Firebase:', newSite.id, newSite.siteName);
+      await firebaseService.saveSite(newSite);
+      console.log('Site saved successfully');
+      navigateBack();
+    } catch (error) {
+      console.error('Error in handleAddSite:', error);
+      alert('Error creating site: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   const handleUpdateSite = async (updatedSite: Site) => {
