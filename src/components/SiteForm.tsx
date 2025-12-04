@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Site, TeamMember, Vendor } from '../App';
 import { MaterialItem } from '../services/geminiService';
 import { FileInput } from './FileInput';
+import firebaseService from '../services/firebaseService';
 
 interface SiteFormProps {
     onBack: () => void;
@@ -248,14 +249,50 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             console.log('Photos selected:', photos.length);
             console.log('Documents selected:', documents.length);
             
-            // NOTE: Files are NOT stored in Firestore due to size constraints
-            // Files are kept in frontend state for future integration with cloud storage (Google Drive, OneDrive, etc)
-            console.log('Preparing submission data (files excluded to prevent payload size issues)');
+            // Generate a temporary site ID for file uploads
+            const tempSiteId = isEditing && initialData ? initialData.id : `temp_${Date.now()}`;
+            
+            // Upload files to Firebase Storage and get URLs
+            let photoUrls: { name: string; url: string }[] = [];
+            let documentUrls: { name: string; url: string }[] = [];
+            
+            if (photos.length > 0) {
+                console.log('Uploading photos to Firebase Storage...');
+                try {
+                    photoUrls = await Promise.all(photos.map(async (file) => {
+                        const url = await firebaseService.uploadFile(tempSiteId, 'photo', file);
+                        console.log(`Photo uploaded: ${file.name} -> ${url}`);
+                        return { name: file.name, url };
+                    }));
+                } catch (fileError) {
+                    console.error('Error uploading photos:', fileError);
+                    alert('Error uploading photos. Please try again with smaller files.');
+                    return;
+                }
+            }
+            
+            if (documents.length > 0) {
+                console.log('Uploading documents to Firebase Storage...');
+                try {
+                    documentUrls = await Promise.all(documents.map(async (file) => {
+                        const url = await firebaseService.uploadFile(tempSiteId, 'document', file);
+                        console.log(`Document uploaded: ${file.name} -> ${url}`);
+                        return { name: file.name, url };
+                    }));
+                } catch (fileError) {
+                    console.error('Error uploading documents:', fileError);
+                    alert('Error uploading documents. Please try again with smaller files.');
+                    return;
+                }
+            }
+
+            console.log('Photo URLs created:', photoUrls.length);
+            console.log('Document URLs created:', documentUrls.length);
 
             let submissionData: Omit<Site, 'id'> = {
                 ...formData,
-                photos: [], // Do not include file data in Firebase
-                documents: [], // Do not include file data in Firebase
+                photos: [...(formData.photos || []), ...photoUrls],
+                documents: [...(formData.documents || []), ...documentUrls],
                 // Initialize C1 stage as 'in-progress' if team members are assigned
                 stages: {
                     ...formData.stages,
@@ -278,7 +315,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             console.log('Site submission completed successfully');
             
             if (photos.length > 0 || documents.length > 0) {
-                alert(`Site created successfully! Note: ${photos.length} photos and ${documents.length} documents were selected but not stored. File upload integration will be available in a future update.`);
+                alert(`✅ Site created successfully!\n\n📸 Photos uploaded: ${photos.length}\n📄 Documents uploaded: ${documents.length}`);
             }
         } catch (error) {
             console.error('Error submitting site:', error);

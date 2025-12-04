@@ -11,6 +11,7 @@ import {
   onSnapshot,
   writeBatch
 } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -25,6 +26,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 // Utility: remove undefined values recursively to satisfy Firestore constraints
 const pruneUndefined = (value: any): any => {
   if (Array.isArray(value)) {
@@ -341,6 +343,37 @@ export const initializeDefaultAdmin = async () => {
   }
 };
 
+// ============ FILE STORAGE ============
+export const uploadFile = async (siteId: string, fileType: 'photo' | 'document', file: File): Promise<string> => {
+  try {
+    const timestamp = Date.now();
+    const fileName = `${fileType}_${timestamp}_${file.name}`;
+    const filePath = `sites/${siteId}/${fileType}/${fileName}`;
+    const fileRef = ref(storage, filePath);
+    
+    console.log(`Uploading ${fileType} to Firebase Storage:`, filePath);
+    await uploadBytes(fileRef, file);
+    
+    const downloadURL = await getDownloadURL(fileRef);
+    console.log(`File uploaded successfully:`, downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error(`Error uploading file:`, error);
+    throw error;
+  }
+};
+
+export const deleteFile = async (fileUrl: string): Promise<void> => {
+  try {
+    const fileRef = ref(storage, fileUrl);
+    await deleteObject(fileRef);
+    console.log('File deleted successfully');
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw error;
+  }
+};
+
 export default {
   // Team Members
   saveTeamMember,
@@ -409,6 +442,10 @@ export default {
   deleteVendorBillingRequest,
   updateVendorBillingRequest,
   subscribeToVendorBillingRequests,
+  
+  // File Storage
+  uploadFile,
+  deleteFile,
   
   // Utils
   clearAllData,
