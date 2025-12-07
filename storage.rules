@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Rugged Customs Portal
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Allow authenticated users to read and write files
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Site-specific files (photos and documents)
+    match /sites/{siteId}/{fileType}/{fileName} {
+      // Allow authenticated users to upload and read site files
+      allow read: if request.auth != null;
+      allow write: if request.auth != null 
+                   && (fileType == 'photo' || fileType == 'document')
+                   && request.resource.size < 20 * 1024 * 1024; // 20MB limit
+    }
+  }
+}
