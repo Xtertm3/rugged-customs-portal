@@ -63,7 +63,15 @@ const COLLECTIONS = {
 
 // ============ TEAM MEMBERS ============
 export const saveTeamMember = async (member: any) => {
-  await setDoc(doc(db, COLLECTIONS.TEAM_MEMBERS, member.id), member);
+  try {
+    console.log('Firebase: Saving team member', member.id);
+    const cleaned = pruneUndefined(member);
+    await setDoc(doc(db, COLLECTIONS.TEAM_MEMBERS, member.id), cleaned);
+    console.log('Firebase: Team member saved successfully');
+  } catch (error) {
+    console.error('Firebase saveTeamMember error:', error);
+    throw error;
+  }
 };
 
 export const getAllTeamMembers = async (): Promise<any[]> => {

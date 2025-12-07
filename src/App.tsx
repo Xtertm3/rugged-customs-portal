@@ -788,25 +788,33 @@ const App: React.FC = () => {
   }, [currentUser, sites, paymentRequests]);
 
   const handleAddTeamMember = async (name: string, role: string, mobile: string, photo: string | null, password?: string, email?: string, companyName?: string, gstNumber?: string, address?: string) => {
-    const isSubVendor = role === 'Sub-Vendor';
-    const newMember: TeamMember = { 
-      id: Date.now().toString(), 
-      name, 
-      role, 
-      mobile, 
-      photo, 
-      password: password || mobile, 
-      passwordChanged: false,
-      email: isSubVendor ? email : undefined,
-      isSubVendor: isSubVendor,
-      subVendorDetails: isSubVendor ? {
-        companyName: companyName || '',
-        gstNumber: gstNumber || '',
-        address: address || ''
-      } : undefined
-    };
-    await firebaseService.saveTeamMember(newMember);
-    // State auto-updates via Firebase listener
+    try {
+      console.log('handleAddTeamMember called:', { name, role, mobile });
+      const isSubVendor = role === 'Sub-Vendor';
+      const newMember: TeamMember = { 
+        id: Date.now().toString(), 
+        name, 
+        role, 
+        mobile, 
+        photo, 
+        password: password || mobile, 
+        passwordChanged: false,
+        email: isSubVendor ? email : undefined,
+        isSubVendor: isSubVendor,
+        subVendorDetails: isSubVendor ? {
+          companyName: companyName || '',
+          gstNumber: gstNumber || '',
+          address: address || ''
+        } : undefined
+      };
+      console.log('Saving team member to Firebase:', newMember.id, newMember.name);
+      await firebaseService.saveTeamMember(newMember);
+      console.log('Team member saved successfully');
+      // State auto-updates via Firebase listener
+    } catch (error) {
+      console.error('Error in handleAddTeamMember:', error);
+      alert('Error adding team member: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
   
   const handleDeleteTeamMember = async (memberId: string) => {

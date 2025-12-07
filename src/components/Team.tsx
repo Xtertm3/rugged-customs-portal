@@ -194,14 +194,21 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
             setError('Please enter a name and mobile number.');
             return;
         }
-        setError('');
-        onAddMember(newName, newRole, newMobile, newPhoto, newPassword);
-        setNewName('');
-        setNewRole(predefinedRoles[0]);
-        setNewMobile('');
-        setNewPassword('');
-        setNewPhoto(null);
-        if (photoInputRef.current) photoInputRef.current.value = "";
+        try {
+            setError('');
+            console.log('Adding team member:', { newName, newRole, newMobile });
+            onAddMember(newName, newRole, newMobile, newPhoto, newPassword);
+            setNewName('');
+            setNewRole(predefinedRoles[0]);
+            setNewMobile('');
+            setNewPassword('');
+            setNewPhoto(null);
+            if (photoInputRef.current) photoInputRef.current.value = "";
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            setError(`Failed to add team member: ${errorMsg}`);
+            console.error('Error adding team member:', err);
+        }
     };
     
     const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
