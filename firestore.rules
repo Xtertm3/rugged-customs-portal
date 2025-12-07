@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow read/write access to all documents for now
+    // TODO: Implement proper authentication-based rules
+    match /{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Team members collection
+    match /teamMembers/{memberId} {
+      allow read, write: if true;
+    }
+    
+    // Sites collection
+    match /sites/{siteId} {
+      allow read, write: if true;
+    }
+    
+    // Payment requests collection
+    match /paymentRequests/{requestId} {
+      allow read, write: if true;
+    }
+    
+    // Vendors collection
+    match /vendors/{vendorId} {
+      allow read, write: if true;
+    }
+    
+    // Billing overviews collection
+    match /billingOverviews/{billingId} {
+      allow read, write: if true;
+    }
+    
+    // Vendor billing requests collection
+    match /vendorBillingRequests/{requestId} {
+      allow read, write: if true;
+    }
+    
+    // Transporters collection
+    match /transporters/{transporterId} {
+      allow read, write: if true;
+    }
+    
+    // Job cards collection
+    match /jobCards/{cardId} {
+      allow read, write: if true;
+    }
+    
+    // Material usage logs collection
+    match /materialUsageLogs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}

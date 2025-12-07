@@ -364,8 +364,19 @@ const App: React.FC = () => {
   useEffect(() => {
     const initializeFirebase = async () => {
       try {
+        console.log('=== FIREBASE INITIALIZATION START ===');
+        console.log('Firebase config check:', {
+          hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+          hasAuthDomain: !!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+          hasProjectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+          hasStorageBucket: !!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+        });
+        
         // Initialize default admin if needed
+        console.log('Initializing default admin...');
         await firebaseService.initializeDefaultAdmin();
+        console.log('Default admin initialized successfully');
 
         // Restore logged-in user from session
         const storedUser = sessionStorage.getItem('currentUser');
@@ -482,8 +493,28 @@ const App: React.FC = () => {
         };
 
       } catch (err) {
-        console.error("Failed to initialize Firebase:", err);
-        setError("Could not connect to cloud database. Please check your internet connection.");
+        console.error("=== FIREBASE INITIALIZATION FAILED ===");
+        console.error("Error details:", err);
+        console.error("Error message:", err instanceof Error ? err.message : String(err));
+        console.error("Error stack:", err instanceof Error ? err.stack : 'No stack trace');
+        
+        // More specific error message
+        let errorMsg = "Could not connect to cloud database. ";
+        if (err instanceof Error) {
+          if (err.message.includes('Missing or insufficient permissions')) {
+            errorMsg += "Permission denied. Please check Firestore security rules.";
+          } else if (err.message.includes('network')) {
+            errorMsg += "Network error. Please check your internet connection.";
+          } else if (err.message.includes('PERMISSION_DENIED')) {
+            errorMsg += "Access denied. Please check Firebase security rules.";
+          } else {
+            errorMsg += `Error: ${err.message}`;
+          }
+        } else {
+          errorMsg += "Please check your internet connection.";
+        }
+        
+        setError(errorMsg);
         setIsDbLoading(false);
       }
     };
