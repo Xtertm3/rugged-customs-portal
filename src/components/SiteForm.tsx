@@ -37,6 +37,10 @@ const initialFormData: Omit<Site, 'id'> = {
     siteManagerId: '',
     vendorId: '',
     vendorName: '',
+    technicianName: '',
+    technicianPhone: '',
+    fscName: '',
+    fscPhone: '',
     photos: [],
     documents: [],
     currentStage: 'c1', // Start with C1 stage (Civil Phase 1)
@@ -99,6 +103,10 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 siteManagerId: initialData.siteManagerId || '',
                 vendorId: initialData.vendorId || '',
                 vendorName: initialData.vendorName || '',
+                technicianName: initialData.technicianName || '',
+                technicianPhone: initialData.technicianPhone || '',
+                fscName: initialData.fscName || '',
+                fscPhone: initialData.fscPhone || '',
                 photos: initialData.photos || [],
                 documents: initialData.documents || [],
                 // Handle backward compatibility for sites created before 4-stage tracking
@@ -435,7 +443,68 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     {errors.vendorId && <p className="text-red-400 text-xs mt-1">{errors.vendorId}</p>}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Technician and FSC Details */}
+                <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-700">Technician Details</h4>
+                            <div>
+                                <label htmlFor="technicianName" className={labelStyles}>Technician Name</label>
+                                <input 
+                                    id="technicianName" 
+                                    name="technicianName" 
+                                    type="text" 
+                                    value={formData.technicianName} 
+                                    onChange={handleChange} 
+                                    className={inputStyles}
+                                    placeholder="Enter technician name"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="technicianPhone" className={labelStyles}>Technician Phone Number</label>
+                                <input 
+                                    id="technicianPhone" 
+                                    name="technicianPhone" 
+                                    type="tel" 
+                                    value={formData.technicianPhone} 
+                                    onChange={handleChange} 
+                                    className={inputStyles}
+                                    placeholder="Enter phone number"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-700">FSC Details</h4>
+                            <div>
+                                <label htmlFor="fscName" className={labelStyles}>FSC Name</label>
+                                <input 
+                                    id="fscName" 
+                                    name="fscName" 
+                                    type="text" 
+                                    value={formData.fscName} 
+                                    onChange={handleChange} 
+                                    className={inputStyles}
+                                    placeholder="Enter FSC name"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="fscPhone" className={labelStyles}>FSC Phone Number</label>
+                                <input 
+                                    id="fscPhone" 
+                                    name="fscPhone" 
+                                    type="tel" 
+                                    value={formData.fscPhone} 
+                                    onChange={handleChange} 
+                                    className={inputStyles}
+                                    placeholder="Enter phone number"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 pt-6">
                     <div>
                         <label htmlFor="projectType" className={labelStyles}>Project Type</label>
                         <select id="projectType" name="projectType" value={formData.projectType} onChange={handleChange} className={inputStyles}>

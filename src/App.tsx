@@ -107,6 +107,12 @@ export interface Site {
   siteManagerId?: string;
   vendorId?: string; // Reference to Vendor
   vendorName?: string; // Cached vendor name for display
+  // Technician details
+  technicianName?: string;
+  technicianPhone?: string;
+  // FSC (Field Service Coordinator) details
+  fscName?: string;
+  fscPhone?: string;
   photos?: SiteAttachment[];
   documents?: SiteAttachment[];
   // New 4-stage work tracking: C1 → C2 → C1+C2 Combined → Electrical
