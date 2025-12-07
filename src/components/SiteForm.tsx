@@ -252,9 +252,11 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             console.log('=== SITE FORM SUBMIT DEBUG ===');
             console.log('Photos selected:', photos.length);
             console.log('Documents selected:', documents.length);
+            console.log('Is editing:', isEditing);
             
-            // Generate a temporary site ID for file uploads
-            const tempSiteId = isEditing && initialData ? initialData.id : `temp_${Date.now()}`;
+            // Generate site ID for file uploads
+            const siteId = isEditing && initialData ? initialData.id : Date.now().toString();
+            console.log('Using site ID for uploads:', siteId);
             
             // Upload files to Firebase Storage and get URLs
             let photoUrls: { name: string; url: string }[] = [];
@@ -264,13 +266,14 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 console.log('Uploading photos to Firebase Storage...');
                 try {
                     photoUrls = await Promise.all(photos.map(async (file) => {
-                        const url = await firebaseService.uploadFile(tempSiteId, 'photo', file);
-                        console.log(`Photo uploaded: ${file.name} -> ${url}`);
+                        console.log(`Uploading photo: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                        const url = await firebaseService.uploadFile(siteId, 'photo', file);
+                        console.log(`Photo uploaded successfully: ${file.name} -> ${url}`);
                         return { name: file.name, url };
                     }));
                 } catch (fileError) {
                     console.error('Error uploading photos:', fileError);
-                    alert('Error uploading photos. Please try again with smaller files.');
+                    alert('Error uploading photos: ' + (fileError instanceof Error ? fileError.message : 'Please try again with smaller files (max 20MB).'));
                     return;
                 }
             }
@@ -279,24 +282,31 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                 console.log('Uploading documents to Firebase Storage...');
                 try {
                     documentUrls = await Promise.all(documents.map(async (file) => {
-                        const url = await firebaseService.uploadFile(tempSiteId, 'document', file);
-                        console.log(`Document uploaded: ${file.name} -> ${url}`);
+                        console.log(`Uploading document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                        const url = await firebaseService.uploadFile(siteId, 'document', file);
+                        console.log(`Document uploaded successfully: ${file.name} -> ${url}`);
                         return { name: file.name, url };
                     }));
                 } catch (fileError) {
                     console.error('Error uploading documents:', fileError);
-                    alert('Error uploading documents. Please try again with smaller files.');
+                    alert('Error uploading documents: ' + (fileError instanceof Error ? fileError.message : 'Please try again with smaller files (max 20MB).'));
                     return;
                 }
             }
 
-            console.log('Photo URLs created:', photoUrls.length);
-            console.log('Document URLs created:', documentUrls.length);
+            console.log('Photo URLs created:', photoUrls.length, photoUrls);
+            console.log('Document URLs created:', documentUrls.length, documentUrls);
+
+            const allPhotos = [...(formData.photos || []), ...photoUrls];
+            const allDocuments = [...(formData.documents || []), ...documentUrls];
+            
+            console.log('Total photos to save:', allPhotos.length);
+            console.log('Total documents to save:', allDocuments.length);
 
             let submissionData: Omit<Site, 'id'> = {
                 ...formData,
-                photos: [...(formData.photos || []), ...photoUrls],
-                documents: [...(formData.documents || []), ...documentUrls],
+                photos: allPhotos,
+                documents: allDocuments,
                 // Initialize C1 stage as 'in-progress' if team members are assigned
                 stages: {
                     ...formData.stages,
@@ -319,7 +329,10 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
             console.log('Site submission completed successfully');
             
             if (photos.length > 0 || documents.length > 0) {
-                alert(`✅ Site created successfully!\n\n📸 Photos uploaded: ${photos.length}\n📄 Documents uploaded: ${documents.length}`);
+                const message = isEditing 
+                    ? `✅ Site updated successfully!\n\n📸 Photos uploaded: ${photoUrls.length}\n📄 Documents uploaded: ${documentUrls.length}`
+                    : `✅ Site created successfully!\n\n📸 Photos uploaded: ${photoUrls.length}\n📄 Documents uploaded: ${documentUrls.length}`;
+                alert(message);
             }
         } catch (error) {
             console.error('Error submitting site:', error);
