@@ -43,6 +43,7 @@ export const Projects: React.FC<ProjectsProps> = ({
     onRequestApproval
 }) => {
     const [searchFilter, setSearchFilter] = useState('');
+    const [teamFilter, setTeamFilter] = useState('');
 
     const displayedSummaries = useMemo(() => {
         // Admin-like roles see all sites with full data
@@ -79,9 +80,11 @@ export const Projects: React.FC<ProjectsProps> = ({
         }
 
         // Apply search filter on site name, site ID, and RL ID
+        let filteredSummaries = baseSummaries;
+        
         if (searchFilter.trim()) {
             const searchLower = searchFilter.toLowerCase().trim();
-            return baseSummaries.filter(summary => {
+            filteredSummaries = filteredSummaries.filter(summary => {
                 const site = sites.find(s => s.id === summary.id);
                 if (!site) return false;
                 
@@ -93,8 +96,30 @@ export const Projects: React.FC<ProjectsProps> = ({
             });
         }
 
-        return baseSummaries;
-    }, [projectSummaries, currentUser, sites, searchFilter]);
+        // Apply team filter
+        if (teamFilter.trim()) {
+            const teamLower = teamFilter.toLowerCase().trim();
+            filteredSummaries = filteredSummaries.filter(summary => {
+                const site = sites.find(s => s.id === summary.id);
+                if (!site) return false;
+                
+                // Check if any team member assigned to this site matches the filter
+                const allTeamIds = [
+                    ...(site.stages?.c1?.assignedTeamIds || []),
+                    ...(site.stages?.c2?.assignedTeamIds || []),
+                    ...(site.stages?.c1_c2_combined?.assignedTeamIds || []),
+                    ...(site.stages?.electrical?.assignedTeamIds || [])
+                ];
+                
+                return allTeamIds.some(teamId => {
+                    const member = teamMembers.find(m => m.id === teamId);
+                    return member && member.name.toLowerCase().includes(teamLower);
+                });
+            });
+        }
+
+        return filteredSummaries;
+    }, [projectSummaries, currentUser, sites, searchFilter, teamFilter, teamMembers]);
 
     const [selectedStages, setSelectedStages] = useState<Record<string, 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'>>({});
     const [updatingStage, setUpdatingStage] = useState<string | null>(null);
@@ -143,13 +168,22 @@ export const Projects: React.FC<ProjectsProps> = ({
             <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-6">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
                     <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 flex-1">Sites Overview</h2>
-                    <input
-                        type="text"
-                        placeholder="Search by Site Name, ID, or RL ID..."
-                        value={searchFilter}
-                        onChange={(e) => setSearchFilter(e.target.value)}
-                        className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                    <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                        <input
+                            type="text"
+                            placeholder="Search by Site Name, ID, or RL ID..."
+                            value={searchFilter}
+                            onChange={(e) => setSearchFilter(e.target.value)}
+                            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Filter by Team Member..."
+                            value={teamFilter}
+                            onChange={(e) => setTeamFilter(e.target.value)}
+                            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                        />
+                    </div>
                 </div>
                 {displayedSummaries.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">

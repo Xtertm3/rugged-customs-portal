@@ -1979,7 +1979,7 @@ const App: React.FC = () => {
         </header>
         
         {!['form', 'siteForm', 'siteDetail', 'teamMemberDetail', 'transporterDetail'].includes(currentView) && (
-            <nav className="hidden md:flex mb-6 p-3 glass rounded-2xl border border-gray-200/50 justify-center items-center flex-wrap gap-2 animate-slide-up shadow-lg">
+            <nav className="hidden md:flex mb-6 p-3 glass rounded-2xl border border-gray-200/50 justify-center items-center flex-wrap gap-2 animate-slide-up shadow-lg sticky top-0 z-50 bg-white/95 backdrop-blur-sm">
                 <NavButton view="dashboard" label="📊 Dashboard" />
                 <NavButton view="projects" label="🏗️ Sites" />
                 <NavButton view="inventory" label="📦 Inventory" />
