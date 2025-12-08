@@ -456,7 +456,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
                                             disabled={!!site.paymentsLocked}
-                                            className="flex-1 py-1.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-md hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]">
+                                            className="flex-1 py-1.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-md hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]"
                                         >
                                             Submit Completion
                                         </button>
