@@ -141,14 +141,14 @@ export const Projects: React.FC<ProjectsProps> = ({
              )}
 
             <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-6">
-                <div className="flex items-center justify-between mb-4 gap-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
                     <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 flex-1">Sites Overview</h2>
                     <input
                         type="text"
                         placeholder="Search by Site Name, ID, or RL ID..."
                         value={searchFilter}
                         onChange={(e) => setSearchFilter(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64"
+                        className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                 </div>
                 {displayedSummaries.length === 0 ? (
