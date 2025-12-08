@@ -29,7 +29,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-white text-text-primary flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm mx-auto text-center">
         <header className="mb-10 animate-fade-in">
-          <h1 className="text-5xl font-extrabold text-orange-500">
+          <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-600 via-blue-700 to-amber-500 bg-clip-text text-transparent">
             Rugged Customs
           </h1>
         </header>

@@ -29,8 +29,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate, r
             onClick={() => onNavigate(item.view)}
             className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl transition-all min-w-[60px] ripple ${
               currentView === item.view
-                ? 'text-primary bg-orange-50 scale-105'
-                : 'text-gray-600 hover:text-primary hover:bg-gray-50'
+                ? 'text-blue-600 bg-blue-50 scale-105'
+                : 'text-gray-600 hover:text-blue-600 hover:bg-amber-50'
             }`}
           >
             <span className="text-2xl mb-1">{item.icon}</span>

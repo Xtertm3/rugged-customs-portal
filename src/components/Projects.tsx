@@ -181,7 +181,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                             placeholder="Filter by Team Member..."
                             value={teamFilter}
                             onChange={(e) => setTeamFilter(e.target.value)}
-                            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
                         />
                     </div>
                 </div>
@@ -221,7 +221,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                 <div 
                                     key={summary.id} 
                                     onClick={() => onViewSiteDetails(summary.name)}
-                                    className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 overflow-hidden ${statusStyle.border} hover:border-orange-400`}
+                                    className={`bg-white rounded-xl border-2 shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 overflow-hidden ${statusStyle.border} hover:border-amber-400`}
                                 >
                                     {/* Compact Header */}
                                     <div className="bg-gradient-to-r from-gray-50 to-slate-50 px-4 py-3 border-b">
@@ -456,7 +456,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
                                             disabled={!!site.paymentsLocked}
-                                            className="flex-1 py-1.5 bg-orange-600 text-white font-bold rounded-md hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]"
+                                            className="flex-1 py-1.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-md hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]">
                                         >
                                             Submit Completion
                                         </button>

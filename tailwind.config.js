@@ -12,19 +12,27 @@ export default {
       colors: {
         'background': '#ffffff',
         'surface': '#ffffff',
-        'surface-secondary': '#f8fafc',
-        'primary': '#f97316',
-        'primary-light': '#fb923c',
-        'primary-dark': '#ea580c',
-        'primary-hover': '#ea580c',
-        'orange': {
-          '400': '#fb923c',
-          '500': '#f97316',
-          '600': '#ea580c',
-          '700': '#c2410c'
+        'surface-secondary': '#f0f4ff',
+        'primary': '#1e40af',
+        'primary-light': '#3b82f6',
+        'primary-dark': '#1e3a8a',
+        'primary-hover': '#1e3a8a',
+        'blue': {
+          '400': '#60a5fa',
+          '500': '#3b82f6',
+          '600': '#2563eb',
+          '700': '#1d4ed8',
+          '800': '#1e40af',
+          '900': '#1e3a8a'
+        },
+        'gold': {
+          '400': '#fbbf24',
+          '500': '#f59e0b',
+          '600': '#d97706',
+          '700': '#b45309'
         },
         'secondary': '#64748b',
-        'text-primary': '#0f172a',
+        'text-primary': '#1e3a8a',
         'text-secondary': '#64748b',
         'border': '#e2e8f0',
         'border-light': '#f1f5f9',

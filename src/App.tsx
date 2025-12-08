@@ -1405,8 +1405,8 @@ const App: React.FC = () => {
         onClick={() => setViewHistory([view])} 
         className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 ${
             currentView === view 
-            ? 'bg-primary text-white shadow-md' 
-            : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+            ? 'bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-md' 
+            : 'bg-white text-gray-700 hover:bg-amber-50 hover:border-amber-300 border border-gray-200'
         }`}
     >
       {label}
@@ -1956,8 +1956,8 @@ const App: React.FC = () => {
     <header className="glass rounded-2xl px-4 py-3 sm:px-6 sm:py-4 mb-6 shadow-lg border border-gray-200/50 animate-fade-in sticky top-4 z-30">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg flex-shrink-0">
-            <span className="text-white text-xl sm:text-2xl font-bold">R</span>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg flex-shrink-0">
+            <span className="text-amber-400 text-xl sm:text-2xl font-bold">R</span>
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-lg sm:text-2xl font-extrabold text-text-primary truncate">
@@ -1968,10 +1968,10 @@ const App: React.FC = () => {
         </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                <NotificationBell isSubscribed={isSubscribed} permission={notificationPermission} onClick={handleNotificationToggle} />
-               <button onClick={() => setIsChangePasswordModalOpen(true)} className="hidden sm:flex text-xs sm:text-sm px-2 sm:px-3 py-2 bg-white/80 border border-gray-300 text-text-secondary rounded-lg hover:bg-white hover:text-text-primary hover:border-orange-300 transition-all shadow-sm">
+               <button onClick={() => setIsChangePasswordModalOpen(true)} className="hidden sm:flex text-xs sm:text-sm px-2 sm:px-3 py-2 bg-white/80 border border-gray-300 text-text-secondary rounded-lg hover:bg-white hover:text-text-primary hover:border-blue-400 transition-all shadow-sm">
                  Change Password
                </button>
-               <button onClick={handleLogout} className="text-xs sm:text-sm px-2 sm:px-3 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-md font-medium">
+               <button onClick={handleLogout} className="text-xs sm:text-sm px-2 sm:px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg hover:from-blue-700 hover:to-blue-900 transition-all shadow-md font-medium">
                  Logout
                </button>
             </div>
@@ -1989,7 +1989,7 @@ const App: React.FC = () => {
                 {permissions.canManageTransporters && <NavButton view="transporter" label="🚚 Transport" />}
                 {/* Transactions quick access for eligible roles (Admins/Managers/Accountant etc.) */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil','Supervisor'].includes(currentUser.role) && (
-                  <button onClick={() => setIsTransactionReportOpen(true)} className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all ripple">📄 Transactions</button>
+                  <button onClick={() => setIsTransactionReportOpen(true)} className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:from-amber-600 hover:to-yellow-700 transition-all ripple">📄 Transactions</button>
                 )}
                 {/* Inventory Report for Admin/Manager/Accountant/Supervisor */}
                 {currentUser && !['Transporter','Civil','Electricals','Electrical + Civil'].includes(currentUser.role) && (

@@ -151,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="w-full flex flex-col sm:flex-row gap-2">
                 <button 
                   onClick={onDownloadMyInventoryReport}
-                  className="flex-1 text-center px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2"
+                  className="flex-1 text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 text-white font-semibold rounded-lg hover:from-amber-600 hover:to-yellow-700 flex items-center justify-center gap-2"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -196,7 +196,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <button
                 onClick={() => selectedSiteId && onCreateRequest(selectedSiteId)}
                 disabled={!selectedSiteId}
-                className="w-full sm:w-auto px-6 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -352,7 +352,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <button
         onClick={() => setStatusFilter(status)}
         className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200 ${
-          isActive ? 'bg-orange-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+          isActive ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
         }`}
       >
         {status}
@@ -366,7 +366,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <button
         onClick={() => setJobStatusFilter(status)}
         className={`px-4 py-1.5 text-sm font-semibold rounded-full transition-colors duration-200 ${
-          isActive ? 'bg-orange-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+          isActive ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
         }`}
       >
         {status}
@@ -379,16 +379,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-lg">
                 <p className="text-sm text-gray-500">Ongoing Projects</p>
-                <p className="text-3xl font-bold text-orange-400">{stats.ongoingProjects}</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.ongoingProjects}</p>
             </div>
             <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-lg">
                 <p className="text-sm text-gray-500">Completed Payments This Month</p>
-                <p className="text-3xl font-bold text-orange-400">{stats.completedThisMonth}</p>
+                <p className="text-3xl font-bold text-amber-500">{stats.completedThisMonth}</p>
             </div>
              <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-lg flex flex-col justify-center items-center">
                 <button 
                   onClick={onDownloadMyInventoryReport}
-                  className="w-full text-center px-4 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 flex items-center justify-center gap-2"
+                  className="w-full text-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-900 flex items-center justify-center gap-2"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
