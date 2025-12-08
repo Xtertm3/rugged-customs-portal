@@ -1480,8 +1480,12 @@ const App: React.FC = () => {
   const inventoryData = useMemo<InventoryItem[]>(() => {
     const reportData: Omit<InventoryItem, 'id'>[] = [];
 
+    // Filter to show only current user's materials (unless Admin/Manager/Accountant)
+    const isPrivileged = currentUser && ['Admin', 'Manager', 'Accountant'].includes(currentUser.role);
+    const membersToShow = isPrivileged ? teamMembers : (currentUser ? [currentUser] : []);
+
     // Build inventory from teamMembers assignedMaterials (team-scoped opening balances)
-    teamMembers.forEach(member => {
+    membersToShow.forEach(member => {
       const managedSite = sites.find(s => s.siteManagerId === member.id);
       const assignedSiteName = managedSite ? managedSite.siteName : 'N/A';
 
