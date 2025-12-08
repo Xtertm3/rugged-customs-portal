@@ -42,16 +42,17 @@ export const Projects: React.FC<ProjectsProps> = ({
     onCompletionSubmitClick,
     onRequestApproval
 }) => {
+    const [searchFilter, setSearchFilter] = useState('');
+
     const displayedSummaries = useMemo(() => {
         // Admin-like roles see all sites with full data
-        if (!currentUser || currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Accountant') {
-            return projectSummaries;
-        }
+        let baseSummaries: ProjectSummary[];
         
-        // Field roles see sites where they are part of any stage team OR legacy manager
-        // AND need to override totalPaid based on their role
-        if (currentUser.role === 'Civil' || currentUser.role === 'Electricals' || currentUser.role === 'Electrical + Civil' || currentUser.role === 'Supervisor') {
-            return projectSummaries
+        if (!currentUser || currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Accountant') {
+            baseSummaries = projectSummaries;
+        } else if (currentUser.role === 'Civil' || currentUser.role === 'Electricals' || currentUser.role === 'Electrical + Civil' || currentUser.role === 'Supervisor') {
+            // Field roles see sites where they are part of any stage team OR legacy manager
+            baseSummaries = projectSummaries
                 .filter(summary => {
                     const site = sites.find(s => s.id === summary.id);
                     if (!site) return false;
@@ -73,9 +74,27 @@ export const Projects: React.FC<ProjectsProps> = ({
                     // Electrical + Civil and Supervisor see all
                     return summary;
                 });
+        } else {
+            baseSummaries = [];
         }
-        return [];
-    }, [projectSummaries, currentUser, sites]);
+
+        // Apply search filter on site name, site ID, and RL ID
+        if (searchFilter.trim()) {
+            const searchLower = searchFilter.toLowerCase().trim();
+            return baseSummaries.filter(summary => {
+                const site = sites.find(s => s.id === summary.id);
+                if (!site) return false;
+                
+                const siteName = (site.siteName || summary.name || '').toLowerCase();
+                const siteId = (site.siteId || '').toLowerCase();
+                const rlId = (site.rlId || '').toLowerCase();
+                
+                return siteName.includes(searchLower) || siteId.includes(searchLower) || rlId.includes(searchLower);
+            });
+        }
+
+        return baseSummaries;
+    }, [projectSummaries, currentUser, sites, searchFilter]);
 
     const [selectedStages, setSelectedStages] = useState<Record<string, 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'>>({});
     const [updatingStage, setUpdatingStage] = useState<string | null>(null);
@@ -122,11 +141,20 @@ export const Projects: React.FC<ProjectsProps> = ({
              )}
 
             <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-6">
-                <h2 className="text-xl font-bold mb-4 text-gray-900 border-b border-gray-100 pb-3">Sites Overview</h2>
+                <div className="flex items-center justify-between mb-4 gap-4">
+                    <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-3 flex-1">Sites Overview</h2>
+                    <input
+                        type="text"
+                        placeholder="Search by Site Name, ID, or RL ID..."
+                        value={searchFilter}
+                        onChange={(e) => setSearchFilter(e.target.value)}
+                        className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64"
+                    />
+                </div>
                 {displayedSummaries.length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg">{canManageSites ? "No sites found." : "You have no sites assigned to you."}</p>
-                        {canManageSites && <p className="mt-2 text-sm">Click "Create New Site" to get started.</p>}
+                        <p className="text-lg">{searchFilter ? "No sites match your search." : (canManageSites ? "No sites found." : "You have no sites assigned to you.")}</p>
+                        {canManageSites && !searchFilter && <p className="mt-2 text-sm">Click "Create New Site" to get started.</p>}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
