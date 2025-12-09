@@ -29,7 +29,7 @@ export const TransporterDetail: React.FC<TransporterDetailProps> = ({ transporte
   return (
     <div className="w-full animate-fade-in">
       <div className="mb-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold transition-colors">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 font-semibold transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
@@ -84,7 +84,7 @@ export const TransporterDetail: React.FC<TransporterDetailProps> = ({ transporte
                           <select
                               value={card.status}
                               onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
-                              className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors ${statusColors[card.status]}`}
+                              className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${statusColors[card.status]}`}
                               aria-label={`Update status for job ${card.id}`}
                           >
                               <option value="Assigned">Assigned</option>

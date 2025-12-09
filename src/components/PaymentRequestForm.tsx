@@ -123,13 +123,13 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
     };
 
     // Updated light theme styles for better readability
-    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition disabled:opacity-50";
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition disabled:opacity-50";
     const labelStyles = "block text-sm font-semibold text-gray-700 mb-2";
 
     const submitButtonText = isEditing ? 'Update Submission' : 'Submit for Review';
     return (
         <div className="w-full animate-fade-in">
-            <button onClick={handleBackClick} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold mb-6">
+            <button onClick={handleBackClick} className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 font-semibold mb-6">
                  &larr; Back
             </button>
           <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 space-y-8">
@@ -156,9 +156,9 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
                 </div>
 
                  {selectedSite?.vendorName && (
-                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-sm text-gray-700">
-                            <span className="font-semibold text-orange-600">🏢 Vendor:</span> {selectedSite.vendorName}
+                            <span className="font-semibold text-blue-600">🏢 Vendor:</span> {selectedSite.vendorName}
                         </p>
                     </div>
                  )}
@@ -220,7 +220,7 @@ export const PaymentRequestForm: React.FC<PaymentRequestFormProps> = ({
 
                 <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
                     <button type="button" onClick={handleBackClick} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Cancel</button>
-                    <button type="submit" disabled={isLoading || sites.length === 0 || paymentsLocked} className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-800/50 disabled:cursor-not-allowed">
+                    <button type="submit" disabled={isLoading || sites.length === 0 || paymentsLocked} className="w-48 flex justify-center items-center px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800 disabled:bg-blue-800/50 disabled:cursor-not-allowed">
                         {isLoading ? <Spinner /> : submitButtonText}
                     </button>
                 </div>

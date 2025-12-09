@@ -47,7 +47,7 @@ export const QuickJobModal: React.FC<QuickJobModalProps> = ({ transporterName, s
         }
     }, [siteName, assignTo, stage, onSubmit]);
     
-    const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const inputStyles = "w-full bg-zinc-700/50 border border-zinc-600 rounded-md py-2 px-3 text-zinc-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
     const labelStyles = "block text-sm font-medium text-zinc-300 mb-2";
 
     return (
@@ -62,7 +62,7 @@ export const QuickJobModal: React.FC<QuickJobModalProps> = ({ transporterName, s
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-zinc-100">Assign New Job</h2>
-                        <p className="text-sm text-zinc-400">To: <span className="font-semibold text-orange-400">{transporterName}</span></p>
+                        <p className="text-sm text-zinc-400">To: <span className="font-semibold text-blue-500">{transporterName}</span></p>
                     </div>
                     <button onClick={onClose} className="text-zinc-400 text-2xl font-bold hover:text-white transition-colors">&times;</button>
                 </div>
@@ -126,7 +126,7 @@ export const QuickJobModal: React.FC<QuickJobModalProps> = ({ transporterName, s
                         <button
                             type="submit"
                             disabled={isProcessing || sites.length === 0 || filteredTeamMembers.length === 0}
-                            className="w-full flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-500/50 disabled:cursor-not-allowed transition-all"
+                            className="w-full flex justify-center items-center px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800 disabled:bg-blue-600/50 disabled:cursor-not-allowed transition-all"
                         >
                             {isProcessing ? <><Spinner /> <span>Assigning...</span></> : "Assign Job"}
                         </button>

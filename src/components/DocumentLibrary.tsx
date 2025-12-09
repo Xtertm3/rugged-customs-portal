@@ -82,7 +82,7 @@ export const DocumentLibrary: React.FC<DocumentLibraryProps> = ({ sites, payment
         <div>
           <button 
             onClick={onBack} 
-            className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-semibold transition-colors mb-2"
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors mb-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -98,7 +98,7 @@ export const DocumentLibrary: React.FC<DocumentLibraryProps> = ({ sites, payment
           <button
             onClick={() => setViewMode('grid')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'grid' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -108,7 +108,7 @@ export const DocumentLibrary: React.FC<DocumentLibraryProps> = ({ sites, payment
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'list' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -127,7 +127,7 @@ export const DocumentLibrary: React.FC<DocumentLibraryProps> = ({ sites, payment
             <select
               value={selectedSiteId}
               onChange={(e) => setSelectedSiteId(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-4 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2.5 px-4 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Sites ({paymentRequests.filter(r => (r.photos && r.photos.length > 0) || (r.documents && r.documents.length > 0)).length} requests)</option>
               {sites.map(site => {
@@ -154,9 +154,9 @@ export const DocumentLibrary: React.FC<DocumentLibraryProps> = ({ sites, payment
               <p className="text-2xl font-bold text-green-600">{allDocuments.length}</p>
               <p className="text-xs text-green-700 font-medium">Documents</p>
             </div>
-            <div className="bg-orange-50 border border-orange-200 rounded-lg px-6 py-3 text-center">
-              <p className="text-2xl font-bold text-orange-600">{filteredRequests.length}</p>
-              <p className="text-xs text-orange-700 font-medium">Requests</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-6 py-3 text-center">
+              <p className="text-2xl font-bold text-blue-600">{filteredRequests.length}</p>
+              <p className="text-xs text-blue-700 font-medium">Requests</p>
             </div>
           </div>
         </div>

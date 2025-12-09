@@ -122,7 +122,7 @@ const SubVendorForm: React.FC<SubVendorFormProps> = ({ onAddSubVendor, inputStyl
                             </div>
 
                             <div className="flex items-center gap-4 pt-4">
-                                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-sm px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">Upload Photo</button>
+                                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-sm px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Upload Photo</button>
                                 <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/*" className="hidden" />
                                 {photo && <img src={photo} alt="Preview" className="w-12 h-12 rounded-full object-cover" />}
                             </div>
@@ -211,7 +211,7 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
         }
     };
     
-    const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
     const labelStyles = "block text-sm font-medium text-gray-700 mb-1";
 
     return (
@@ -222,7 +222,7 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
                     {canDownloadInventoryReport && (
                         <button 
                             onClick={onDownloadInventoryReport} 
-                            className="text-sm px-4 py-2 bg-orange-500 text-gray-700 font-semibold rounded-lg hover:bg-orange-600 flex items-center gap-2"
+                            className="text-sm px-4 py-2 bg-blue-600 text-gray-700 font-semibold rounded-lg hover:bg-blue-700 flex items-center gap-2"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -257,13 +257,13 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 mt-4">
-                                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-sm px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600">Upload Photo</button>
+                                <button type="button" onClick={() => photoInputRef.current?.click()} className="text-sm px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">Upload Photo</button>
                                 <input type="file" ref={photoInputRef} onChange={handlePhotoChange} accept="image/*" className="hidden" />
                                 {newPhoto && <img src={newPhoto} alt="Preview" className="w-12 h-12 rounded-full object-cover" />}
                             </div>
                             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
                             <div className="flex justify-end pt-2">
-                                <button onClick={handleAddClick} className="px-8 py-2 bg-orange-600 text-white font-semibold rounded-lg">Add Member</button>
+                                <button onClick={handleAddClick} className="px-8 py-2 bg-blue-700 text-white font-semibold rounded-lg">Add Member</button>
                             </div>
                         </div>
                         
@@ -280,7 +280,7 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
                                     {member.photo ? (
                                         <img src={member.photo} alt={member.name} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
                                     ) : (
-                                        <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white flex-shrink-0">
+                                        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white flex-shrink-0">
                                             {getInitials(member.name)}
                                         </div>
                                     )}
@@ -308,7 +308,7 @@ export const Team: React.FC<TeamProps> = ({ sites, teamMembers, onAddMember, onD
                                                         <button 
                                                             key={site.id} 
                                                             onClick={(e) => { e.stopPropagation(); onViewSiteDetails(site.siteName); }}
-                                                            className="text-xs px-2 py-1 bg-orange-500 text-gray-700 rounded-md hover:bg-orange-600 transition-colors"
+                                                            className="text-xs px-2 py-1 bg-blue-600 text-gray-700 rounded-md hover:bg-blue-700 transition-colors"
                                                         >
                                                             {site.siteName}
                                                         </button>

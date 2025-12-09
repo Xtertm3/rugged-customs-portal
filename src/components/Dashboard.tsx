@@ -139,11 +139,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="w-full animate-fade-in space-y-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-xl shadow-lg">
             <p className="text-sm text-white/90 font-medium">Ongoing Projects</p>
             <p className="text-4xl font-bold text-white mt-2">{stats.ongoingProjects}</p>
           </div>
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg">
+          <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-xl shadow-lg">
             <p className="text-sm text-white/90 font-medium">Completed This Month</p>
             <p className="text-4xl font-bold text-white mt-2">{stats.completedThisMonth}</p>
           </div>
@@ -179,7 +179,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <select
                 value={selectedSiteId}
                 onChange={(e) => setSelectedSiteId(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-4 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 px-4 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {managedSites.length === 0 ? (
                   <option value="">No sites assigned</option>
@@ -281,7 +281,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-xs text-gray-500 mt-1">{req.timestamp}</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-orange-600">₹{req.amount?.toLocaleString()}</p>
+                      <p className="text-2xl font-bold text-blue-600">₹{req.amount?.toLocaleString()}</p>
                       <p className="text-xs text-gray-600 mt-2">
                         {req.reasons || 'No reasons provided'}
                       </p>
@@ -314,7 +314,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </span>
                       {onViewRequestDetails && (
                         <button 
-                          className="text-xs text-orange-600 hover:text-orange-700 font-semibold"
+                          className="text-xs text-blue-600 hover:text-blue-700 font-semibold"
                           onClick={(e) => {
                             e.stopPropagation();
                             onViewRequestDetails(req.id);
@@ -328,7 +328,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                           e.stopPropagation();
                           onEditRequest(req);
                         }}
-                        className="text-orange-600 hover:text-orange-700 text-xs font-semibold transition-colors"
+                        className="text-blue-600 hover:text-blue-700 text-xs font-semibold transition-colors"
                       >
                         Edit
                       </button>
@@ -414,7 +414,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         placeholder="Search by Site Name..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 pl-10 pr-4 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 pl-10 pr-4 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -453,7 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 </div>
                                 <div>
                                   <p className="text-sm text-gray-700 font-semibold mb-1">{req.paymentFor}</p>
-                                  <p className="text-2xl font-bold text-orange-600">₹{req.amount?.toLocaleString()}</p>
+                                  <p className="text-2xl font-bold text-blue-600">₹{req.amount?.toLocaleString()}</p>
                                   {req.reasons && <p className="text-xs text-gray-600 italic mt-2">"{req.reasons}"</p>}
                                   
                                   {/* Document indicators */}
@@ -495,7 +495,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     </select>
                                     {onViewRequestDetails && (
                                       <button 
-                                        className="text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1"
+                                        className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           onViewRequestDetails(req.id);
@@ -552,7 +552,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         placeholder="Search by Transporter..."
                         value={jobSearchTerm}
                         onChange={(e) => setJobSearchTerm(e.target.value)}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 pl-10 pr-4 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        className="w-full bg-gray-50 border border-gray-300 rounded-lg py-2 pl-10 pr-4 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
@@ -577,7 +577,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                 <div className="flex-grow space-y-3">
                                     <div className="flex items-center gap-3">
-                                        <span className="font-bold text-orange-400 text-lg">{getTransporterName(card.transporterId)}</span>
+                                        <span className="font-bold text-blue-500 text-lg">{getTransporterName(card.transporterId)}</span>
                                     </div>
                                     <div className="text-sm">
                                         <p className="text-gray-500">
@@ -594,7 +594,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         value={card.status}
                                         onChange={(e) => onUpdateJobCardStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
                                         disabled={!canManageTransporters}
-                                        className={`cursor-pointer text-xs font-medium pl-3 pr-8 py-1 rounded-full border appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-300`}
+                                        className={`cursor-pointer text-xs font-medium pl-3 pr-8 py-1 rounded-full border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-300`}
                                         style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23${jobStatusArrowColors[card.status]}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em' }}
                                         aria-label={`Update status for job ${card.id}`}
                                     >

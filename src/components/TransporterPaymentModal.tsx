@@ -70,7 +70,7 @@ export const TransporterPaymentModal: React.FC<TransporterPaymentModalProps> = (
                 setError('');
               }}
               placeholder="Enter amount"
-              className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition"
+              className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition"
               autoFocus
             />
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
@@ -86,7 +86,7 @@ export const TransporterPaymentModal: React.FC<TransporterPaymentModalProps> = (
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors"
+              className="px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
             >
               Submit Request
             </button>

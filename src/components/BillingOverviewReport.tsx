@@ -184,7 +184,7 @@ export const BillingOverviewReport: React.FC<BillingOverviewReportProps> = ({
     const colors: Record<BillingStatus, string> = {
       'Quotation Sent': 'bg-blue-100 text-blue-700',
       'Yet To Bill': 'bg-yellow-100 text-yellow-700',
-      'Approval Pending': 'bg-orange-100 text-orange-700',
+      'Approval Pending': 'bg-blue-100 text-blue-700',
       'Add PR Process': 'bg-purple-100 text-purple-700',
       'Add PR Done': 'bg-indigo-100 text-indigo-700',
       'Waiting For Amendment': 'bg-amber-100 text-amber-700',

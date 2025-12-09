@@ -349,12 +349,12 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
     };
 
     // Updated modern light theme styles
-    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
     const labelStyles = "block text-sm font-semibold text-gray-700 mb-2";
 
     return (
         <div className="w-full animate-fade-in">
-            <button onClick={onBack} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold mb-6">
+            <button onClick={onBack} className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 font-semibold mb-6">
                 &larr; Back
             </button>
           <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 space-y-8">
@@ -654,7 +654,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                             </div>
                         ))}
                     </div>
-                    <button type="button" onClick={addMaterialRow} className="mt-4 inline-flex items-center gap-1 text-sm text-orange-600 font-semibold hover:text-orange-700">+ Add Material</button>
+                    <button type="button" onClick={addMaterialRow} className="mt-4 inline-flex items-center gap-1 text-sm text-blue-600 font-semibold hover:text-blue-700">+ Add Material</button>
                 </div>
 
                 {canAddAttachments && (
@@ -706,7 +706,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
 
                 <div className="flex justify-end items-center gap-4 pt-6 border-t border-gray-200">
                     <button type="button" onClick={onBack} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700">Cancel</button>
-                    <button type="submit" className="w-48 flex justify-center items-center px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700">
+                    <button type="submit" className="w-48 flex justify-center items-center px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800">
                         {isEditing ? 'Update Site' : 'Create Site'}
                     </button>
                 </div>

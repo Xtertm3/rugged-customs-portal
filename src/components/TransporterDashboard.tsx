@@ -48,11 +48,11 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-start p-4 font-sans antialiased">
       <div className="w-full max-w-5xl mx-auto my-8">
         <div className="relative text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-600 mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-amber-600 mb-2">
               Transporter Dashboard
             </h1>
             <p className="text-gray-600 text-lg">
-              Welcome, <span className="font-bold text-orange-600">{transporter.contactPerson}</span>
+              Welcome, <span className="font-bold text-blue-600">{transporter.contactPerson}</span>
             </p>
             <div className="absolute top-0 right-0">
                <button onClick={onLogout} className="text-sm px-3 py-1.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Logout</button>
@@ -98,7 +98,7 @@ export const TransporterDashboard: React.FC<TransporterDashboardProps> = ({ tran
                     {onRequestPaymentForJob && (
                       <button
                         onClick={() => setSelectedJobForPayment(card)}
-                        className="text-sm px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                        className="text-sm px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium"
                       >
                         Request Payment
                       </button>

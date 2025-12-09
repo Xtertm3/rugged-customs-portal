@@ -28,7 +28,7 @@ export const EditTransporterModal: React.FC<EditTransporterModalProps> = ({ tran
         onUpdate({ ...transporter, contactPerson, contactNumber, password: password || undefined });
     };
 
-    const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+    const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
     const labelStyles = "block text-sm font-medium text-gray-700 mb-1";
 
     return (
@@ -58,7 +58,7 @@ export const EditTransporterModal: React.FC<EditTransporterModalProps> = ({ tran
                     {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
                     <div className="flex justify-end pt-4 gap-4">
                          <button onClick={onClose} className="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors">Cancel</button>
-                         <button onClick={handleUpdateClick} className="px-8 py-2 bg-orange-600 text-white font-semibold rounded-lg">Update Transporter</button>
+                         <button onClick={handleUpdateClick} className="px-8 py-2 bg-blue-700 text-white font-semibold rounded-lg">Update Transporter</button>
                     </div>
                 </div>
             </div>

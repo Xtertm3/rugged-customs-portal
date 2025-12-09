@@ -199,7 +199,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
     return (
         <div className="w-full animate-fade-in text-center py-12">
             <p className="text-lg text-gray-500">Site details not found.</p>
-            <button onClick={onBack} className="mt-4 text-sm text-orange-400 hover:text-orange-300 font-semibold">
+            <button onClick={onBack} className="mt-4 text-sm text-blue-500 hover:text-blue-400 font-semibold">
                 &larr; Go Back
             </button>
         </div>
@@ -237,7 +237,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
         <ul className="list-disc list-inside text-gray-500 space-y-1">
             {attachments.map((file, i) => (
                 <li key={i}>
-                    <a href={file.dataUrl} download={file.name} className="hover:text-orange-400 underline">
+                    <a href={file.dataUrl} download={file.name} className="hover:text-blue-500 underline">
                         {file.name}
                     </a>
                 </li>
@@ -247,7 +247,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
 
   return (
     <div className="w-full animate-fade-in">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-semibold mb-6">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm text-blue-500 hover:text-blue-400 font-semibold mb-6">
             &larr; Back
         </button>
         <div className="bg-white/50 p-6 rounded-2xl space-y-6">
@@ -298,7 +298,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                         const statusColors: Record<string, string> = {
                           'Quotation Sent': 'bg-blue-100 text-blue-700',
                           'Yet To Bill': 'bg-yellow-100 text-yellow-700',
-                          'Approval Pending': 'bg-orange-100 text-orange-700',
+                          'Approval Pending': 'bg-blue-100 text-blue-700',
                           'Add PR Process': 'bg-purple-100 text-purple-700',
                           'Add PR Done': 'bg-indigo-100 text-indigo-700',
                           'Waiting For Amendment': 'bg-amber-100 text-amber-700',
@@ -320,11 +320,11 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                  </div>
                 {site.vendorName && (
                   <p className="text-md text-gray-700 font-medium mb-2">
-                    🏢 Vendor: <span className="text-orange-600">{site.vendorName}</span>
+                    🏢 Vendor: <span className="text-blue-600">{site.vendorName}</span>
                   </p>
                 )}
                 <p className="text-md text-gray-500">📍 {site.location}</p>
-                {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-orange-400">{managerName}</span></p>}
+                {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-blue-500">{managerName}</span></p>}
                 
                 {/* Request Approval Button */}
                 {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && !billings.find(b => b.siteId === site.id) && (
@@ -567,7 +567,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                        // Update the site immediately
                        onEditSite({ ...site, workType: newWorkType || undefined });
                      }}
-                     className="w-48 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                     className="w-48 bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                    >
                      <option value="">Select Work Type</option>
                      <option value="Civil">Civil</option>
@@ -687,7 +687,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                         {canEditMaterials && (
                             <button
                                 onClick={() => setShowAddMaterial(!showAddMaterial)}
-                                className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                             >
                                 {showAddMaterial ? '✕ Cancel' : '+ Add Material'}
                             </button>
@@ -703,21 +703,21 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                                     placeholder="Material Name"
                                     value={newMaterialName}
                                     onChange={(e) => setNewMaterialName(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <input
                                     type="number"
                                     placeholder="Quantity (m)"
                                     value={newMaterialUnits}
                                     onChange={(e) => setNewMaterialUnits(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <input
                                     type="number"
                                     placeholder="Used (m)"
                                     value={newMaterialUsed}
                                     onChange={(e) => setNewMaterialUsed(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <button
                                     onClick={handleAddMaterial}
@@ -803,7 +803,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                         <h3 className="text-xl font-semibold text-gray-800">Initial Materials & Usage</h3>
                         <button
                             onClick={() => setShowAddMaterial(!showAddMaterial)}
-                            className="px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                            className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             {showAddMaterial ? '✕ Cancel' : '+ Add Material'}
                         </button>
@@ -818,21 +818,21 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                                     placeholder="Material Name"
                                     value={newMaterialName}
                                     onChange={(e) => setNewMaterialName(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <input
                                     type="number"
                                     placeholder="Quantity (m)"
                                     value={newMaterialUnits}
                                     onChange={(e) => setNewMaterialUnits(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <input
                                     type="number"
                                     placeholder="Used (m)"
                                     value={newMaterialUsed}
                                     onChange={(e) => setNewMaterialUsed(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                                 />
                                 <button
                                     onClick={handleAddMaterial}
@@ -869,7 +869,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                               value={req.status}
                               onChange={(e) => onUpdateRequestStatus(req.id, e.target.value as any)}
                               disabled={!canApprove}
-                              className={`cursor-pointer text-xs font-medium rounded-full px-3 py-1 border focus:outline-none focus:ring-2 focus:ring-orange-500/50 disabled:cursor-not-allowed disabled:opacity-60`}
+                              className={`cursor-pointer text-xs font-medium rounded-full px-3 py-1 border focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:cursor-not-allowed disabled:opacity-60`}
                             >
                               <option value="Pending">Pending</option>
                               <option value="Approved">Approved</option>
@@ -882,7 +882,7 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                       <div className="mt-4 pt-3 border-t border-gray-200/50 flex items-center justify-between">
                           <div>
                             {(req.photos.length > 0 || req.documents.length > 0) && (
-                                <button onClick={() => toggleDetails(req.id)} className="text-xs font-semibold text-orange-400 hover:text-orange-300">
+                                <button onClick={() => toggleDetails(req.id)} className="text-xs font-semibold text-blue-500 hover:text-blue-400">
                                     {expandedDetails[req.id] ? 'Hide Details' : 'Show Details'}
                                 </button>
                             )}

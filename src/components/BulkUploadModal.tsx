@@ -98,7 +98,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onClose, onUpl
                     <button
                         onClick={handleUploadClick}
                         disabled={!selectedFile || isProcessing}
-                        className="w-full flex justify-center items-center px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 disabled:bg-orange-500/50 disabled:cursor-not-allowed transition-all"
+                        className="w-full flex justify-center items-center px-6 py-3 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800 disabled:bg-blue-600/50 disabled:cursor-not-allowed transition-all"
                     >
                         {isProcessing ? <><Spinner /> <span>Processing...</span></> : "Upload & Process File"}
                     </button>

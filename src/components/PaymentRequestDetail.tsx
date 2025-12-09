@@ -29,7 +29,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
         <div className="mb-6">
           <button 
             onClick={onBack} 
-            className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-semibold transition-colors"
+            className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -71,7 +71,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
       <div className="mb-6">
         <button 
           onClick={onBack} 
-          className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-semibold transition-colors"
+          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-semibold transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -104,7 +104,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
           </div>
           <div>
             <p className="text-sm text-gray-600 font-semibold mb-1">Amount</p>
-            <p className="text-3xl font-bold text-orange-600">₹{request.amount?.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-blue-600">₹{request.amount?.toLocaleString()}</p>
           </div>
         </div>
 
@@ -156,7 +156,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
             </h2>
             <button
               onClick={() => request.photos.forEach((photo, i) => downloadFile(photo.dataUrl, photo.name || `photo-${i + 1}`))}
-              className="text-sm px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+              className="text-sm px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -179,7 +179,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
                       e.stopPropagation();
                       downloadFile(photo.dataUrl, photo.name || `photo-${index + 1}`);
                     }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white rounded-full hover:bg-orange-500 hover:text-white"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-white rounded-full hover:bg-blue-600 hover:text-white"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -204,7 +204,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
             </h2>
             <button
               onClick={() => request.documents.forEach((doc, i) => downloadFile(doc.dataUrl, doc.name || `document-${i + 1}`))}
-              className="text-sm px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+              className="text-sm px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -228,7 +228,7 @@ export const PaymentRequestDetail: React.FC<PaymentRequestDetailProps> = ({ requ
                 </div>
                 <button
                   onClick={() => downloadFile(doc.dataUrl, doc.name || `document-${index + 1}`)}
-                  className="p-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className="p-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />

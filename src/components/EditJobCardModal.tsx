@@ -56,7 +56,7 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
     onClose();
   }, [jobCard, transporterId, pickFrom, dropPoints, description, onUpdate, onClose]);
 
-  const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+  const inputStyles = "w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
   const labelStyles = "block text-sm font-medium text-gray-700 mb-2";
 
   return (
@@ -118,7 +118,7 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
               ))}
             </div>
             {dropPoints.length < 5 && (
-              <button type="button" onClick={handleAddDropPoint} className="mt-2 text-sm text-orange-400 font-semibold hover:text-orange-300">
+              <button type="button" onClick={handleAddDropPoint} className="mt-2 text-sm text-blue-500 font-semibold hover:text-blue-400">
                 + Add Another Drop Point
               </button>
             )}
@@ -146,7 +146,7 @@ export const EditJobCardModal: React.FC<EditJobCardModalProps> = ({ jobCard, tra
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 transition-all"
+              className="px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800 transition-all"
             >
               Update Job
             </button>

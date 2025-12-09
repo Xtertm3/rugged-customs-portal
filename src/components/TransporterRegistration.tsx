@@ -39,13 +39,13 @@ export const TransporterRegistration: React.FC<TransporterRegistrationProps> = (
     }
   };
 
-  const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 focus:outline-none transition";
+  const inputStyles = "w-full bg-white border border-gray-300 rounded-lg py-3 px-4 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition";
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 font-sans antialiased">
       <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-500 to-amber-600 mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-amber-600 mb-2">
             Transporter Registration
           </h1>
           <p className="text-gray-600 text-lg">
@@ -75,10 +75,10 @@ export const TransporterRegistration: React.FC<TransporterRegistrationProps> = (
             {error && <div className="text-center text-red-400 font-medium">{error}</div>}
             {success && <div className="text-center text-green-400 font-medium">{success}</div>}
 
-            <button type="submit" className="w-full px-8 py-3 bg-orange-600 text-white font-bold rounded-lg">Register</button>
+            <button type="submit" className="w-full px-8 py-3 bg-blue-700 text-white font-bold rounded-lg">Register</button>
           </form>
            <div className="text-center mt-6">
-                <button onClick={onNavigateToLogin} className="text-sm text-orange-400 hover:text-orange-300 font-semibold">
+                <button onClick={onNavigateToLogin} className="text-sm text-blue-500 hover:text-blue-400 font-semibold">
                     &larr; Back to Login
                 </button>
             </div>

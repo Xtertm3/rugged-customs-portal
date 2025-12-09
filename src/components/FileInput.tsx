@@ -114,14 +114,14 @@ export const FileInput: React.FC<FileInputProps> = ({
              {icon}
            </div>
            <p className="text-sm">
-            <span className="font-semibold text-orange-400 cursor-pointer" onClick={(e) => {
+            <span className="font-semibold text-blue-500 cursor-pointer" onClick={(e) => {
               e.stopPropagation();
               console.log(`[FileInput ${id}] Span clicked, triggering file input`);
               fileInputRef.current?.click();
             }}>Click to upload</span> or drag and drop
           </p>
           <p className="text-xs text-zinc-500 mt-1">{acceptedFileTypes.replace('image/*', 'Image files').replace(/\./g, ' ')}</p>
-          <p className="text-xs text-orange-300 mt-1 font-semibold">⚠️ Max 20MB per file</p>
+          <p className="text-xs text-blue-400 mt-1 font-semibold">⚠️ Max 20MB per file</p>
            {showCameraButton && (
             <button
               type="button"

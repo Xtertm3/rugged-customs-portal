@@ -121,14 +121,14 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
                         placeholder="Filter by Team Member..."
                         value={memberFilter}
                         onChange={e => setMemberFilter(e.target.value)}
-                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-orange-500"
+                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
                     />
                     <input
                         type="text"
                         placeholder="Filter by Site Name..."
                         value={siteFilter}
                         onChange={e => setSiteFilter(e.target.value)}
-                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-orange-500"
+                        className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
 
@@ -184,7 +184,7 @@ export const Inventory: React.FC<InventoryProps> = ({ inventoryData, currentUser
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-16 bg-gray-200 rounded-full h-1.5" title={`${getUsagePercentage(item.usedUnits, item.initialUnits).toFixed(1)}% Used`}>
                                                                             <div 
-                                                                                className="bg-orange-500 h-1.5 rounded-full" 
+                                                                                className="bg-blue-600 h-1.5 rounded-full" 
                                                                                 style={{ width: `${getUsagePercentage(item.usedUnits, item.initialUnits)}%` }}
                                                                             ></div>
                                                                         </div>

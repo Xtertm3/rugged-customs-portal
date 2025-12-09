@@ -516,7 +516,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
             </button>
             <button
               onClick={exportPDF}
-              className="px-3 py-1 bg-orange-500 text-white rounded-md text-sm hover:bg-orange-600"
+              className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
             >
               Export PDF
             </button>
@@ -626,7 +626,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                                 <td className="px-3 py-2 text-right">
                                   {mat.opening}m
                                 </td>
-                                <td className="px-3 py-2 text-right text-orange-400">
+                                <td className="px-3 py-2 text-right text-blue-500">
                                   {mat.used}m
                                 </td>
                                 <td
@@ -675,7 +675,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                         </div>
                         <div>
                           <span className="text-gray-500">Used:</span>
-                          <div className="font-semibold text-orange-400">
+                          <div className="font-semibold text-blue-500">
                             {item.totalUsed}m
                           </div>
                         </div>
@@ -776,7 +776,7 @@ export const InventoryDetailReport: React.FC<InventoryDetailReportProps> = ({
                               <td className="px-3 py-2">{item.teamMemberName}</td>
                               <td className="px-3 py-2">{item.materialName}</td>
                               <td className="px-3 py-2 text-right">{item.openingBalance}m</td>
-                              <td className="px-3 py-2 text-right text-orange-400">{item.totalUsed}m</td>
+                              <td className="px-3 py-2 text-right text-blue-500">{item.totalUsed}m</td>
                               <td className={`px-3 py-2 text-right font-semibold ${
                                 item.remaining < 0
                                   ? 'text-red-400'

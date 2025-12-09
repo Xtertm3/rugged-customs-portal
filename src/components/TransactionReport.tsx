@@ -465,7 +465,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
           <h2 className="text-2xl font-bold text-text-primary">Transactions Report</h2>
           <div className="flex gap-2">
             <button onClick={exportCSV} className="px-3 py-1 bg-primary text-white rounded-md text-sm">Export CSV</button>
-            <button onClick={exportPDF} className="px-3 py-1 bg-orange-500 text-white rounded-md text-sm hover:bg-orange-600">Export PDF</button>
+            <button onClick={exportPDF} className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">Export PDF</button>
             <button onClick={onClose} className="px-3 py-1 bg-gray-200 rounded-md text-sm text-text-secondary">Close</button>
           </div>
         </div>

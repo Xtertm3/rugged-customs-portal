@@ -30,7 +30,7 @@ export const JobCardsPage: React.FC<JobCardsPageProps> = ({ jobCards, transporte
       <div className="flex justify-end items-center gap-4 mb-6">
         <button
           onClick={onNewJobCard}
-          className="px-6 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-lg hover:bg-orange-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500/50 flex items-center gap-2"
+          className="px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-800 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex items-center gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -54,7 +54,7 @@ export const JobCardsPage: React.FC<JobCardsPageProps> = ({ jobCards, transporte
               <div key={card.id} className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-700 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-grow space-y-3">
                   <div className="flex items-center gap-3">
-                    <span className="font-bold text-orange-400 text-lg">{getTransporterName(card.transporterId)}</span>
+                    <span className="font-bold text-blue-500 text-lg">{getTransporterName(card.transporterId)}</span>
                   </div>
                   <div className="text-sm">
                     <p className="text-zinc-400">
@@ -71,7 +71,7 @@ export const JobCardsPage: React.FC<JobCardsPageProps> = ({ jobCards, transporte
                   <select
                     value={card.status}
                     onChange={(e) => onUpdateStatus(card.id, e.target.value as 'Assigned' | 'In Transit' | 'Completed')}
-                    className={`cursor-pointer text-xs font-medium pl-3 pr-8 py-1 rounded-full border appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors duration-300 ${statusColors[card.status]}`}
+                    className={`cursor-pointer text-xs font-medium pl-3 pr-8 py-1 rounded-full border appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-colors duration-300 ${statusColors[card.status]}`}
                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23${statusArrowColors[card.status]}' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.25rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em' }}
                     aria-label={`Update status for job ${card.id}`}
                   >

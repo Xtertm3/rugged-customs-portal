@@ -97,19 +97,19 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ requests }) => {
                     placeholder="Filter by Site Name..."
                     value={siteFilter}
                     onChange={e => setSiteFilter(e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-orange-500"
+                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                     type="text"
                     placeholder="Filter by User..."
                     value={userFilter}
                     onChange={e => setUserFilter(e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-orange-500"
+                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
                 />
                 <select
                     value={statusFilter}
                     onChange={e => setStatusFilter(e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-orange-500"
+                    className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-gray-800 focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="All">All Statuses</option>
                     <option value="Pending">Pending</option>

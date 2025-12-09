@@ -157,7 +157,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                 }}
                                 onFocus={() => setShowSiteDropdown(true)}
                                 placeholder="Type site..."
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
                             />
                             {showSiteDropdown && (
                                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-32 overflow-y-auto z-10">
@@ -166,7 +166,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                             <button
                                                 key={site.id}
                                                 onClick={() => handleSiteSelect(site.id, site.siteName)}
-                                                className="w-full text-left px-2 py-1.5 hover:bg-orange-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
+                                                className="w-full text-left px-2 py-1.5 hover:bg-blue-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
                                             >
                                                 {site.siteName}
                                             </button>
@@ -194,7 +194,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                 onFocus={() => setShowMaterialDropdown(true)}
                                 disabled={!selectedSiteId}
                                 placeholder={selectedSiteId ? "Type..." : "Site first"}
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             {showMaterialDropdown && selectedSiteId && (
                                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg mt-1 max-h-32 overflow-y-auto z-10">
@@ -203,7 +203,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                                             <button
                                                 key={material}
                                                 onClick={() => handleMaterialSelect(material)}
-                                                className="w-full text-left px-2 py-1.5 hover:bg-orange-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
+                                                className="w-full text-left px-2 py-1.5 hover:bg-blue-50 text-xs text-gray-700 border-b border-gray-100 last:border-b-0"
                                             >
                                                 {material}
                                             </button>
@@ -225,7 +225,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                             onChange={(e) => setInitialUnits(e.target.value)}
                             disabled={!selectedMaterialName}
                             placeholder="0"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
@@ -238,14 +238,14 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                             onChange={(e) => setPrice(e.target.value)}
                             disabled={!selectedMaterialName}
                             placeholder="0"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
                     </div>
 
                     {/* Total Amount Display - 2 cols */}
-                    <div className="lg:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-2">
-                        <div className="text-xs text-orange-600 font-semibold">Total</div>
-                        <div className="text-lg font-bold text-orange-700">₹{totalAmount.toLocaleString()}</div>
+                    <div className="lg:col-span-2 bg-gradient-to-r from-orange-50 to-orange-100 border border-blue-200 rounded-lg p-2">
+                        <div className="text-xs text-blue-600 font-semibold">Total</div>
+                        <div className="text-lg font-bold text-blue-700">₹{totalAmount.toLocaleString()}</div>
                     </div>
 
                     {/* Action Buttons - 1.5 cols */}
@@ -260,7 +260,7 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({ isOpen, onCl
                         <button
                             onClick={handleSubmit}
                             disabled={isLoading || !selectedSiteId || !selectedMaterialName || !initialUnits || !price}
-                            className="flex-1 px-2 py-1.5 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
+                            className="flex-1 px-2 py-1.5 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-xs"
                         >
                             {isLoading ? 'Adding...' : 'Add'}
                         </button>
