@@ -399,7 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Billing Overview Card - Admin & Manager Only */}
-        {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager') && billings.length > 0 && (
+        {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager') && (
           <BillingOverviewCard billings={billings} />
         )}
 
