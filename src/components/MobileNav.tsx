@@ -4,13 +4,14 @@ interface MobileNavProps {
   currentView: string;
   onNavigate: (view: string) => void;
   role: string;
+  isSubVendor?: boolean;
 }
 
-export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate, role }) => {
+export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate, role, isSubVendor = false }) => {
   const navItems = [
-    { view: 'dashboard', label: 'Dashboard', icon: '📊', roles: ['Admin', 'Manager', 'Accountant', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'] },
+    { view: 'dashboard', label: 'Dashboard', icon: '📊', roles: ['Admin', 'Manager', 'Accountant', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'], excludeSubVendor: true },
     { view: 'projects', label: 'Sites', icon: '🏗️', roles: ['Admin', 'Manager', 'Accountant', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'] },
-    { view: 'inventory', label: 'Inventory', icon: '📦', roles: ['Admin', 'Manager', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'] },
+    { view: 'inventory', label: 'Inventory', icon: '📦', roles: ['Admin', 'Manager', 'Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'], excludeSubVendor: true },
     { view: 'team', label: 'Team', icon: '👥', roles: ['Admin', 'Manager'] },
     { view: 'vendors', label: 'Vendors', icon: '🏢', roles: ['Admin', 'Manager', 'Accountant'] },
   { view: 'billingOverview', label: 'Billing', icon: '💰', roles: ['Admin', 'Manager'] },
@@ -18,7 +19,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onNavigate, r
     { view: 'transporter', label: 'Transport', icon: '🚚', roles: ['Admin', 'Manager'] },
   ];
 
-  const visibleItems = navItems.filter(item => item.roles.includes(role));
+  const visibleItems = navItems.filter(item => {
+    if (isSubVendor && item.excludeSubVendor) return false;
+    return item.roles.includes(role);
+  });
 
   return (
     <nav className="bottom-nav md:hidden">

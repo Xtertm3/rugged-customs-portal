@@ -1980,9 +1980,9 @@ const App: React.FC = () => {
         
         {!['form', 'siteForm', 'siteDetail', 'teamMemberDetail', 'transporterDetail'].includes(currentView) && (
             <nav className="hidden md:flex mb-6 p-3 glass rounded-2xl border border-gray-200/50 justify-center items-center flex-wrap gap-2 animate-slide-up shadow-lg sticky top-0 z-50 bg-white/95 backdrop-blur-sm">
-                <NavButton view="dashboard" label="📊 Dashboard" />
+                {!currentUser?.isSubVendor && <NavButton view="dashboard" label="📊 Dashboard" />}
                 <NavButton view="projects" label="🏗️ Sites" />
-                <NavButton view="inventory" label="📦 Inventory" />
+                {!currentUser?.isSubVendor && <NavButton view="inventory" label="📦 Inventory" />}
                 {(permissions.canManageTeam || permissions.canDownloadInventoryReport) && <NavButton view="team" label="👥 Team" />}
                 {permissions.canManageSites && <NavButton view="vendors" label="🏢 Vendors" />}
                 {(currentUser?.role === 'Admin' || currentUser?.role === 'Manager') && <NavButton view="billingOverview" label="💰 Billing" />}
@@ -2011,7 +2011,7 @@ const App: React.FC = () => {
       
       {/* Mobile Bottom Navigation */}
       {!['form', 'siteForm', 'siteDetail', 'teamMemberDetail', 'transporterDetail', 'requestDetail', 'documentLibrary'].includes(currentView) && (
-        <MobileNav currentView={currentView} onNavigate={(view) => setViewHistory([view])} role={currentUser.role} />
+        <MobileNav currentView={currentView} onNavigate={(view) => setViewHistory([view])} role={currentUser.role} isSubVendor={currentUser?.isSubVendor} />
       )}
       
        {isChangePasswordModalOpen && !isForcedPasswordChange && (
