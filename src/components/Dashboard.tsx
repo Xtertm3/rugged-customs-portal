@@ -398,9 +398,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </div>
 
-        {/* Billing Overview Card - Admin & Manager Only */}
-        {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager') && (
-          <BillingOverviewCard billings={billings} />
+        {/* Billing Overview Card - Admin, Manager & Backoffice */}
+        {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager' || currentUser.role === 'Backoffice') && (
+          <BillingOverviewCard billings={billings} paymentRequests={requests} />
         )}
 
         <div className="bg-white backdrop-blur-sm border border-gray-200 rounded-2xl shadow-2xl p-6 transition-all duration-500">

@@ -1,15 +1,21 @@
 import React from 'react';
-import { BillingOverview } from '../App';
+import { BillingOverview, PaymentRequest } from '../App';
 
 interface BillingOverviewCardProps {
   billings: BillingOverview[];
+  paymentRequests?: PaymentRequest[];
 }
 
-export const BillingOverviewCard: React.FC<BillingOverviewCardProps> = ({ billings }) => {
+export const BillingOverviewCard: React.FC<BillingOverviewCardProps> = ({ billings, paymentRequests = [] }) => {
   const stats = React.useMemo(() => {
     const totalQuoted = billings.reduce((sum, b) => sum + b.quotationAmount, 0);
     const totalYetToBill = billings.reduce((sum, b) => sum + b.yetToBillAmount, 0);
-    const totalActualBilling = billings.reduce((sum, b) => sum + b.actualBillingTotal, 0);
+    
+    // Calculate actual billing from paid payment requests
+    const totalActualBilling = paymentRequests
+      .filter(req => req.status === 'Paid')
+      .reduce((sum, req) => sum + (Number(req.amount) || 0), 0);
+    
     const totalExpense = billings.reduce((sum, b) => sum + b.expense, 0);
     const totalProfit = totalActualBilling - totalExpense;
 
@@ -20,7 +26,7 @@ export const BillingOverviewCard: React.FC<BillingOverviewCardProps> = ({ billin
       totalExpense,
       totalProfit
     };
-  }, [billings]);
+  }, [billings, paymentRequests]);
 
   const StatCard = ({ title, value, color, icon }: { title: string; value: number; color: string; icon: string }) => (
     <div className={`glass rounded-xl p-4 ${color} border-l-4`}>
