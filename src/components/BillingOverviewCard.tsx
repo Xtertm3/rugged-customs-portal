@@ -17,7 +17,7 @@ export const BillingOverviewCard: React.FC<BillingOverviewCardProps> = ({ billin
       .reduce((sum, req) => sum + (Number(req.amount) || 0), 0);
     
     const totalExpense = billings.reduce((sum, b) => sum + b.expense, 0);
-    const totalProfit = totalActualBilling - totalExpense;
+    const totalProfit = 0; // Keeping profit as zero for now
 
     return {
       totalQuoted,
