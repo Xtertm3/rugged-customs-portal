@@ -546,6 +546,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
                   <thead className="text-xs text-gray-500 uppercase bg-gray-50">
                     <tr>
                       <th className="px-3 py-2">Type</th>
+                      <th className="px-3 py-2">Site</th>
                       <th className="px-3 py-2">When</th>
                       <th className="px-3 py-2">Team</th>
                       <th className="px-3 py-2">Detail</th>
@@ -555,6 +556,7 @@ export const TransactionReport: React.FC<TransactionReportProps> = ({ isOpen, on
                     {g.entries.map((e: any) => (
                       <tr key={e.id} className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="px-3 py-2">{e.type}</td>
+                        <td className="px-3 py-2">{e.siteName}</td>
                         <td className="px-3 py-2">{e.timestamp}</td>
                         <td className="px-3 py-2">{e.teamMemberName}</td>
                         <td className="px-3 py-2">{e.detail}</td>
