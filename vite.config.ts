@@ -20,7 +20,7 @@ export default defineConfig({
           'firebase': ['firebase/app', 'firebase/firestore', 'firebase/storage'],
           'jspdf-vendor': ['jspdf', 'jspdf-autotable'],
           'html2canvas-vendor': ['html2canvas'],
-          'dompurify-vendor': ['dompurify', 'isomorphic-dompurify']
+          'dompurify-vendor': ['dompurify']
         }
       }
     }

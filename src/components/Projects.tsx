@@ -44,6 +44,7 @@ export const Projects: React.FC<ProjectsProps> = ({
 }) => {
     const [searchFilter, setSearchFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState('');
 
     const displayedSummaries = useMemo(() => {
         // Admin-like roles see all sites with full data
@@ -118,8 +119,19 @@ export const Projects: React.FC<ProjectsProps> = ({
             });
         }
 
+        // Apply date filter
+        if (dateFilter.trim()) {
+            filteredSummaries = filteredSummaries.filter(summary => {
+                const site = sites.find(s => s.id === summary.id);
+                if (!site || !site.allocationDate) return false;
+                
+                // Check if allocation date matches the filter
+                return site.allocationDate === dateFilter;
+            });
+        }
+
         return filteredSummaries;
-    }, [projectSummaries, currentUser, sites, searchFilter, teamFilter, teamMembers]);
+    }, [projectSummaries, currentUser, sites, searchFilter, teamFilter, dateFilter, teamMembers]);
 
     const [selectedStages, setSelectedStages] = useState<Record<string, 'c1' | 'c2' | 'c1_c2_combined' | 'electrical'>>({});
     const [updatingStage, setUpdatingStage] = useState<string | null>(null);
@@ -182,6 +194,13 @@ export const Projects: React.FC<ProjectsProps> = ({
                             value={teamFilter}
                             onChange={(e) => setTeamFilter(e.target.value)}
                             className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
+                        />
+                        <input
+                            type="date"
+                            placeholder="Filter by Allocation Date..."
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
                         />
                     </div>
                 </div>

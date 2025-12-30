@@ -130,6 +130,8 @@ export interface Site {
   // Billing status tracking
   billingStatus?: 'WIP' | 'YTB' | 'ADD PR DONE' | 'WCC DONE' | 'BILLING DONE';
   billingValue?: number;
+  // Allocation date for the site
+  allocationDate?: string;
 }
 
 export interface ProjectSummary {
@@ -1413,7 +1415,7 @@ const App: React.FC = () => {
     </button>
   );
 
-  const ongoingProjects = useMemo(() => new Set(paymentRequests.filter(req => req.status === 'Pending' || req.status === 'Approved').map(req => req.siteName)).size, [paymentRequests]);
+  const ongoingProjects = useMemo(() => sites.filter(site => site.currentStage !== 'completed').length, [sites]);
   const completedThisMonth = useMemo(() => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);

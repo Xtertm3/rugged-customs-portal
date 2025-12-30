@@ -69,7 +69,8 @@ const initialFormData: Omit<Site, 'id'> = {
             startDate: undefined,
             completionDate: undefined
         }
-    }
+    },
+    allocationDate: ''
 };
 
 export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialData, teamMembers, vendors, onAddVendor, canAddAttachments, currentUser }) => {
@@ -136,7 +137,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                         startDate: undefined,
                         completionDate: undefined
                     }
-                }
+                },
+                allocationDate: initialData.allocationDate || ''
             });
         } else {
             const defaultManagerId = assignableTeamMembers.length > 0 ? assignableTeamMembers[0].id : '';
@@ -377,7 +379,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                         <input id="rlId" name="rlId" type="text" value={formData.rlId} onChange={handleChange} className={inputStyles} placeholder="Optional" />
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label htmlFor="location" className={labelStyles}>Location <span className="text-red-500">*</span></label>
                         <input id="location" name="location" type="text" value={formData.location} onChange={handleChange} className={inputStyles} />
@@ -391,6 +393,10 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                             <option value="Hydro">Hydro</option>
                             <option value="Other">Other</option>
                         </select>
+                    </div>
+                    <div>
+                        <label htmlFor="allocationDate" className={labelStyles}>Allocation Date</label>
+                        <input id="allocationDate" name="allocationDate" type="date" value={formData.allocationDate} onChange={handleChange} className={inputStyles} />
                     </div>
                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
