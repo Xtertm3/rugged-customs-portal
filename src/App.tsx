@@ -1482,7 +1482,34 @@ const App: React.FC = () => {
     </button>
   );
 
-  const ongoingProjects = useMemo(() => sites.filter(site => site.currentStage !== 'completed').length, [sites]);
+  const ongoingProjects = useMemo(() => {
+    const allOngoing = sites.filter(site => site.currentStage !== 'completed');
+    
+    // Admin, Manager, and Accountant (Backoffice) see all ongoing projects
+    if (!currentUser || ['Admin', 'Manager', 'Accountant'].includes(currentUser.role)) {
+      return allOngoing.length;
+    }
+    
+    // Team members (Civil, Electricals, Electrical + Civil, Supervisor) see only their assigned sites
+    if (['Civil', 'Electricals', 'Electrical + Civil', 'Supervisor'].includes(currentUser.role)) {
+      const myOngoingSites = allOngoing.filter(site => {
+        // Check if user is legacy manager
+        if (site.siteManagerId === currentUser.id) return true;
+        
+        // Check if user is in any stage team
+        const inC1Team = Array.isArray(site.stages?.c1?.assignedTeamIds) && site.stages.c1.assignedTeamIds.includes(currentUser.id);
+        const inC2Team = Array.isArray(site.stages?.c2?.assignedTeamIds) && site.stages.c2.assignedTeamIds.includes(currentUser.id);
+        const inC1C2CombinedTeam = Array.isArray(site.stages?.c1_c2_combined?.assignedTeamIds) && site.stages.c1_c2_combined.assignedTeamIds.includes(currentUser.id);
+        const inElectricalTeam = Array.isArray(site.stages?.electrical?.assignedTeamIds) && site.stages.electrical.assignedTeamIds.includes(currentUser.id);
+        
+        return inC1Team || inC2Team || inC1C2CombinedTeam || inElectricalTeam;
+      });
+      return myOngoingSites.length;
+    }
+    
+    // Other roles (Transporter, etc.) see 0
+    return 0;
+  }, [sites, currentUser]);
   const completedThisMonth = useMemo(() => {
     const now = new Date();
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
