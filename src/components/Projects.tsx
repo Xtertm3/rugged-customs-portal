@@ -15,6 +15,7 @@ interface ProjectsProps {
     currentUser: TeamMember | null;
     onCompletionSubmitClick: (siteId: string) => void;
     onRequestApproval?: (site: Site) => void;
+    onUpdateSiteStatus?: (siteId: string, newStatus: 'Open' | 'Closed') => void;
 }
 
 const getSiteStatusStyle = (status: 'Open' | 'Closed' | 'No Activity') => {
@@ -40,7 +41,8 @@ export const Projects: React.FC<ProjectsProps> = ({
     onDeleteSite,
     currentUser,
     onCompletionSubmitClick,
-    onRequestApproval
+    onRequestApproval,
+    onUpdateSiteStatus
 }) => {
     const [searchFilter, setSearchFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
@@ -248,9 +250,25 @@ export const Projects: React.FC<ProjectsProps> = ({
                                             <h3 className="font-bold text-base text-gray-900 leading-tight truncate flex-1" title={baseName || summary.name}>
                                                 {baseName || summary.name}
                                             </h3>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusStyle.text} ${statusStyle.border.replace('border-','bg-')} bg-opacity-20 whitespace-nowrap`}>
-                                                {summary.siteStatus}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusStyle.text} ${statusStyle.border.replace('border-','bg-')} bg-opacity-20 whitespace-nowrap`}>
+                                                    {summary.siteStatus}
+                                                </span>
+                                                {/* Status Toggle for Admin/Manager */}
+                                                {currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager') && onUpdateSiteStatus && summary.siteStatus !== 'No Activity' && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const newStatus = summary.siteStatus === 'Open' ? 'Closed' : 'Open';
+                                                            onUpdateSiteStatus(site.id, newStatus);
+                                                        }}
+                                                        className="text-[10px] px-2 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-700 font-semibold"
+                                                        title={`Change status to ${summary.siteStatus === 'Open' ? 'Closed' : 'Open'}`}
+                                                    >
+                                                        {summary.siteStatus === 'Open' ? '→ Close' : '→ Open'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-wrap">
                                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-300 text-gray-700 font-mono font-bold">

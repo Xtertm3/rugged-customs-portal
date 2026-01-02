@@ -1148,6 +1148,44 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateSiteStatus = async (siteId: string, newStatus: 'Open' | 'Closed') => {
+    // Find all payment requests for this site
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return;
+    
+    // Find payment requests matching this site
+    const siteRequests = paymentRequests.filter(req => {
+      if (req.siteId && req.siteId === site.id) return true;
+      if (req.siteName && req.siteName === site.siteName) return true;
+      return false;
+    });
+    
+    if (siteRequests.length === 0) {
+      alert('No payment requests found for this site. Cannot change status.');
+      return;
+    }
+    
+    // Update all payment requests based on desired status
+    if (newStatus === 'Closed') {
+      // Mark all as Paid to close the site
+      await Promise.all(
+        siteRequests
+          .filter(req => req.status !== 'Paid')
+          .map(req => handleUpdateRequestStatus(req.id, 'Paid'))
+      );
+      alert(`Site status changed to Closed. All pending/approved payments marked as Paid.`);
+    } else if (newStatus === 'Open') {
+      // If there's at least one Paid request, change one to Approved to reopen
+      const paidReq = siteRequests.find(req => req.status === 'Paid');
+      if (paidReq) {
+        await handleUpdateRequestStatus(paidReq.id, 'Approved');
+        alert(`Site status changed to Open. One payment reverted to Approved.`);
+      } else {
+        alert('Cannot reopen site - no paid requests found to modify.');
+      }
+    }
+  };
+
   const handleViewSiteDetails = (siteName: string) => { setSelectedSiteName(siteName); navigateTo('siteDetail'); };
   const handleViewRequestDetails = (requestId: string) => { setSelectedPaymentRequestId(requestId); navigateTo('requestDetail'); };
   const handleViewTeamMemberDetails = (memberId: string) => { setSelectedTeamMemberId(memberId); navigateTo('teamMemberDetail'); };
@@ -1936,7 +1974,7 @@ const App: React.FC = () => {
 
   const MainViews: { [key: string]: React.ReactNode } = {
   dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} billings={billingOverviews} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
-    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} />,
+    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} onUpdateSiteStatus={handleUpdateSiteStatus} />,
     vendorBillingOverview: <VendorBillingOverviewReport requests={vendorBillingRequests} onUpdateStatus={handleUpdateVendorBillingStatus} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,

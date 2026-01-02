@@ -279,6 +279,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <h3 className="font-bold text-xl text-gray-900 mb-1">{req.siteName}</h3>
                       <p className="text-sm text-gray-700 font-semibold">{req.paymentFor}</p>
                       <p className="text-xs text-gray-500 mt-1">{req.timestamp}</p>
+                      {req.statusHistory && req.statusHistory.length > 0 && (
+                        <p className="text-xs text-blue-600 mt-1">Requested by: {req.statusHistory[0].userName}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-blue-600">₹{req.amount?.toLocaleString()}</p>
@@ -450,6 +453,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     <h3 className="font-bold text-xl text-gray-900 mb-1">{req.siteName}</h3>
                                     <p className="text-sm text-gray-600">{req.location}</p>
                                     <p className="text-xs text-gray-500 mt-1">{req.timestamp}</p>
+                                    {req.statusHistory && req.statusHistory.length > 0 && (
+                                      <p className="text-xs text-blue-600 mt-1">Requested by: {req.statusHistory[0].userName}</p>
+                                    )}
                                 </div>
                                 <div>
                                   <p className="text-sm text-gray-700 font-semibold mb-1">{req.paymentFor}</p>
