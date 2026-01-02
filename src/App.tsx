@@ -1186,6 +1186,35 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUnlockPayments = async (siteId: string) => {
+    const site = sites.find(s => s.id === siteId);
+    if (!site) return;
+    
+    if (!currentUser || !['Admin', 'Manager'].includes(currentUser.role)) {
+      alert('Only Admin and Manager can unlock payments.');
+      return;
+    }
+    
+    const confirmUnlock = window.confirm(
+      `Are you sure you want to unlock payments for "${site.siteName}"?\n\n` +
+      `This will allow new payment requests to be submitted for this site.`
+    );
+    
+    if (!confirmUnlock) return;
+    
+    try {
+      await firebaseService.updateSite(siteId, {
+        paymentsLocked: false,
+        paymentsLockedAt: undefined,
+        paymentsLockedBy: undefined
+      });
+      alert(`Payments unlocked for "${site.siteName}". New payment requests can now be submitted.`);
+    } catch (error) {
+      console.error('Error unlocking payments:', error);
+      alert('Failed to unlock payments. Please try again.');
+    }
+  };
+
   const handleViewSiteDetails = (siteName: string) => { setSelectedSiteName(siteName); navigateTo('siteDetail'); };
   const handleViewRequestDetails = (requestId: string) => { setSelectedPaymentRequestId(requestId); navigateTo('requestDetail'); };
   const handleViewTeamMemberDetails = (memberId: string) => { setSelectedTeamMemberId(memberId); navigateTo('teamMemberDetail'); };
@@ -1974,7 +2003,7 @@ const App: React.FC = () => {
 
   const MainViews: { [key: string]: React.ReactNode } = {
   dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} billings={billingOverviews} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
-    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} onUpdateSiteStatus={handleUpdateSiteStatus} />,
+    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} onUpdateSiteStatus={handleUpdateSiteStatus} onUnlockPayments={handleUnlockPayments} />,
     vendorBillingOverview: <VendorBillingOverviewReport requests={vendorBillingRequests} onUpdateStatus={handleUpdateVendorBillingStatus} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,

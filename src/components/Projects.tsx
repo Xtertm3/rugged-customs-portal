@@ -16,6 +16,7 @@ interface ProjectsProps {
     onCompletionSubmitClick: (siteId: string) => void;
     onRequestApproval?: (site: Site) => void;
     onUpdateSiteStatus?: (siteId: string, newStatus: 'Open' | 'Closed') => void;
+    onUnlockPayments?: (siteId: string) => void;
 }
 
 const getSiteStatusStyle = (status: 'Open' | 'Closed' | 'No Activity') => {
@@ -42,7 +43,8 @@ export const Projects: React.FC<ProjectsProps> = ({
     currentUser,
     onCompletionSubmitClick,
     onRequestApproval,
-    onUpdateSiteStatus
+    onUpdateSiteStatus,
+    onUnlockPayments
 }) => {
     const [searchFilter, setSearchFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
@@ -490,13 +492,22 @@ export const Projects: React.FC<ProjectsProps> = ({
 
                                     {/* Compact Footer */}
                                     <div className="px-2.5 pb-2.5 flex gap-1.5">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
-                                            disabled={!!site.paymentsLocked}
-                                            className="flex-1 py-1.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-md hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]"
-                                        >
-                                            Submit Completion
-                                        </button>
+                                        {site.paymentsLocked && currentUser && ['Admin', 'Manager'].includes(currentUser.role) && onUnlockPayments ? (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onUnlockPayments(site.id); }}
+                                                className="flex-1 py-1.5 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-md hover:from-red-700 hover:to-orange-700 transition-colors text-[11px] flex items-center justify-center gap-1"
+                                            >
+                                                🔓 Unlock Payments
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onCompletionSubmitClick(site.id); }}
+                                                disabled={!!site.paymentsLocked}
+                                                className="flex-1 py-1.5 bg-gradient-to-r from-blue-600 to-blue-800 text-white font-bold rounded-md hover:from-blue-700 hover:to-blue-900 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-[11px]"
+                                            >
+                                                Submit Completion
+                                            </button>
+                                        )}
                                         {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && onRequestApproval && (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); onRequestApproval(site); }}
