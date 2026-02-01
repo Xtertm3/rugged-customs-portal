@@ -187,3 +187,12 @@ button:active {
 .mobile-scrollable {
   -webkit-overflow-scrolling: touch;
 }
+
+/* Hide scrollbar for mobile nav scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}

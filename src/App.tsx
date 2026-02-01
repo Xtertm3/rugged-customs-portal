@@ -381,8 +381,8 @@ const App: React.FC = () => {
         await firebaseService.initializeDefaultAdmin();
         console.log('Default admin initialized successfully');
 
-        // Restore logged-in user from session
-        const storedUser = sessionStorage.getItem('currentUser');
+        // Restore logged-in user from local storage (persist until explicit logout)
+        const storedUser = localStorage.getItem('currentUser');
         if (storedUser) {
           setCurrentUser(JSON.parse(storedUser));
         }
@@ -534,19 +534,19 @@ const App: React.FC = () => {
     if (mobile === '9986277180' && pass === '9986') {
       const adminUser: TeamMember = { id: 'admin', name: 'Admin', role: 'Admin', mobile, photo: null, passwordChanged: true };
       setCurrentUser(adminUser);
-      sessionStorage.setItem('currentUser', JSON.stringify(adminUser));
+      localStorage.setItem('currentUser', JSON.stringify(adminUser));
       return true;
     }
     const member = teamMembers.find(m => m.mobile === mobile && (m.password || m.mobile) === pass);
     if (member) {
-       if (!member.passwordChanged) {
-        setCurrentUser(member);
-        sessionStorage.setItem('currentUser', JSON.stringify(member));
+      if (!member.passwordChanged) {
+       setCurrentUser(member);
+       localStorage.setItem('currentUser', JSON.stringify(member));
         setIsForcedPasswordChange(true);
         setIsChangePasswordModalOpen(true);
       } else {
         setCurrentUser(member);
-        sessionStorage.setItem('currentUser', JSON.stringify(member));
+        localStorage.setItem('currentUser', JSON.stringify(member));
       }
       return true;
     }
@@ -557,12 +557,12 @@ const App: React.FC = () => {
        
        if (!originalTransporter.passwordChanged) {
             setCurrentUser(transporterUser);
-            sessionStorage.setItem('currentUser', JSON.stringify(transporterUser));
+            localStorage.setItem('currentUser', JSON.stringify(transporterUser));
             setIsForcedPasswordChange(true);
             setIsChangePasswordModalOpen(true);
        } else {
            setCurrentUser(transporterUser);
-           sessionStorage.setItem('currentUser', JSON.stringify(transporterUser));
+           localStorage.setItem('currentUser', JSON.stringify(transporterUser));
        }
        return true;
     }
@@ -571,7 +571,7 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    sessionStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser');
     setViewHistory(['dashboard']);
   };
   
