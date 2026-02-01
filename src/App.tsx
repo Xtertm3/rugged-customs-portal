@@ -28,6 +28,7 @@ import { InventoryDetailReport } from './components/InventoryDetailReport';
 import { PaymentRequestDetail } from './components/PaymentRequestDetail';
 import { DocumentLibrary } from './components/DocumentLibrary';
 import { MobileNav } from './components/MobileNav';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import { Vendors } from './components/Vendors';
 import { BillingOverviewReport } from './components/BillingOverviewReport';
 import { LineItemsModal } from './components/LineItemsModal';
@@ -2042,12 +2043,13 @@ const App: React.FC = () => {
     transporterDetail: selectedTransporter ? <TransporterDetail transporter={selectedTransporter} jobCards={jobCards} onBack={navigateBack} onUpdateStatus={handleUpdateJobCardStatus} onEditJobCard={handleEditJobCard} transporters={transporters} canEdit={permissions.canManageTransporters} onDownloadReport={handleDownloadTransporterJobReport} /> : null,
     requestDetail: selectedPaymentRequest ? <PaymentRequestDetail request={selectedPaymentRequest} onBack={navigateBack} currentUser={currentUser} /> : null,
     documentLibrary: <DocumentLibrary sites={sites} paymentRequests={paymentRequests} teamMembers={teamMembers} onBack={navigateBack} />,
+    privacyPolicy: <PrivacyPolicy />,
     form: <PaymentRequestForm sites={sites} onSubmit={handleSubmitRequest} onBack={navigateBack} isLoading={isLoading} error={error} initialData={editingPaymentRequest} initialSiteId={initialSiteIdForCompletion} />,
   siteForm: <SiteForm onBack={navigateBack} onSubmit={async (siteData) => { if (editingSite) { await handleUpdateSite(siteData as Site); } else { await handleAddSite(siteData as Omit<Site, 'id'>); } }} initialData={editingSite} teamMembers={teamMembers} vendors={vendors} onAddVendor={handleAddVendor} canAddAttachments={permissions.canManageSites} currentUser={currentUser} />,
   };
 
   return (
-    <div className="min-h-screen text-text-primary font-sans mobile-content-padding">
+    <div className="min-h-screen text-text-primary font-sans mobile-content-padding overflow-y-auto mobile-scrollable">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <header className="glass rounded-2xl px-4 py-3 sm:px-6 sm:py-4 mb-6 shadow-lg border border-gray-200/50 animate-fade-in sticky top-4 z-30">
       <div className="flex items-center justify-between gap-3">
@@ -2095,6 +2097,8 @@ const App: React.FC = () => {
                 {currentUser && ['Admin', 'Manager', 'Backoffice', 'Accountant'].includes(currentUser.role) && (
                   <NavButton view="documentLibrary" label="📚 Documents" />
                 )}
+                {/* Privacy Policy (available to all logged-in users) */}
+                {currentUser && <NavButton view="privacyPolicy" label="🔒 Privacy" />}
             </nav>
         )}
         
