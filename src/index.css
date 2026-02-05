@@ -120,6 +120,14 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
+/* Disable backdrop-filter and heavy shadows when running inside Android/Capacitor to avoid WebView GPU crashes */
+.no-backdrop-filter .glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(255,255,255,0.98) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
 /* Smooth transitions with spring effect */
 * {
   transition-property: color, background-color, border-color, transform, opacity, box-shadow;

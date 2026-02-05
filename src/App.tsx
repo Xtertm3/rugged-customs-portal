@@ -365,6 +365,17 @@ const App: React.FC = () => {
 
   // Initialize Firebase real-time listeners for ALL data
   useEffect(() => {
+    // Detect Android / Capacitor environment and add class to reduce heavy effects
+    try {
+      const ua = navigator.userAgent || '';
+      const isAndroid = /Android/i.test(ua);
+      const isCap = (window as any).Capacitor || window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:';
+      if (isAndroid || isCap) {
+        document.documentElement.classList.add('no-backdrop-filter');
+      }
+    } catch (e) {
+      // ignore
+    }
     const initializeFirebase = async () => {
       try {
         console.log('=== FIREBASE INITIALIZATION START ===');
