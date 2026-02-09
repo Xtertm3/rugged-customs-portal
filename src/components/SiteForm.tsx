@@ -70,7 +70,8 @@ const initialFormData: Omit<Site, 'id'> = {
             completionDate: undefined
         }
     },
-    allocationDate: ''
+    allocationDate: '',
+    planningRecommendation: ''
 };
 
 export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialData, teamMembers, vendors, onAddVendor, canAddAttachments, currentUser }) => {
@@ -138,7 +139,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                         completionDate: undefined
                     }
                 },
-                allocationDate: initialData.allocationDate || ''
+                allocationDate: initialData.allocationDate || '',
+                planningRecommendation: initialData.planningRecommendation || ''
             });
         } else {
             const defaultManagerId = assignableTeamMembers.length > 0 ? assignableTeamMembers[0].id : '';
@@ -156,7 +158,7 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
         }
     }, [initialData, assignableTeamMembers]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -329,6 +331,8 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     }
                 }
             };
+            // Ensure planningRecommendation is included
+            submissionData = { ...submissionData, planningRecommendation: formData.planningRecommendation || '' };
 
             console.log('Submission data prepared, calling onSubmit...');
             if (isEditing && initialData) {
@@ -531,6 +535,20 @@ export const SiteForm: React.FC<SiteFormProps> = ({ onBack, onSubmit, initialDat
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && (
+                        <div className="md:col-span-2">
+                            <label htmlFor="planningRecommendation" className={labelStyles}>Planning Recommendation</label>
+                            <textarea
+                                id="planningRecommendation"
+                                name="planningRecommendation"
+                                value={formData.planningRecommendation}
+                                onChange={handleChange}
+                                className={inputStyles + ' h-32'}
+                                placeholder="Enter planning notes for assigned team"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">Editable by Admin / Manager / Backoffice. Visible to assigned team members.</p>
+                        </div>
+                    )}
                     <div>
                         <label htmlFor="siteManagerId" className={labelStyles}>Site Manager (Legacy)</label>
                         <select id="siteManagerId" name="siteManagerId" value={formData.siteManagerId} onChange={handleChange} className={inputStyles} disabled={assignableTeamMembers.length === 0}>

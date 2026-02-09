@@ -195,6 +195,12 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
     setShowAddMaterial(false);
   };
 
+  const canSeePlanning = currentUser && (
+    ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) ||
+    Object.values(site.stages || {}).some((s: any) => (s.assignedTeamIds || []).includes(currentUser.id)) ||
+    currentUser.id === site.siteManagerId
+  );
+
   if (!site) {
     return (
         <div className="w-full animate-fade-in text-center py-12">
@@ -325,6 +331,12 @@ export const SiteDetail: React.FC<SiteDetailProps> = ({ site, requests, teamMemb
                 )}
                 <p className="text-md text-gray-500">📍 {site.location}</p>
                 {managerName && <p className="text-sm text-gray-700 font-medium mt-1">Managed by: <span className="text-blue-500">{managerName}</span></p>}
+                {canSeePlanning && site.planningRecommendation && (
+                  <div className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Planning Recommendation</h4>
+                    <p className="text-sm text-gray-700 whitespace-pre-line">{site.planningRecommendation}</p>
+                  </div>
+                )}
                 
                 {/* Request Approval Button */}
                 {currentUser && ['Admin', 'Manager', 'Backoffice'].includes(currentUser.role) && !billings.find(b => b.siteId === site.id) && (

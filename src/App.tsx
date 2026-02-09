@@ -133,6 +133,8 @@ export interface Site {
   billingValue?: number;
   // Allocation date for the site
   allocationDate?: string;
+  // Planning recommendation visible to assigned team
+  planningRecommendation?: string;
 }
 
 export interface ProjectSummary {
