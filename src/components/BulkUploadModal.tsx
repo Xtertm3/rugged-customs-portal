@@ -1,16 +1,21 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Spinner } from './Spinner';
 import { MultiSiteCreateUI } from './MultiSiteCreateUI';
-import { useContext } from 'react';
-import { AppContext } from '../App';
+
+
+import { TeamMember, Vendor } from '../App';
 
 interface BulkUploadModalProps {
   onClose: () => void;
   onUpload: (file: File) => Promise<{success: number, failed: number, errors: string[]}>;
-  onBulkCreateSites?: (file: File) => Promise<{success: number, failed: number, errors: string[]}>;
+  teamMembers: TeamMember[];
+  vendors: Vendor[];
+  currentUser: any;
+  onAddVendor: (vendor: Omit<Vendor, 'id'>) => Promise<void>;
+  firebaseService: any;
 }
 
-export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onClose, onUpload, onBulkCreateSites }) => {
+export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onClose, onUpload, teamMembers, vendors, currentUser, onAddVendor, firebaseService }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [uploadResult, setUploadResult] = useState<{success: number, failed: number, errors: string[]} | null>(null);
@@ -91,13 +96,13 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onClose, onUpl
               {mode === 'bulkCreate' && (
                 <MultiSiteCreateUI
                   onClose={onClose}
-                  teamMembers={window.teamMembers || []}
-                  vendors={window.vendors || []}
-                  currentUser={window.currentUser || {}}
-                  onAddVendor={window.onAddVendor || (async () => {})}
+                  teamMembers={teamMembers}
+                  vendors={vendors}
+                  currentUser={currentUser}
+                  onAddVendor={onAddVendor}
                   onSubmitAll={async (sites) => {
                     for (const site of sites) {
-                      await window.firebaseService.saveSite({ ...site, id: Date.now().toString() + Math.random().toString(36).slice(2) });
+                      await firebaseService.saveSite({ ...site, id: Date.now().toString() + Math.random().toString(36).slice(2) });
                     }
                     alert('All sites created successfully!');
                     onClose();

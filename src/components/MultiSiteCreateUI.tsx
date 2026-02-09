@@ -105,7 +105,7 @@ export const MultiSiteCreateUI: React.FC<MultiSiteCreateUIProps> = ({ onClose, t
       </div>
       {errors.length > 0 && <div className="text-red-400 mb-2">{errors.join(', ')}</div>}
       <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2">
-        {siteForms.map((form, idx) => (
+        {siteForms.map((form) => (
           <div key={form.key} className="relative border border-zinc-600 rounded-xl bg-zinc-900/40 p-4">
             <SiteForm
               onBack={() => handleRemoveSite(form.key)}

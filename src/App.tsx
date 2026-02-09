@@ -2139,6 +2139,11 @@ const App: React.FC = () => {
           <BulkUploadModal
             onClose={() => setIsBulkUploadModalOpen(false)}
             onUpload={handleBulkUpload}
+            teamMembers={teamMembers}
+            vendors={vendors}
+            currentUser={currentUser}
+            onAddVendor={handleAddVendor}
+            firebaseService={firebaseService}
           />
        )}
        {isNewJobCardModalOpen && (
