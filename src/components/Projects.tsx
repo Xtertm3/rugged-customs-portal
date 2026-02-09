@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { ProjectSummary, Site, TeamMember } from '../App';
+import { ProjectSummary, Site, TeamMember, Vendor } from '../App';
 import * as firebaseService from '../services/firebaseService';
+import { generateExcelWithDropdownsV2 } from '../utils/excelTemplateGenerator';
 
 interface ProjectsProps {
     sites: Site[];
     projectSummaries: ProjectSummary[];
     teamMembers: TeamMember[];
+    vendors: Vendor[];
     onBulkUploadClick: () => void;
     onViewSiteDetails: (siteName: string) => void;
     canManageSites: boolean;
@@ -33,7 +35,8 @@ const getSiteStatusStyle = (status: 'Open' | 'Closed' | 'No Activity') => {
 export const Projects: React.FC<ProjectsProps> = ({ 
     sites, 
     projectSummaries, 
-    teamMembers, 
+    teamMembers,
+    vendors,
     onBulkUploadClick, 
     onViewSiteDetails, 
     canManageSites, 
@@ -49,6 +52,29 @@ export const Projects: React.FC<ProjectsProps> = ({
     const [searchFilter, setSearchFilter] = useState('');
     const [teamFilter, setTeamFilter] = useState('');
     const [dateFilter, setDateFilter] = useState('');
+
+    const handleDownloadTemplate = async () => {
+        try {
+            const blob = await generateExcelWithDropdownsV2(teamMembers, vendors);
+            
+            // Create a temporary link and trigger download
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `site-template-${new Date().toISOString().split('T')[0]}.xlsx`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert('Error downloading template: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    };
 
     const displayedSummaries = useMemo(() => {
         // Admin-like roles see all sites with full data
@@ -167,10 +193,17 @@ export const Projects: React.FC<ProjectsProps> = ({
              {canManageSites && (
                 <div className="flex flex-wrap justify-end items-center gap-4 mb-6">
                     <button
+                        onClick={handleDownloadTemplate}
+                        className="text-sm px-4 py-2 bg-amber-100/60 text-amber-700 font-semibold rounded-lg hover:bg-amber-100"
+                        title="Download CSV template to bulk create sites"
+                    >
+                        📥 Download Template File
+                    </button>
+                    <button
                         onClick={onBulkUploadClick}
                         className="text-sm px-4 py-2 bg-gray-100/60 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
                     >
-                        Bulk Upload (Legacy)
+                        📤 Upload Filled Template
                     </button>
                     <button
                         onClick={onCreateSite}

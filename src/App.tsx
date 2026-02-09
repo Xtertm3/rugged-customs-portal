@@ -4,6 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { PaymentRequestForm } from './components/PaymentRequestForm';
 import { Projects } from './components/Projects';
 import { BulkUploadModal } from './components/BulkUploadModal';
+import { BulkSiteUploadModal } from './components/BulkSiteUploadModal';
 import { Team } from './components/Team';
 import { Transporter as TransporterPage } from './components/Transporter';
 import { SiteDetail } from './components/SiteDetail';
@@ -324,6 +325,7 @@ const App: React.FC = () => {
   const [isDbLoading, setIsDbLoading] = useState(true);
 
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
+  const [isBulkSiteUploadModalOpen, setIsBulkSiteUploadModalOpen] = useState(false);
   const [isNewJobCardModalOpen, setIsNewJobCardModalOpen] = useState(false);
   const [isEditTeamMemberModalOpen, setIsEditTeamMemberModalOpen] = useState(false);
   const [isEditJobCardModalOpen, setIsEditJobCardModalOpen] = useState(false);
@@ -1145,6 +1147,36 @@ const App: React.FC = () => {
     if (!site) return;
     
     await firebaseService.updateSite(siteId, { ...site, billingStatus, billingValue });
+  };
+
+  const handleBulkSiteUpload = async (sitesData: Omit<Site, 'id'>[]) => {
+    try {
+      setIsLoading(true);
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const siteData of sitesData) {
+        try {
+          const newSite: Site = { ...siteData, id: Date.now().toString() + Math.random().toString(36).slice(2) };
+          await firebaseService.saveSite(newSite);
+          successCount++;
+        } catch (error) {
+          errors.push(`Failed to create site "${siteData.siteName}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+
+      if (successCount > 0) {
+        alert(`✓ Successfully created ${successCount} site(s)!${errors.length > 0 ? `\n\nErrors:\n${errors.join('\n')}` : ''}`);
+        setIsBulkSiteUploadModalOpen(false);
+      } else {
+        alert(`✗ Failed to create any sites.\n\nErrors:\n${errors.join('\n')}`);
+      }
+    } catch (error) {
+      console.error('Error in handleBulkSiteUpload:', error);
+      alert('Error uploading sites: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteSite = async (siteId: string) => {
@@ -2044,7 +2076,7 @@ const App: React.FC = () => {
 
   const MainViews: { [key: string]: React.ReactNode } = {
   dashboard: <Dashboard requests={paymentRequests} stats={stats} currentUser={currentUser} sites={sites} billings={billingOverviews} onUpdateRequestStatus={handleUpdateRequestStatus} onViewRequestDetails={handleViewRequestDetails} onEditRequest={handleEditRequest} canApprove={permissions.canApprove} canEdit={permissions.canEdit} onDeleteRequest={handleDeleteRequest} jobCards={jobCards} transporters={transporters} onUpdateJobCardStatus={handleUpdateJobCardStatus} canManageTransporters={permissions.canManageTransporters} onDownloadMyInventoryReport={handleDownloadMyInventoryReport} onCreateRequest={handleNavigateToCompletionForm} onOpenTransactionsReport={() => setIsTransactionReportOpen(true)} />,
-    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} onBulkUploadClick={() => setIsBulkUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} onUpdateSiteStatus={handleUpdateSiteStatus} onUnlockPayments={handleUnlockPayments} />,
+    projects: <Projects sites={sites} projectSummaries={projectSummaries} teamMembers={teamMembers} vendors={vendors} onBulkUploadClick={() => setIsBulkSiteUploadModalOpen(true)} onViewSiteDetails={handleViewSiteDetails} canManageSites={permissions.canManageSites} onCreateSite={handleNavigateToCreateSite} onEditSite={handleNavigateToEditSite} onDeleteSite={handleDeleteSite} currentUser={currentUser} onCompletionSubmitClick={handleNavigateToCompletionForm} onRequestApproval={handleRequestApprovalClick} onUpdateSiteStatus={handleUpdateSiteStatus} onUnlockPayments={handleUnlockPayments} />,
     vendorBillingOverview: <VendorBillingOverviewReport requests={vendorBillingRequests} onUpdateStatus={handleUpdateVendorBillingStatus} />,
   inventory: <Inventory inventoryData={inventoryData} currentUser={currentUser} onEditItem={handleEditInventoryItem} onDeleteItem={handleDeleteInventoryItem} onAddItem={handleAddInventoryItem} sites={sites} onOpenUsageModal={() => setIsMaterialUsageModalOpen(true)} onOpenBalanceModal={() => setIsOpeningBalanceModalOpen(true)} />,
     team: <Team sites={sites} teamMembers={teamMembers} onAddMember={handleAddTeamMember} onDeleteMember={handleDeleteTeamMember} onViewDetails={handleViewTeamMemberDetails} onEditMember={handleEditTeamMember} canManageTeam={permissions.canManageTeam} onDownloadInventoryReport={handleDownloadTeamInventoryReport} onViewSiteDetails={handleViewSiteDetails} canDownloadInventoryReport={permissions.canDownloadInventoryReport} />,
@@ -2144,6 +2176,15 @@ const App: React.FC = () => {
             currentUser={currentUser}
             onAddVendor={handleAddVendor}
             firebaseService={firebaseService}
+          />
+       )}
+       {isBulkSiteUploadModalOpen && (
+          <BulkSiteUploadModal
+            isOpen={isBulkSiteUploadModalOpen}
+            onClose={() => setIsBulkSiteUploadModalOpen(false)}
+            onUpload={handleBulkSiteUpload}
+            teamMembers={teamMembers}
+            vendors={vendors}
           />
        )}
        {isNewJobCardModalOpen && (
