@@ -49,13 +49,13 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
     }
   };
 
-  const validateAndParseCSV = useCallback(async (file: File) => {
+  const validateAndParseFile = useCallback(async (file: File) => {
     try {
       setIsProcessing(true);
       setUploadErrors([]);
       setParsedSites([]);
 
-      let csvData: any[] = [];
+      let fileData: any[] = [];
 
       // Check file type and parse accordingly
       if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -64,17 +64,17 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
         const workbook = XLSX.read(buffer, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
-        csvData = jsonData;
+        fileData = jsonData;
       } else if (file.name.endsWith('.csv')) {
-        // Parse CSV file
+        // Parse CSV file (backward compatibility)
         const content = await file.text();
-        csvData = parseCSVContent(content);
+        fileData = parseCSVContent(content);
       } else {
-        setUploadErrors(['Please upload a CSV or Excel (.xlsx) file']);
+        setUploadErrors(['Please upload an Excel (.xlsx) or CSV file']);
         return;
       }
 
-      if (csvData.length === 0) {
+      if (fileData.length === 0) {
         setUploadErrors(['No valid data found in file']);
         return;
       }
@@ -82,7 +82,7 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
       const validatedSites: Array<{ id: string; data: Omit<Site, 'id'>; errors: string[] }> = [];
       const errors: string[] = [];
 
-      csvData.forEach((row, index) => {
+      fileData.forEach((row, index) => {
         const rowIndex = index + 2; // Account for header row
         const rowErrors: string[] = [];
 
@@ -182,15 +182,38 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
 
         // 11. Site Manager (REQUIRED)
         let siteManagerId = '';
-        if (!row.siteManagerId?.trim()) {
-          rowErrors.push('Site Manager ID is required');
-        } else {
+        if (row.siteManagerName?.trim()) {
+          // Search by manager name
+          const manager = teamMembers.find(m => m.name.toLowerCase() === row.siteManagerName.toLowerCase());
+          if (!manager) {
+            rowErrors.push(`Site Manager '${row.siteManagerName}' not found`);
+          } else {
+            siteManagerId = manager.id;
+          }
+        } else if (row.siteManagerId?.trim()) {
+          // Fallback to ID for backward compatibility
           const manager = teamMembers.find(m => m.id === row.siteManagerId);
           if (!manager) {
             rowErrors.push(`Site Manager ID '${row.siteManagerId}' not found`);
           } else {
             siteManagerId = manager.id;
           }
+        } else {
+          rowErrors.push('Site Manager Name is required');
+        }
+
+        // 11.5 Team Assignment (OPTIONAL - can be multiple names separated by comma or semicolon)
+        let teamAssignmentIds: string[] = [];
+        if (row.teamAssignment?.trim()) {
+          const teamNames = row.teamAssignment.split(/[,;]/).map((name: string) => name.trim()).filter((name: string) => name);
+          teamNames.forEach((teamName: string) => {
+            const member = teamMembers.find(m => m.name.toLowerCase() === teamName.toLowerCase());
+            if (member) {
+              teamAssignmentIds.push(member.id);
+            } else {
+              rowErrors.push(`Team member '${teamName}' not found in team assignment`);
+            }
+          });
         }
 
         // 12. Technician Name (REQUIRED)
@@ -247,25 +270,25 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
             stages: {
               c1: {
                 status: 'not-started',
-                assignedTeamIds: siteManagerId ? [siteManagerId] : [],
+                assignedTeamIds: teamAssignmentIds.length > 0 ? teamAssignmentIds : (siteManagerId ? [siteManagerId] : []),
                 startDate: undefined,
                 completionDate: undefined
               },
               c2: {
                 status: 'not-started',
-                assignedTeamIds: [],
+                assignedTeamIds: teamAssignmentIds.length > 0 ? teamAssignmentIds : [],
                 startDate: undefined,
                 completionDate: undefined
               },
               c1_c2_combined: {
                 status: 'not-started',
-                assignedTeamIds: [],
+                assignedTeamIds: teamAssignmentIds.length > 0 ? teamAssignmentIds : [],
                 startDate: undefined,
                 completionDate: undefined
               },
               electrical: {
                 status: 'not-started',
-                assignedTeamIds: [],
+                assignedTeamIds: teamAssignmentIds.length > 0 ? teamAssignmentIds : [],
                 startDate: undefined,
                 completionDate: undefined
               }
@@ -287,7 +310,7 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
       setParsedSites(validatedSites);
     } catch (error) {
       setUploadErrors([
-        'Error parsing CSV file: ' + (error instanceof Error ? error.message : 'Unknown error')
+        'Error parsing file: ' + (error instanceof Error ? error.message : 'Unknown error')
       ]);
       setParsedSites([]);
     } finally {
@@ -300,7 +323,7 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
       setUploadErrors(['Please select a file']);
       return;
     }
-    await validateAndParseCSV(selectedFile);
+    await validateAndParseFile(selectedFile);
   };
 
   const handleConfirmUpload = async () => {
@@ -345,13 +368,10 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
               ×
             </button>
           </div>
-          <p className="text-blue-100 text-sm mt-2">Upload your filled CSV template to bulk create sites</p>
-        </div>
-
-        <div className="p-6 space-y-4">
+          <p className="text-blue-100 text-sm mt-2">Upload your filled Excel template to bulk create sites</p>
           {/* File Upload Area */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Select CSV File</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Select Excel File (.xlsx)</label>
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -361,7 +381,7 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
             >
               <input
                 type="file"
-                accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,.csv,text/csv"
                 onChange={handleFileChange}
                 ref={fileInputRef}
                 className="hidden"
@@ -373,8 +393,8 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-gray-600 font-semibold">📁 Drag & drop CSV file here</p>
-                  <p className="text-xs text-gray-500">or click to select</p>
+                  <p className="text-gray-600 font-semibold">📁 Drag & drop Excel file here</p>
+                  <p className="text-xs text-gray-500">or click to select (.xlsx format)</p>
                 </div>
               )}
             </div>
@@ -487,8 +507,9 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
               <ol className="list-decimal list-inside space-y-1">
                 <li>Download the template using "Download Template File" button</li>
                 <li>Fill in the required fields for each site row</li>
-                <li>Use vendor IDs and manager IDs from the template reference section</li>
-                <li>Upload the filled CSV file here</li>
+                <li>Use dropdown lists for: Project Type, Work Type, Vendor ID, Site Manager Name, and Team Assignment</li>
+                <li>Team Assignment can include multiple names separated by commas (e.g., "John Doe, Jane Smith")</li>
+                <li>Upload the filled Excel file here</li>
                 <li>Review the preview and confirm to create all sites at once</li>
               </ol>
             </div>

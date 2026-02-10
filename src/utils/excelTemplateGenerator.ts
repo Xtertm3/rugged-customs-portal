@@ -16,9 +16,14 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
   const projectTypes = ['Solar', 'Wind', 'Hydro', 'Thermal', 'Battery', 'Biogas', 'Transmission', 'Distribution'];
   const workTypes = ['Civil', 'Electrical'];
   const vendorIds = vendors.map(v => v.id);
-  const managerIds = teamMembers
+  
+  // Get manager names instead of IDs
+  const managerNames = teamMembers
     .filter(m => ['Admin', 'Manager', 'Supervisor', 'Electrical + Civil', 'Civil', 'Electricals'].includes(m.role))
-    .map(m => m.id);
+    .map(m => m.name);
+  
+  // Get all team member names for team assignment
+  const allTeamMemberNames = teamMembers.map(m => m.name);
 
   // Create workbook and worksheet
   const workbook = new ExcelJS.Workbook();
@@ -37,7 +42,8 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     { header: 'allocationDate', key: 'allocationDate', width: 15 },
     { header: 'vendorId', key: 'vendorId', width: 20 },
     { header: 'vendorName', key: 'vendorName', width: 20 },
-    { header: 'siteManagerId', key: 'siteManagerId', width: 20 },
+    { header: 'siteManagerName', key: 'siteManagerName', width: 20 },
+    { header: 'teamAssignment', key: 'teamAssignment', width: 20 },
     { header: 'technicianName', key: 'technicianName', width: 20 },
     { header: 'technicianPhone', key: 'technicianPhone', width: 15 },
     { header: 'fscName', key: 'fscName', width: 20 },
@@ -91,17 +97,32 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     }
   }
 
-  // Add data validation for siteManagerId (Column L, rows 2-11)
-  if (managerIds.length > 0) {
+  // Add data validation for siteManagerName (Column L, rows 2-11)
+  if (managerNames.length > 0) {
     for (let row = 2; row <= 11; row++) {
       worksheet.getCell(`L${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
-        formulae: [`"${managerIds.join(',')}"`],
+        formulae: [`"${managerNames.join(',')}"`],
         showErrorMessage: true,
         errorStyle: 'error',
-        errorTitle: 'Invalid Manager ID',
-        error: 'Please select a manager ID from the list'
+        errorTitle: 'Invalid Manager Name',
+        error: 'Please select a manager name from the list'
+      };
+    }
+  }
+
+  // Add data validation for teamAssignment (Column M, rows 2-11)
+  if (allTeamMemberNames.length > 0) {
+    for (let row = 2; row <= 11; row++) {
+      worksheet.getCell(`M${row}`).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [`"${allTeamMemberNames.join(',')}"`],
+        showErrorMessage: true,
+        errorStyle: 'error',
+        errorTitle: 'Invalid Team Member Name',
+        error: 'Please select a team member name from the list'
       };
     }
   }
