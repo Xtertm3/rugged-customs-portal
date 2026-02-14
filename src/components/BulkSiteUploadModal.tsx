@@ -19,6 +19,37 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
   teamMembers,
   vendors
 }) => {
+  const normalizeAllocationDate = (rawDate: string) => {
+    const trimmed = rawDate.trim();
+    const ddmmyyyyRegex = /^(\d{2})-(\d{2})-(\d{4})$/;
+    const match = trimmed.match(ddmmyyyyRegex);
+
+    if (!match) {
+      return { normalized: '', error: `Allocation Date '${rawDate}' must be in DD-MM-YYYY format` };
+    }
+
+    const day = Number(match[1]);
+    const month = Number(match[2]);
+    const year = Number(match[3]);
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+      return { normalized: '', error: `Allocation Date '${rawDate}' is invalid` };
+    }
+
+    const date = new Date(year, month - 1, day);
+    const isValid =
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day;
+
+    if (!isValid) {
+      return { normalized: '', error: `Allocation Date '${rawDate}' is invalid` };
+    }
+
+    const normalized = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return { normalized, error: '' };
+  };
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedSites, setParsedSites] = useState<Array<{ id: string; data: Omit<Site, 'id'>; errors: string[] }>>([]);
@@ -151,24 +182,16 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
         if (!row.allocationDate?.trim()) {
           rowErrors.push('Allocation Date is required');
         } else {
-          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-          if (!dateRegex.test(row.allocationDate)) {
-            rowErrors.push(`Allocation Date '${row.allocationDate}' must be in YYYY-MM-DD format`);
+          const { error } = normalizeAllocationDate(row.allocationDate);
+          if (error) {
+            rowErrors.push(error);
           }
         }
 
         // 10. Vendor/Client (REQUIRED)
         let vendorId = '';
         let vendorName = '';
-        if (row.vendorId?.trim()) {
-          const vendor = vendors.find(v => v.id === row.vendorId);
-          if (!vendor) {
-            rowErrors.push(`Vendor ID '${row.vendorId}' not found`);
-          } else {
-            vendorId = vendor.id;
-            vendorName = vendor.name;
-          }
-        } else if (row.vendorName?.trim()) {
+        if (row.vendorName?.trim()) {
           const vendor = vendors.find(v => v.name.toLowerCase() === row.vendorName.toLowerCase());
           if (!vendor) {
             rowErrors.push(`Vendor '${row.vendorName}' not found`);
@@ -176,8 +199,16 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
             vendorId = vendor.id;
             vendorName = vendor.name;
           }
+        } else if (row.vendorId?.trim()) {
+          const vendor = vendors.find(v => v.id === row.vendorId);
+          if (!vendor) {
+            rowErrors.push(`Vendor ID '${row.vendorId}' not found`);
+          } else {
+            vendorId = vendor.id;
+            vendorName = vendor.name;
+          }
         } else {
-          rowErrors.push('Vendor/Client ID or Name is required');
+          rowErrors.push('Vendor/Client Name is required');
         }
 
         // 11. Site Manager (REQUIRED)
@@ -244,6 +275,8 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
         if (rowErrors.length > 0) {
           errors.push(`Row ${rowIndex}: ${rowErrors.join('; ')}`);
         } else {
+          const { normalized: normalizedAllocationDate } = normalizeAllocationDate(row.allocationDate);
+
           // Create site data with ALL validated information
           const siteData: Omit<Site, 'id'> = {
             siteName: row.siteName!,
@@ -266,7 +299,7 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
             documents: [],
             currentStage: 'c1',
             planningRecommendation: row.planningRecommendation!.trim(),
-            allocationDate: row.allocationDate!.trim(),
+            allocationDate: normalizedAllocationDate,
             stages: {
               c1: {
                 status: 'not-started',
@@ -507,7 +540,8 @@ export const BulkSiteUploadModal: React.FC<BulkSiteUploadModalProps> = ({
               <ol className="list-decimal list-inside space-y-1">
                 <li>Download the template using "Download Template File" button</li>
                 <li>Fill in the required fields for each site row</li>
-                <li>Use dropdown lists for: Project Type, Work Type, Vendor ID, Site Manager Name, and Team Assignment</li>
+                <li>Use dropdown lists for: Project Type, Work Type, Vendor Name, Site Manager Name, and Team Assignment</li>
+                <li>Enter Allocation Date in DD-MM-YYYY format (e.g., 14-02-2026)</li>
                 <li>Team Assignment can include multiple names separated by commas (e.g., "John Doe, Jane Smith")</li>
                 <li>Upload the filled Excel file here</li>
                 <li>Review the preview and confirm to create all sites at once</li>

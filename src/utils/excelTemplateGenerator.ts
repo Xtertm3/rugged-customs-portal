@@ -10,12 +10,12 @@ import { TeamMember, Vendor } from '../App';
 /**
  * Generates an Excel file (.xlsx) with data validation dropdowns
  * Creates a template with 17 columns and 10 empty rows for data entry
- * Includes dropdown lists for: projectType, workType, vendorId, siteManagerId
+ * Includes dropdown lists for: projectType, workType, vendorName, siteManagerName
  */
 export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], vendors: Vendor[]): Promise<Blob> => {
   const projectTypes = ['Solar', 'Wind', 'Hydro', 'Thermal', 'Battery', 'Biogas', 'Transmission', 'Distribution'];
   const workTypes = ['Civil', 'Electrical'];
-  const vendorIds = vendors.map(v => v.id);
+  const vendorNames = vendors.map(v => v.name);
   
   // Get manager names instead of IDs
   const managerNames = teamMembers
@@ -40,7 +40,6 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     { header: 'projectType', key: 'projectType', width: 15 },
     { header: 'workType', key: 'workType', width: 12 },
     { header: 'allocationDate', key: 'allocationDate', width: 15 },
-    { header: 'vendorId', key: 'vendorId', width: 20 },
     { header: 'vendorName', key: 'vendorName', width: 20 },
     { header: 'siteManagerName', key: 'siteManagerName', width: 20 },
     { header: 'teamAssignment', key: 'teamAssignment', width: 20 },
@@ -50,6 +49,8 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     { header: 'fscPhone', key: 'fscPhone', width: 15 },
     { header: 'planningRecommendation', key: 'planningRecommendation', width: 25 }
   ];
+
+  worksheet.getColumn(9).numFmt = 'dd-mm-yyyy';
 
   // Add 10 empty rows for data entry
   for (let i = 0; i < 10; i++) {
@@ -82,25 +83,25 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     };
   }
 
-  // Add data validation for vendorId (Column J, rows 2-11)
-  if (vendorIds.length > 0) {
+  // Add data validation for vendorName (Column J, rows 2-11)
+  if (vendorNames.length > 0) {
     for (let row = 2; row <= 11; row++) {
       worksheet.getCell(`J${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
-        formulae: [`"${vendorIds.join(',')}"`],
+        formulae: [`"${vendorNames.join(',')}"`],
         showErrorMessage: true,
         errorStyle: 'error',
-        errorTitle: 'Invalid Vendor ID',
-        error: 'Please select a vendor ID from the list'
+        errorTitle: 'Invalid Vendor Name',
+        error: 'Please select a vendor name from the list'
       };
     }
   }
 
-  // Add data validation for siteManagerName (Column L, rows 2-11)
+  // Add data validation for siteManagerName (Column K, rows 2-11)
   if (managerNames.length > 0) {
     for (let row = 2; row <= 11; row++) {
-      worksheet.getCell(`L${row}`).dataValidation = {
+      worksheet.getCell(`K${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
         formulae: [`"${managerNames.join(',')}"`],
@@ -112,10 +113,10 @@ export const generateExcelWithDropdownsV2 = async (teamMembers: TeamMember[], ve
     }
   }
 
-  // Add data validation for teamAssignment (Column M, rows 2-11)
+  // Add data validation for teamAssignment (Column L, rows 2-11)
   if (allTeamMemberNames.length > 0) {
     for (let row = 2; row <= 11; row++) {
-      worksheet.getCell(`M${row}`).dataValidation = {
+      worksheet.getCell(`L${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
         formulae: [`"${allTeamMemberNames.join(',')}"`],

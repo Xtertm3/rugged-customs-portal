@@ -18,7 +18,6 @@ export const generateSiteTemplate = (teamMembers: TeamMember[], vendors: Vendor[
     'projectType',
     'workType',
     'allocationDate',
-    'vendorId',
     'vendorName',
     'siteManagerId',
     'technicianName',
@@ -39,7 +38,7 @@ export const generateSiteTemplate = (teamMembers: TeamMember[], vendors: Vendor[
   // Prepare dropdown reference data
   const projectTypeOptions = ['Solar', 'Wind', 'Hydro', 'Thermal', 'Battery', 'Biogas', 'Transmission', 'Distribution'].join('|');
   const workTypeOptions = ['Civil', 'Electrical'].join('|');
-  const vendorOptions = vendors.map(v => `${v.id}:${v.name}`).join('|');
+  const vendorOptions = vendors.map(v => v.name).join('|');
   const managerOptions = teamMembers
     .filter(m => ['Admin', 'Manager', 'Supervisor', 'Electrical + Civil', 'Civil', 'Electricals'].includes(m.role))
     .map(m => `${m.id}:${m.name}`)
@@ -56,7 +55,7 @@ export const generateSiteTemplate = (teamMembers: TeamMember[], vendors: Vendor[
     '[DROPDOWN:workType]',
     workTypeOptions,
     '',
-    '[DROPDOWN:vendorId]',
+    '[DROPDOWN:vendorName]',
     vendorOptions,
     '',
     '[DROPDOWN:siteManagerId]',
